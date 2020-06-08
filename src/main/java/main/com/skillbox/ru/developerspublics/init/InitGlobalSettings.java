@@ -1,4 +1,4 @@
-package main.com.skillbox.ru.developerspublics.config;
+package main.com.skillbox.ru.developerspublics.init;
 
 import main.com.skillbox.ru.developerspublics.model.GlobalSetting;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsCodes;

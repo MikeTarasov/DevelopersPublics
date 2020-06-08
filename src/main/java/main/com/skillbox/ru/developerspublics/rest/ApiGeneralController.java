@@ -2,7 +2,7 @@ package main.com.skillbox.ru.developerspublics.rest;
 
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import main.com.skillbox.ru.developerspublics.config.InitGlobalSettings;
+import main.com.skillbox.ru.developerspublics.init.InitGlobalSettings;
 import main.com.skillbox.ru.developerspublics.model.BlogInfo;
 import main.com.skillbox.ru.developerspublics.model.GlobalSetting;
 import main.com.skillbox.ru.developerspublics.model.Tag;
