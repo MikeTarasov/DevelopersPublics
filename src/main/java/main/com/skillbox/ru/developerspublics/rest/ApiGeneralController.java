@@ -1,10 +1,16 @@
-package main.java.main.com.skillbox.ru.developerspublics.rest;
+package main.com.skillbox.ru.developerspublics.rest;
 
 import lombok.AllArgsConstructor;
-//import lombok.SneakyThrows;
-//import main.model.*;
-//import org.json.simple.JSONArray;
-//import org.json.simple.JSONObject;
+import lombok.SneakyThrows;
+import main.com.skillbox.ru.developerspublics.config.InitGlobalSettings;
+import main.com.skillbox.ru.developerspublics.model.BlogInfo;
+import main.com.skillbox.ru.developerspublics.model.GlobalSetting;
+import main.com.skillbox.ru.developerspublics.model.Tag;
+import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsValues;
+import main.com.skillbox.ru.developerspublics.repository.GlobalSettingsRepository;
+import main.com.skillbox.ru.developerspublics.repository.TagsRepository;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,18 +25,18 @@ import java.util.TreeMap;
 @RestController
 public class ApiGeneralController
 {
-//    @Autowired
-//    private GlobalSettingsRepository globalSettingsRepository;
-//
-//    @Autowired
-//    private TagsRepository tagsRepository;
-//
-//    //GET /api/init/
-//    @GetMapping("/api/init")
-//    public ResponseEntity<BlogInfo> init() {
-//        InitGlobalSettings.init(globalSettingsRepository);
-//        return ResponseEntity.status(HttpStatus.OK).body(new BlogInfo());
-//    }
+    @Autowired
+    private GlobalSettingsRepository globalSettingsRepository;
+
+    @Autowired
+    private TagsRepository tagsRepository;
+
+    //GET /api/init/
+    @GetMapping("/api/init")
+    public ResponseEntity<BlogInfo> init() {
+        InitGlobalSettings.init(globalSettingsRepository);
+        return ResponseEntity.status(HttpStatus.OK).body(new BlogInfo());
+    }
 
     //POST /api/image
     //Запрос: Content-Type: multipart/form-data
@@ -77,17 +83,17 @@ public class ApiGeneralController
     // }
     // ]
     //}
-//    @SneakyThrows
-//    @GetMapping("/api/tag")
-//    public ResponseEntity<JSONObject> getApiTag() {
-//        JSONObject response = new JSONObject();
-//        JSONArray jsonArray = new JSONArray();
-//        for (Tag tag : tagsRepository.findAll()) {
-//            jsonArray.add(tag);
-//        }
-//        response.put("tags", jsonArray);
-//        return ResponseEntity.status(HttpStatus.OK).body(response);
-//    }
+    @SneakyThrows
+    @GetMapping("/api/tag")
+    public ResponseEntity<JSONObject> getApiTag() {
+        JSONObject response = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+        for (Tag tag : tagsRepository.findAll()) {
+            jsonArray.add(tag);
+        }
+        response.put("tags", jsonArray);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 
     //POST /api/moderation
     //{
@@ -105,14 +111,14 @@ public class ApiGeneralController
     //"2020-03-12": 6
     //}
     //}
-//    @SneakyThrows
-//    @GetMapping("/api/calendar")
-//    public ResponseEntity<JSONObject> getApiCalendar() {
-//        JSONObject response = new JSONObject();
-//        response.put("years", new ArrayList(Collections.singleton("2020")));
-//        response.put("posts", "");
-//        return ResponseEntity.status(HttpStatus.OK).body(response);
-//    }
+    @SneakyThrows
+    @GetMapping("/api/calendar")
+    public ResponseEntity<JSONObject> getApiCalendar() {
+        JSONObject response = new JSONObject();
+        response.put("years", new ArrayList(Collections.singleton("2020")));
+        response.put("posts", "");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 
     //POST /api/profile/my
     //{
@@ -174,15 +180,15 @@ public class ApiGeneralController
     //}
 
     //GET /api/settings/
-//    @GetMapping("/api/settings")
-//    public TreeMap<String, Boolean> getGlobalSettings() {
-//        TreeMap<String, Boolean> treeMap = new TreeMap<>();
-//        for (GlobalSetting globalSetting : globalSettingsRepository.findAll()) {
-//            treeMap.put(globalSetting.getCode(),
-//                    globalSetting.getValue().equals(GlobalSettingsValues.YES.toString()));
-//        }
-//        return treeMap;
-//    }
+    @GetMapping("/api/settings")
+    public TreeMap<String, Boolean> getGlobalSettings() {
+        TreeMap<String, Boolean> treeMap = new TreeMap<>();
+        for (GlobalSetting globalSetting : globalSettingsRepository.findAll()) {
+            treeMap.put(globalSetting.getCode(),
+                    globalSetting.getValue().equals(GlobalSettingsValues.YES.toString()));
+        }
+        return treeMap;
+    }
 
     //PUT /api/settings/
     //{

@@ -1,0 +1,4 @@
+spring.dataSource.url: jdbc:mysql://localhost:3306/devpostsdb?verifyServerCertificate=false&useSSL=false&requireSSL=false&useLegacyDatetimeCode=false&amp&serverTimezone=UTC
+spring.dataSource.username: root
+spring.dataSource.password: test123341
+spring.jpa.hibernate.ddl-auto: update

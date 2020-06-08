@@ -1,6 +1,6 @@
-package main.java.main.com.skillbox.ru.developerspublics.rest;
+package main.com.skillbox.ru.developerspublics.rest;
 
-//import org.json.simple.JSONObject;
+import org.json.simple.JSONObject;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,12 +47,12 @@ public class ApiAuthController
     //{
     //"result": false
     //}
-//    @GetMapping("/api/auth/check")
-//    public JSONObject authCheck() {
-//        JSONObject response = new JSONObject();
-//        response.put("result", false);
-//        return response;
-//    }
+    @GetMapping("/api/auth/check")
+    public JSONObject authCheck() {
+        JSONObject response = new JSONObject();
+        response.put("result", false);
+        return response;
+    }
 
     //POST /api/auth/restore
     //{

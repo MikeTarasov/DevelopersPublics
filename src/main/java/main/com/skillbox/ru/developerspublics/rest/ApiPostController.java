@@ -1,14 +1,15 @@
-package main.java.main.com.skillbox.ru.developerspublics.rest;
+package main.com.skillbox.ru.developerspublics.rest;
 
-//import main.model.*;
-//import org.json.simple.JSONObject;
+
+import lombok.AllArgsConstructor;
+import org.json.simple.JSONObject;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 
-//@AllArgsConstructor
+@AllArgsConstructor
 @RestController
 public class ApiPostController
 {
@@ -44,18 +45,18 @@ public class ApiPostController
     //{...}
     //]
     //}
-//    @GetMapping("/api/post")
-//    public JSONObject post(@RequestHeader(value = "mode", defaultValue = "") String mode) {
-//        JSONObject response = new JSONObject();
-//        System.out.println(mode + " --- ");
-//        response.put("count", 0);
-//        response.put("posts", new ArrayList<>());
-//
-////        for (Posts post : postsRepository.findAll()) {
-////            posts.put(post.getId(), post);
-////        }
-//        return response;
-//    }
+    @GetMapping("/api/post")
+    public JSONObject post(@RequestHeader(value = "mode", defaultValue = "") String mode) {
+        JSONObject response = new JSONObject();
+        System.out.println(mode + " --- ");
+        response.put("count", 0);
+        response.put("posts", new ArrayList<>());
+
+//        for (Posts post : postsRepository.findAll()) {
+//            posts.put(post.getId(), post);
+//        }
+        return response;
+    }
 
 
     //GET /api/post/search/
