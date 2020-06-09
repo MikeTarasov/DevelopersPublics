@@ -5,9 +5,11 @@ import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.init.InitGlobalSettings;
 import main.com.skillbox.ru.developerspublics.model.BlogInfo;
 import main.com.skillbox.ru.developerspublics.model.GlobalSetting;
+import main.com.skillbox.ru.developerspublics.model.Post;
 import main.com.skillbox.ru.developerspublics.model.Tag;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsValues;
 import main.com.skillbox.ru.developerspublics.repository.GlobalSettingsRepository;
+import main.com.skillbox.ru.developerspublics.repository.PostsRepository;
 import main.com.skillbox.ru.developerspublics.repository.TagsRepository;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -15,11 +17,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.TreeMap;
+import java.sql.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @AllArgsConstructor
 @RestController
@@ -31,10 +35,15 @@ public class ApiGeneralController
     @Autowired
     private TagsRepository tagsRepository;
 
+    @Autowired
+    private PostsRepository postsRepository;
+
     //GET /api/init/
     @GetMapping("/api/init")
-    public ResponseEntity<BlogInfo> init() {
+    public ResponseEntity<BlogInfo> getApiInit() {
+        //при запуске проверяем заполнены ли глобальные настройки
         InitGlobalSettings.init(globalSettingsRepository);
+        //и возвращаем инфо о блоге
         return ResponseEntity.status(HttpStatus.OK).body(new BlogInfo());
     }
 
@@ -69,7 +78,7 @@ public class ApiGeneralController
     //}
     //}
 
-    //GET /api/tag/   TODO
+    //GET /api/tag/
     //{
     // "tags":
     // [
@@ -85,13 +94,33 @@ public class ApiGeneralController
     //}
     @SneakyThrows
     @GetMapping("/api/tag")
-    public ResponseEntity<JSONObject> getApiTag() {
+    public ResponseEntity<JSONObject> getApiTag(@RequestParam(name = "query", required = false) String query) {
+        //входной параметр
+        //  query - часть тэга или тэг, может быть не задан или быть пустым (в этом случае выводятся все тэги)
+        //выходной параметр
+        // tags -> array {"name": ,"weight": }
+
+        //init response
         JSONObject response = new JSONObject();
         JSONArray jsonArray = new JSONArray();
-        for (Tag tag : tagsRepository.findAll()) {
-            jsonArray.add(tag);
+
+        //если тэг не задан - делаем его пустым
+        if (query == null) {
+            query = "";
         }
+
+        //перебираем все тэги
+        for (Tag tag : tagsRepository.findAll()) {
+            //ищем совпадения
+            if (tag.getName().contains(query)) {
+                //все совпадения заносим в список по шаблону
+                jsonArray.add(tag.toString(postsRepository, tagsRepository));
+            }
+        }
+
+        //собираем ответ
         response.put("tags", jsonArray);
+        //и возвращаем его
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -101,7 +130,7 @@ public class ApiGeneralController
     // "decision":"accept"
     //}
 
-    //GET /api/calendar/ TODO
+    //GET /api/calendar/
     //{
     //"years": [2017, 2018, 2019, 2020],
     //"posts": {
@@ -113,10 +142,53 @@ public class ApiGeneralController
     //}
     @SneakyThrows
     @GetMapping("/api/calendar")
-    public ResponseEntity<JSONObject> getApiCalendar() {
+    public ResponseEntity<JSONObject> getApiCalendar(@RequestParam(name = "year", required = false) Integer year) {
+        //входной параметр - year - год в виде четырёхзначного числа, если не передан - возвращать за текущий год
+        //выходные параметры
+        //  years - список всех годов, за которые была хотя бы одна публикация, в порядке убывания
+        //  posts - мапа из (дата, кол-во) в порядке убывания даты -> посты за год year
+
+        //init response
         JSONObject response = new JSONObject();
-        response.put("years", new ArrayList(Collections.singleton("2020")));
-        response.put("posts", "");
+        //init списка всех годов публикаций
+        TreeSet<String> yearsWithPosts = new TreeSet<>(Comparator.reverseOrder());
+        //init списка дата - кол-во постов
+        TreeMap<String, Integer> dateCountPosts = new TreeMap<>(Comparator.reverseOrder());
+
+        //подготовим два паттерна для форматирования дат
+        DateFormat yearDF = new SimpleDateFormat("yyyy");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+        //если год не передан - возвращаем за текущий год
+        if (year == 0) {
+            year = Calendar.getInstance().get(Calendar.YEAR);
+        }
+        //для удобства переводим в String
+        String stringYear = Integer.toString(year);
+
+        //перебираем все посты
+        for (Post post : postsRepository.findAll()) {
+            //запомним год публикации данного поста
+            String postYear = yearDF.format(post.getTime());
+            //занесем его в список
+            yearsWithPosts.add(postYear);
+            //если год публикации = выбранному году
+            if (postYear.equals(stringYear)) {
+                //сохраняем его в список дата-кол. постов
+                String postDate = dateFormat.format(post.getTime());
+                //проверяем есть ли в списке такая дата
+                if (dateCountPosts.containsKey(postDate)) {
+                    //если есть - инкрементируем кол-во
+                    dateCountPosts.put(postDate, dateCountPosts.get(postDate) + 1);
+                }   //иначе добавляем новую дату
+                else dateCountPosts.put(postDate, 1);
+            }
+        }
+
+        //собираем ответ
+        response.put("years", yearsWithPosts);
+        response.put("posts", dateCountPosts);
+        //и возвращаем его
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -178,16 +250,66 @@ public class ApiGeneralController
     //"viewsCount":58,
     //"firstPublication":"2018-07-16 17:35"
     //}
+    @SneakyThrows
+    @GetMapping("/api/statistics/all")
+    public ResponseEntity<JSONObject> getApiStatisticsAll() {
+        //входные параметры - нет
+        //требования
+        //TODO  if STATISTICS_IS_PUBLIC = NO & Auth=false -> HTTP.401
 
-    //GET /api/settings/
+//        for (GlobalSetting globalSetting : globalSettingsRepository.findAll()) {
+//            if (globalSetting.getCode().equals(GlobalSettingsCodes.STATISTICS_IS_PUBLIC) &&
+//                    globalSetting.getValue().equals(GlobalSettingsValues.NO)) {
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+//            }
+//        }
+
+        //init response & out parameters
+        JSONObject response = new JSONObject();
+        int likesCount = 0;
+        int dislikesCount = 0;
+        int viewsCount = 0;
+        Date firstPublication = new Date(System.currentTimeMillis());
+
+        //перебираем все посты
+        for (Post post : postsRepository.findAll()) {
+            //считаем общ. кол-во лайков
+            likesCount += post.getLikesDislikesCount(1);
+            //считаем общее кол-во дислайков
+            dislikesCount += post.getLikesDislikesCount(-1);
+            //считаем общее кол-во просмотров
+            viewsCount += post.getViewCount();
+            //ищем дату самого первого поста
+            if (firstPublication.after(post.getTime())) {
+                firstPublication = post.getTime();
+            }
+        }
+
+        //собираем ответ
+        response.put("postsCount", (int) postsRepository.count());
+        response.put("likesCount", likesCount);
+        response.put("dislikesCount", dislikesCount);
+        response.put("viewsCount", viewsCount);
+        response.put("firstPublication", firstPublication);
+        //и возвращаем его
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    //GET /api/settings
     @GetMapping("/api/settings")
-    public TreeMap<String, Boolean> getGlobalSettings() {
-        TreeMap<String, Boolean> treeMap = new TreeMap<>();
+    public TreeMap<String, Boolean> getApiSettings() {
+        //TODO требования - запрашивающий пользователь авторизован и является модератором
+
+        //init response
+        TreeMap<String, Boolean> response = new TreeMap<>();
+        //перебираем все настройки
         for (GlobalSetting globalSetting : globalSettingsRepository.findAll()) {
-            treeMap.put(globalSetting.getCode(),
+            //и запоминаем их в ответе -> сразу переводим value String в boolean
+            response.put(globalSetting.getCode(),
                     globalSetting.getValue().equals(GlobalSettingsValues.YES.toString()));
         }
-        return treeMap;
+        //и возвращаем его
+        return response;
     }
 
     //PUT /api/settings/

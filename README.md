@@ -1,1 +1,17 @@
-# DevelopersPublics
+# Developers Publications
+Для запуска приложения необходимо создать:
+*базу - базу данных mySQL8 - devpostsdb
+*пользователя - root с паролем - test123341.
+
+После этого проиводится запуск приложения
+Порт, по которому обращаться - 8080
+Путь к приложению - http://localhost:8080
+Путь к Swagger-UI - http://localhost:8080/swagger-ui.html
+
+
+Типы запросов
+
+Post - создание поста
+Get - получить пост
+Put - обновить пост
+Delete - удалить пост

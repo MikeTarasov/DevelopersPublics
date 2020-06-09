@@ -48,4 +48,12 @@ public class User
 
     @OneToMany(mappedBy = "commentUser", fetch = FetchType.LAZY)
     private List<PostComment> userPostComments;
+
+    public String toString() {
+        return "{\"id\": " + id + ", \"name\": " + name + "}";
+    }
+
+    public String toStringIdNamePhoto() {
+        return "{\"id\": " + id + ", \"name\": " + name + ", \"photo\": " + photo + "}";
+    }
 }

@@ -41,4 +41,20 @@ public class PostComment
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User commentUser;
+
+    public String toString() {
+        return "{\"id\": " + id +
+                ",\"time\": " + time + //TODO "Вчера, 17:32"
+                ", \"text\": " + text + //TODO "Текст комментария в формате HTML"
+                ", \"user\": " + getCommentUser().toStringIdNamePhoto() + "}";
+    }
+    // "id": 776,
+    // "time": "Вчера, 17:32",
+    // "text": "Текст комментария в формате HTML",
+    // "user":
+    // {
+    // "id": 88,
+    // "name": "Дмитрий Петров",
+    // "photo": "/avatars/ab/cd/ef/52461.jpg"
+    // }
 }
