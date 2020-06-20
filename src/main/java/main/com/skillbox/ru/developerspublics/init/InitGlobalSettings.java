@@ -8,25 +8,20 @@ import main.com.skillbox.ru.developerspublics.repository.GlobalSettingsRepositor
 public class InitGlobalSettings
 {
     public static void init(GlobalSettingsRepository repository) {
-        if (repository.count() != 3) {
+        //проверяем, что все настройки есть
+        if (repository.count() != GlobalSettingsCodes.values().length) {
+            //если нет - перезаполняем таблицу БД настройками по умолчанию
             repository.deleteAll();
-            repository.save(new GlobalSetting(
-                    1,
-                    GlobalSettingsCodes.MULTI_USER_MODE.toString(),
-                    "Многопользовательский режим",
-                    GlobalSettingsValues.NO.toString()));
-
-            repository.save(new GlobalSetting(
-                    2,
-                    GlobalSettingsCodes.POST_PREMODERATION.toString(),
-                    "Премодерация постов",
-                    GlobalSettingsValues.YES.toString()));
-
-            repository.save(new GlobalSetting(
-                    3,
-                    GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString(),
-                    "Показывать всем статистику блога",
-                    GlobalSettingsValues.YES.toString()));
+            int id = 1;
+            for (GlobalSettingsCodes code : GlobalSettingsCodes.values()) {
+                repository.save(new GlobalSetting(
+                        id,
+                        code.toString(),
+                        code.name(),
+                        GlobalSettingsValues.NO.toString())
+                );
+                id++;
+            }
         }
     }
 }

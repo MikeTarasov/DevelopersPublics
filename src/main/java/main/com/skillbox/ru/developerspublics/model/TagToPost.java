@@ -20,10 +20,12 @@ public class TagToPost
     @Column(name = "tag_id", nullable = false)
     private int tagId;
 
+    @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)
     private Post postTag;
 
+    @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "tag_id", insertable = false, updatable = false)
     private Tag tagPost;

@@ -6,11 +6,13 @@ import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.model.Post;
 import main.com.skillbox.ru.developerspublics.model.TagToPost;
 import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
+import main.com.skillbox.ru.developerspublics.model.enums.Roles;
 import main.com.skillbox.ru.developerspublics.repository.PostsRepository;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,13 +33,13 @@ public class ApiPostController
 {
 //    @Autowired
 //    private UsersRepository usersRepository;
-//    @Autowired
-//    private PostVotesRepository postVotesRepository;
-//    @Autowired
-//    private PostCommentsRepository postCommentsRepository;
+
     @Autowired
     private PostsRepository postsRepository;
 
+    private final String GUEST = "ROLE_GUEST";
+    private final String USER = "ROLE_USER";
+    private final String MODERATOR = "ROLE_MODERATOR";
 
     //GET /api/post/
     //{
@@ -62,6 +64,7 @@ public class ApiPostController
     //]
     //}
     @SneakyThrows
+//    @Secured(GUEST) //TODO
     @GetMapping("/api/post")
     public JSONObject getApiPost(@RequestParam(name = "offset") int offset,
                            @RequestParam(name = "limit") int limit,

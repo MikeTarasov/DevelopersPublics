@@ -17,6 +17,7 @@ import java.util.List;
 public class Post
 {
     //размер анонса
+    @Transient
     private static final int announceSize = 1000;
 
     //id в БД
@@ -59,24 +60,29 @@ public class Post
     private int viewCount;
 
     //привязанный модератор поста
+    @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "moderator_id", insertable = false, updatable = false)
     private User moderatorPost;
 
     //привязанный автор поста
+    @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User userPost;
 
     //привязанный список лайков/дислайков
+    @Transient
     @OneToMany(mappedBy = "postVote", fetch = FetchType.LAZY)
     private List<PostVote> postVotes;
 
     //привязанный список комментариев к посту
+    @Transient
     @OneToMany(mappedBy = "commentPost", fetch = FetchType.LAZY)
     private List<PostComment> postComments;
 
     //привязанный список тэг-пост
+    @Transient
     @OneToMany(mappedBy = "postTag", fetch = FetchType.LAZY)
     private List<TagToPost> tagToPosts;
 

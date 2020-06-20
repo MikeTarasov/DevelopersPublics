@@ -34,10 +34,12 @@ public class PostComment
     @Column(columnDefinition = "TEXT", nullable = false)
     private String text;
 
+    @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)
     private Post commentPost;
 
+    @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User commentUser;

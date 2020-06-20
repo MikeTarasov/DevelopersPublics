@@ -24,6 +24,7 @@ public class Tag
     @Column(nullable = false)
     private String name;
 
+    @Transient
     @OneToMany(mappedBy = "tagPost", fetch = FetchType.LAZY)
     private List<TagToPost> tagToPosts;
 

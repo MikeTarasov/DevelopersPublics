@@ -1,4 +1,4 @@
-package main.com.skillbox.ru.developerspublics.model;
+package main.com.skillbox.ru.developerspublics.init;
 
 import lombok.Data;
 import lombok.ToString;

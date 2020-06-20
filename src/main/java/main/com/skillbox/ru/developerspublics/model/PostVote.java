@@ -27,10 +27,12 @@ public class PostVote
     @Column(columnDefinition = "TINYINT", nullable = false)
     private int value;  // +1 -> like, -1 -> dislike
 
+    @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User userVote;
 
+    @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)
     private Post postVote;

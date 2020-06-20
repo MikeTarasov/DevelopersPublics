@@ -2,3 +2,6 @@ spring.dataSource.url: jdbc:mysql://localhost:3306/devpostsdb?verifyServerCertif
 spring.dataSource.username: root
 spring.dataSource.password: test123341
 spring.jpa.hibernate.ddl-auto: update
+#spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
+#spring.mvc.view.prefix: /WEB-INF/jsp/
+#spring.mvc.view.suffix: .jsp
