@@ -1,8 +1,12 @@
 package main.com.skillbox.ru.developerspublics.model;
 
 import lombok.*;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import javax.persistence.*;
-import java.sql.Date;
+import java.util.Date;
+
 
 @Data
 @AllArgsConstructor
@@ -16,7 +20,7 @@ public class CaptchaCode
     @Column(nullable = false)
     private int id;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "DATETIME", nullable = false)
     private Date time;
 
     @Column(columnDefinition = "TINYTEXT", nullable = false)
@@ -24,4 +28,13 @@ public class CaptchaCode
 
     @Column(name = "secret_code", columnDefinition = "TINYTEXT", nullable = false)
     private String secretCode;
+
+    @Transient
+    private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+
+    public CaptchaCode(String code) {
+        time = new Date(System.currentTimeMillis());
+        this.code = code;
+        secretCode = bCryptPasswordEncoder.encode(code);
+    }
 }

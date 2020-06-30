@@ -2,16 +2,12 @@ package main.com.skillbox.ru.developerspublics.model;
 
 import lombok.*;
 import main.com.skillbox.ru.developerspublics.model.enums.Roles;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 
 import javax.persistence.*;
-import java.sql.Date;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 @Data
@@ -30,7 +26,7 @@ public class User implements UserDetails
     private int isModerator;
 
     //дата регистрации
-    @Column(name = "reg_time", nullable = false)
+    @Column(name = "reg_time", columnDefinition = "DATETIME", nullable = false)
     private Date regTime;
 
     //имя пользователя
@@ -74,27 +70,27 @@ public class User implements UserDetails
 
     //список ролей пользователя
     @Transient
-    private Set<Role> roles;
+    private Set<Role> roles = new HashSet<>();
 
 
     //спец конструктор для гостевого входа
     public User(String name) {
         if (name.equals("GUEST")) {
+            System.out.println("guest");
             this.name = name;
             password = name;
+            email = name;
             roles.add(new Role(Roles.GUEST));
+            regTime = new Date(System.currentTimeMillis());
         }
     }
 
-    private Set<Role> setRoles() { //TODO каждый раз пересоздаем роли!!!!
-        //если вход не гостевой - проставляем роли
-        if (id != 0) {
-            roles.add(new Role(Roles.USER));
-            if (isModerator == 1) {
-                roles.add(new Role(Roles.MODERATOR));
-            }
-        }
-        return roles;
+    //конструктор для регистрации
+    public User(String email, String name, String password) {
+        this.email = email;
+        this.name = name;
+        this.password = password;
+        regTime = new Date(System.currentTimeMillis());
     }
 
     public String toString() {
@@ -107,7 +103,7 @@ public class User implements UserDetails
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return setRoles();
+        return getRoles();
     }
 
     @Override

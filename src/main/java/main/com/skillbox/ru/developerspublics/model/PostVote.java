@@ -2,7 +2,8 @@ package main.com.skillbox.ru.developerspublics.model;
 
 import lombok.*;
 import javax.persistence.*;
-import java.sql.Date;
+import java.util.Date;
+
 
 @Data
 @AllArgsConstructor
@@ -21,7 +22,7 @@ public class PostVote
     @Column(name = "post_id", nullable = false)
     private int postId;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "DATETIME", nullable = false)
     private Date time;
 
     @Column(columnDefinition = "TINYINT", nullable = false)

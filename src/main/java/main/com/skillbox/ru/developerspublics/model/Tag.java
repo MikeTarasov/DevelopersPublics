@@ -4,10 +4,10 @@ import lombok.*;
 import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
 import main.com.skillbox.ru.developerspublics.repository.PostsRepository;
 import main.com.skillbox.ru.developerspublics.repository.TagsRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
 
 import javax.persistence.*;
-import java.sql.Date;
+import java.util.Date;
 import java.util.List;
 
 @Data

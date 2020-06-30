@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.init.InitGlobalSettings;
 import main.com.skillbox.ru.developerspublics.init.BlogInfo;
+import main.com.skillbox.ru.developerspublics.init.InitGuest;
 import main.com.skillbox.ru.developerspublics.model.GlobalSetting;
 import main.com.skillbox.ru.developerspublics.model.Post;
 import main.com.skillbox.ru.developerspublics.model.Tag;
@@ -11,18 +12,17 @@ import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsValues;
 import main.com.skillbox.ru.developerspublics.repository.GlobalSettingsRepository;
 import main.com.skillbox.ru.developerspublics.repository.PostsRepository;
 import main.com.skillbox.ru.developerspublics.repository.TagsRepository;
+import main.com.skillbox.ru.developerspublics.repository.UsersRepository;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.Date;
+import java.util.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -40,6 +40,9 @@ public class ApiGeneralController
     @Autowired
     private PostsRepository postsRepository;
 
+    @Autowired
+    private UsersRepository usersRepository;
+
     private final String USER = "ROLE_USER";
     private final String MODERATOR = "ROLE_MODERATOR";
 
@@ -48,6 +51,7 @@ public class ApiGeneralController
     public ResponseEntity<BlogInfo> getApiInit() {
         //при запуске проверяем заполнены ли глобальные настройки
         InitGlobalSettings.init(globalSettingsRepository);
+        InitGuest.addGuest(usersRepository);
         //и возвращаем инфо о блоге
         return ResponseEntity.status(HttpStatus.OK).body(new BlogInfo());
     }
@@ -146,7 +150,6 @@ public class ApiGeneralController
     //}
     //}
     @SneakyThrows
-    @Secured({USER, MODERATOR})
     @GetMapping("/api/calendar")
     public JSONObject getApiCalendar(@RequestParam(name = "year", required = false) Integer year) {
         //входной параметр - year - год в виде четырёхзначного числа, если не передан - возвращать за текущий год

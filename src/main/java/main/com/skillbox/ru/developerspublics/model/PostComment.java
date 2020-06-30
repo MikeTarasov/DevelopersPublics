@@ -5,7 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.sql.Date;
+import java.util.Date;
+
 
 @Data
 @AllArgsConstructor
@@ -28,7 +29,7 @@ public class PostComment
     @Column(name = "user_id", nullable = false)
     private int userId;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "DATETIME", nullable = false)
     private Date time;
 
     @Column(columnDefinition = "TEXT", nullable = false)

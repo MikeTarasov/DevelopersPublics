@@ -5,8 +5,8 @@ import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
 import org.hibernate.annotations.ColumnDefault;
 
 import javax.persistence.*;
-import java.sql.Date;
-import java.text.SimpleDateFormat;
+
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -44,7 +44,7 @@ public class Post
     private int userId;
 
     //дата создания поста
-    @Column(nullable = false)
+    @Column(columnDefinition = "DATETIME", nullable = false)
     private Date time;
 
     //заголовок поста

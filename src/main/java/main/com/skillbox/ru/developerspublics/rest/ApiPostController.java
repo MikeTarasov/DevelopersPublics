@@ -12,7 +12,7 @@ import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
+//import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -88,7 +88,7 @@ public class ApiPostController
         //запоминаем активные посты во временном списке posts
         ArrayList<Post> posts = new ArrayList<>();
 
-        for (Post post : postsRepository.findAll()) {
+        for (Post post : postsRepository.findAll()) {  //TODO УБРАТЬ ПОВТОРЯШКУ!!!!
             if (isPostActive(post)) {
                 posts.add(post);
             }
