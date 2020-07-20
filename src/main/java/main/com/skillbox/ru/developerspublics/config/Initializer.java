@@ -1,6 +1,7 @@
 package main.com.skillbox.ru.developerspublics.config;
 
 import lombok.SneakyThrows;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.WebApplicationInitializer;
 import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
@@ -9,6 +10,7 @@ import org.springframework.web.servlet.DispatcherServlet;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRegistration;
 
+@Configuration
 public class Initializer implements WebApplicationInitializer
 {
     // Указываем имя нашему Servlet Dispatcher для мапинга
@@ -17,12 +19,12 @@ public class Initializer implements WebApplicationInitializer
     @Override
     @SneakyThrows
     public void onStartup(ServletContext servletContext) {
-        System.out.println("\t - onStartup");  //TODO хоть раз вызывалось?
+        System.out.println("\t -> onStartup <-");  //TODO хоть раз вызывалось?
         //создаем контекст
         AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
 
         // Регистрируем в контексте конфигурационный класс
-        context.register(WebAppConfig.class);
+        context.register(WebMVCConfig.class);
 
         // добавляем в контекст слушателя с нашей конфигурацией
         servletContext.addListener(new ContextLoaderListener(context));

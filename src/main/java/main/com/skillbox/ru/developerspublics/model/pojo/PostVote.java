@@ -1,4 +1,4 @@
-package main.com.skillbox.ru.developerspublics.model;
+package main.com.skillbox.ru.developerspublics.model.pojo;
 
 import lombok.*;
 import javax.persistence.*;

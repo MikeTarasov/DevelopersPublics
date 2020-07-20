@@ -1,76 +1,61 @@
 package main.com.skillbox.ru.developerspublics.rest;
 
 
+import lombok.Data;
 import lombok.SneakyThrows;
-import main.com.skillbox.ru.developerspublics.config.UserService;
-import main.com.skillbox.ru.developerspublics.model.CaptchaCode;
-import main.com.skillbox.ru.developerspublics.model.Post;
-import main.com.skillbox.ru.developerspublics.model.User;
-import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
-import main.com.skillbox.ru.developerspublics.repository.CaptchaCodesRepository;
-import main.com.skillbox.ru.developerspublics.repository.PostsRepository;
-import org.apache.catalina.connector.Request;
+import main.com.skillbox.ru.developerspublics.config.AuthenticationProviderImpl;
+import main.com.skillbox.ru.developerspublics.model.pojo.CaptchaCode;
+import main.com.skillbox.ru.developerspublics.model.pojo.User;
+import main.com.skillbox.ru.developerspublics.service.CaptchaCodeService;
+import main.com.skillbox.ru.developerspublics.service.PostService;
+import main.com.skillbox.ru.developerspublics.service.UserService;
 import org.apache.tomcat.util.http.parser.Authorization;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.server.Session;
-import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.annotation.RequestScope;
-
-import javax.imageio.ImageIO;
 import javax.servlet.http.HttpSession;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.nio.file.Files;
-import java.util.*;
 
 
+@Data
 @RestController
 public class ApiAuthController
 {
     @Autowired
-    private PostsRepository postsRepository;
+    private PostService postService;
 
     @Autowired
-    private CaptchaCodesRepository captchaCodesRepository;
+    private CaptchaCodeService captchaCodeService;
 
     @Autowired
     private UserService userService;
 
-    private final String GUEST = "ROLE_GUEST";
+    @Autowired
+    private AuthenticationProviderImpl authenticationProvider;
+
 
     //POST /api/auth/login
     @SneakyThrows
     @PostMapping("/api/auth/login")
-    public JSONObject postApiAuthLogin(@RequestBody String requestBody,
-                                       HttpSession httpSession) {
+    public JSONObject postApiAuthLogin(@RequestBody String requestBody, HttpSession httpSession) {
 
         JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
 
         String email = request.get("e_mail").toString();
         String password = request.get("password").toString();
 
-        System.out.println(email + "\n" + password + "\n" + httpSession);
         //init переменные
         JSONObject response = new JSONObject();
         JSONObject userDetails = new JSONObject();
-        User authUser = null;
 
         //пробуем найти пользователя в БД
-        for (User user : userService.allUsers()) {
-            if (user.getEmail().equals(email)) {
-                if (userService.isPasswordCorrect(user, password)) {
-                    authUser = user;
-                    break;
-                }
-            }
-        }
+        User authUser = userService.findUserByLogin(email);
 
         //если не нашли
         if (authUser == null) {
@@ -78,8 +63,17 @@ public class ApiAuthController
             return response;
         }
 
-        //если нашли - запоминаем сессию
+        //если нашли - заносим user'а в контекст
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        securityContext
+                .setAuthentication(
+                    authenticationProvider
+                        .authenticate(
+                                new UsernamePasswordAuthenticationToken(authUser.getUsername(), password)));
+
+        //запоминаем сессию
         userService.addHttpSession(httpSession.getId(), authUser.getId());
+
 
         //и заполняем ответ
         response.put("result", true);
@@ -89,7 +83,7 @@ public class ApiAuthController
         userDetails.put("photo", authUser.getPhoto());
         userDetails.put("email", authUser.getEmail());
         userDetails.put("moderation", authUser.getIsModerator() == 1);
-        userDetails.put("moderationCount", moderationCount(authUser));
+        userDetails.put("moderationCount", userService.getModerationCount(authUser));
         userDetails.put("settings", authUser.getIsModerator() == 1);
 
         response.put("user", userDetails);
@@ -116,23 +110,23 @@ public class ApiAuthController
     //"result": false
     //}
     @GetMapping("/api/auth/check")
-    public JSONObject authCheck(Authentication authentication) {
+    public JSONObject authCheck() { //TODO why I not use Model model.addAttribute(key, value)????????
         //приготовим ответ
         JSONObject response = new JSONObject();
-        //если запрос от гостя
-        if (authentication == null) {
-            //отвечаем {"result": false}
-            response.put("result", false);
-            return response;
-        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication.isAuthenticated()) {
-            //иначе - собираем полный ответ
+
+        System.out.println("check-auth -> " + SecurityContextHolder.getContext().getAuthentication().getAuthorities());
+
+
+        //если авторизован
+        if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
+            //собираем полный ответ
 
             //создаем объект для перечисления параметров
             JSONObject userProperties = new JSONObject();
             //вытаскиваем пользователя
-            User user = (User) authentication.getPrincipal();
+            User user = userService.findUserByLogin(authentication.getName());
 
             //собираем ответ
             response.put("result", true);
@@ -142,28 +136,24 @@ public class ApiAuthController
             userProperties.put("photo", user.getPhoto());
             userProperties.put("email", user.getEmail());
             userProperties.put("moderation", user.getIsModerator() == 1);
-            userProperties.put("moderationCount", moderationCount(user));
+            userProperties.put("moderationCount", userService.getModerationCount(user));
             userProperties.put("settings", user.getIsModerator() == 1);
 
             response.put("user", userProperties);
+            return response;
         }
+
+        //иначе польз. не авторизирован
+
+            response.put("result", false);
+            System.out.println("check => " + false);
+
+
         return response;
     }
 
-    //считаем кол-во постов для модерации
-    private int moderationCount(User user) {
-        int moderationCount = 0;
-        if (user.getIsModerator() == 1) {
-            for (Post post : postsRepository.findAll()) {
-                if (post.getModerationStatus() == ModerationStatuses.NEW) {
-                    moderationCount++;
-                }
-            }
-        }
-        return moderationCount;
-    }
 
-    //POST /api/auth/restore
+    //TODO POST /api/auth/restore
     //{
     // "email":"petrov@petroff.ru"
     //}
@@ -176,7 +166,7 @@ public class ApiAuthController
     //"result": false
     //}
 
-    //POST /api/auth/password
+    //TODO POST /api/auth/password
     //{
     // "code":"b55ca6ea6cb103c6384cfa366b7ce0bdcac092be26bc0",
     // "password":"123456",
@@ -199,7 +189,7 @@ public class ApiAuthController
     //}
     //}
 
-    //POST /api/auth/register TODO
+    //TODO POST /api/auth/register
     @SneakyThrows
     @PostMapping("/api/auth/register")
     public JSONObject postApiAuthRegister(@RequestBody String body) {
@@ -232,12 +222,18 @@ public class ApiAuthController
         }
 
 
-        System.out.println("login");
+        System.out.println("register");
         //проверяем email
         for (User user : userService.allUsers()) {
             if (user.getEmail().equals(email)) {
                 isEmailExist = true;
-                break;
+                if (isNameWrong) break;
+            }
+
+            //и имя заодно
+            if (user.getName().equals(name)) {
+                isNameWrong = true;
+                if (isEmailExist) break;
             }
         }
         //проверяем name
@@ -249,7 +245,7 @@ public class ApiAuthController
             isPasswordInCorrect = true;
         }
         //проверяем captcha
-        for (CaptchaCode captchaCode : captchaCodesRepository.findAll()) {
+        for (CaptchaCode captchaCode : captchaCodeService.getAllCaptchaCodes()) {
             if (captchaCode.getCode().equals(captcha) && captchaCode.getSecretCode().equals(captchaSecret)) {
                 isCaptchaCorrect = true;
                 break;
@@ -284,82 +280,25 @@ public class ApiAuthController
     //GET /api/auth/captcha
     @SneakyThrows
     @GetMapping("/api/auth/captcha")
-    public JSONObject getApiAuthCaptcha(Authentication authentication, Authorization authorization, Session session,
-                                        HttpSession httpSession,
-                                        SecurityContextHolder securityContextHolder) {
-        System.out.println(authentication + " <-> " + authorization);
-        System.out.println(session + " <> " + httpSession);
-        System.out.println(" <=> " + securityContextHolder);
-
-
+    public JSONObject getApiAuthCaptcha() {
         JSONObject response = new JSONObject();
 
         //сначала удалим все старое
         //процесс долгий - убираем в фоновый поток
-        new Thread(() -> {
-            long timeOfOldCaptcha = 60 * 60 * 1000; //время устаревания кода в мс = 1 час
-
-            ArrayList<CaptchaCode> oldCaptchaList = new ArrayList<>();
-            for (CaptchaCode captchaCode : captchaCodesRepository.findAll()) {
-                if (captchaCode.getTime().before(new Date(System.currentTimeMillis() - timeOfOldCaptcha))) {
-                    oldCaptchaList.add(captchaCode);
-                }
-            }
-            captchaCodesRepository.deleteAll(oldCaptchaList);
-        }).start();
+        new Thread(() -> captchaCodeService.deleteOldCaptcha()).start();
 
         //создадим новую капчу
-        //кол-во символов
-        int iTotalChars = 6;
-        //высота капчи
-        int iHeight = 50;
-        //ширина капчи
-        int iWidth = 110;
-        //шрифт
-        int fontSize = (int) (1.67 * iWidth / iTotalChars);
-        //фон
-        Font fntStyle = new Font("Arial", Font.BOLD, fontSize);
-
-        Random randChars = new Random();
-        //генерируем слово
-        String code = (Long.toString(Math.abs(randChars.nextLong()), 36)).substring(0, iTotalChars);
-        //генерируем картинку
-        BufferedImage biImage = new BufferedImage(iWidth, iHeight, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2dImage = (Graphics2D) biImage.getGraphics();
-        int iCircle = 15;
-        for (int i = 0; i < iCircle; i++) {
-            g2dImage.setColor(new Color(randChars.nextInt(255), randChars.nextInt(255), randChars.nextInt(255)));
-        }
-        g2dImage.setFont(fntStyle);
-        for (int i = 0; i < iTotalChars; i++) {
-            g2dImage.setColor(new Color(randChars.nextInt(255), randChars.nextInt(255), randChars.nextInt(255)));
-            if (i % 2 == 0) {
-                g2dImage.drawString(code.substring(i, i + 1), (int)(fontSize * i *0.6), (int)(fontSize/1.25));
-            } else {
-                g2dImage.drawString(code.substring(i, i + 1), (int)(fontSize * i * 0.6), (int)(iHeight-fontSize/4));
-            }
-        }
-        //создаем временный файл в нужном формате
-        File file = new File("target/1.png");
-        ImageIO.write(biImage, "png", file);
-        //кодируем картинку в текст
-        String base64 = Base64.getEncoder().encodeToString(Files.readAllBytes(file.toPath()));
-        //убираем мусор
-        file.delete();
-        g2dImage.dispose();
-
-        //сохраняем капчу в репозиторий
-        CaptchaCode captcha = new CaptchaCode(code);
-        captchaCodesRepository.save(captcha);
+        String base64 = captchaCodeService.createNewCaptcha().get("base64").toString();
+        String code = captchaCodeService.createNewCaptcha().get("code").toString();
 
         //собираем ответ
-        response.put("secret", captcha.getSecretCode());
+        response.put("secret", code);
         response.put("image", "data:image/png;base64, " + base64);
         //и возвращаем его
         return response;
     }
 
-    //GET /api/auth/logout
+    //TODO GET /api/auth/logout
     //{
     // "result": true
     //}

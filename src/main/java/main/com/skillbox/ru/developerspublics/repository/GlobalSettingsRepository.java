@@ -1,6 +1,6 @@
 package main.com.skillbox.ru.developerspublics.repository;
 
-import main.com.skillbox.ru.developerspublics.model.GlobalSetting;
+import main.com.skillbox.ru.developerspublics.model.pojo.GlobalSetting;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

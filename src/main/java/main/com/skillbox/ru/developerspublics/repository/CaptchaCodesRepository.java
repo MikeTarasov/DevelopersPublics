@@ -1,6 +1,6 @@
 package main.com.skillbox.ru.developerspublics.repository;
 
-import main.com.skillbox.ru.developerspublics.model.CaptchaCode;
+import main.com.skillbox.ru.developerspublics.model.pojo.CaptchaCode;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

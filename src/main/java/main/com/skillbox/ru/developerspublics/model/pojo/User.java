@@ -1,6 +1,7 @@
-package main.com.skillbox.ru.developerspublics.model;
+package main.com.skillbox.ru.developerspublics.model.pojo;
 
 import lombok.*;
+import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.enums.Roles;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -73,32 +74,29 @@ public class User implements UserDetails
     private Set<Role> roles = new HashSet<>();
 
 
-    //спец конструктор для гостевого входа
-    public User(String name) {
-        if (name.equals("GUEST")) {
-            System.out.println("guest");
-            this.name = name;
-            password = name;
-            email = name;
-            roles.add(new Role(Roles.GUEST));
-            regTime = new Date(System.currentTimeMillis());
-        }
-    }
-
     //конструктор для регистрации
     public User(String email, String name, String password) {
         this.email = email;
         this.name = name;
         this.password = password;
         regTime = new Date(System.currentTimeMillis());
+        setRoles();
     }
 
-    public String toString() {
-        return "{\"id\": " + id + ", \"name\": " + name + "}";
+    public void setRoles() {
+        roles.add(new Role(Roles.USER));
+        if (isModerator == 1) roles.add(new Role(Roles.MODERATOR));
     }
 
-    public String toStringIdNamePhoto() {
-        return "{\"id\": " + id + ", \"name\": " + name + ", \"photo\": " + photo + "}";
+    public void setRoles(Set<Role> set) {
+        setRoles();
+    }
+
+    public Set<Role> getRoles() {
+        if (roles.size() == 0) {
+            setRoles();
+        }
+        return roles;
     }
 
     @Override
@@ -108,7 +106,7 @@ public class User implements UserDetails
 
     @Override
     public String getUsername() {
-        return name;
+        return email;
     }
 
     @Override
@@ -130,4 +128,14 @@ public class User implements UserDetails
     public boolean isEnabled() {
         return true;
     }
+
+    //    public String toString() {
+//        //TODO убрать!!!
+//        return "{\"id\": " + id + ", \"name\": " + name + "}";
+//    }
+//
+//    public String toStringIdNamePhoto() {
+//        //TODO убрать!!!
+//        return "{\"id\": " + id + ", \"name\": " + name + ", \"photo\": " + photo + "}";
+//    }
 }

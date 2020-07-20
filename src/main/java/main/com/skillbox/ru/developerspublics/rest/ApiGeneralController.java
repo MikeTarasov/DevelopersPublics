@@ -1,18 +1,17 @@
 package main.com.skillbox.ru.developerspublics.rest;
 
-import lombok.AllArgsConstructor;
+
+import lombok.Data;
 import lombok.SneakyThrows;
-import main.com.skillbox.ru.developerspublics.init.InitGlobalSettings;
 import main.com.skillbox.ru.developerspublics.init.BlogInfo;
-import main.com.skillbox.ru.developerspublics.init.InitGuest;
-import main.com.skillbox.ru.developerspublics.model.GlobalSetting;
-import main.com.skillbox.ru.developerspublics.model.Post;
-import main.com.skillbox.ru.developerspublics.model.Tag;
+import main.com.skillbox.ru.developerspublics.model.pojo.GlobalSetting;
+import main.com.skillbox.ru.developerspublics.model.pojo.Post;
+import main.com.skillbox.ru.developerspublics.model.pojo.Tag;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsValues;
-import main.com.skillbox.ru.developerspublics.repository.GlobalSettingsRepository;
-import main.com.skillbox.ru.developerspublics.repository.PostsRepository;
-import main.com.skillbox.ru.developerspublics.repository.TagsRepository;
-import main.com.skillbox.ru.developerspublics.repository.UsersRepository;
+import main.com.skillbox.ru.developerspublics.service.GlobalSettingService;
+import main.com.skillbox.ru.developerspublics.service.PostService;
+import main.com.skillbox.ru.developerspublics.service.TagService;
+import main.com.skillbox.ru.developerspublics.service.UserService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,21 +26,21 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-@AllArgsConstructor
+@Data
 @RestController
 public class ApiGeneralController
 {
     @Autowired
-    private GlobalSettingsRepository globalSettingsRepository;
+    private GlobalSettingService globalSettingService;
 
     @Autowired
-    private TagsRepository tagsRepository;
+    private TagService tagService;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostService postService;
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserService userService;
 
     private final String USER = "ROLE_USER";
     private final String MODERATOR = "ROLE_MODERATOR";
@@ -50,19 +49,18 @@ public class ApiGeneralController
     @GetMapping("/api/init")
     public ResponseEntity<BlogInfo> getApiInit() {
         //при запуске проверяем заполнены ли глобальные настройки
-        InitGlobalSettings.init(globalSettingsRepository);
-        InitGuest.addGuest(usersRepository);
+        globalSettingService.initGlobalSettings();
         //и возвращаем инфо о блоге
         return ResponseEntity.status(HttpStatus.OK).body(new BlogInfo());
     }
 
-    //POST /api/image
+    //TODO POST /api/image
     //Запрос: Content-Type: multipart/form-data
     //image - файл изображения
     //
     //  /upload/ab/cd/ef/52461.jpg
 
-    //POST /api/comment/
+    //TODO POST /api/comment/
     //{
     // "parent_id":"",
     // "post_id":21,
@@ -119,11 +117,11 @@ public class ApiGeneralController
         }
 
         //перебираем все тэги
-        for (Tag tag : tagsRepository.findAll()) {
+        for (Tag tag : tagService.getInitTags()) {
             //ищем совпадения
             if (tag.getName().contains(query)) {
                 //все совпадения заносим в список по шаблону
-                jsonArray.add(tag.toString(postsRepository, tagsRepository));
+                jsonArray.add(tagService.tagToJSON(tag));
             }
         }
 
@@ -133,7 +131,7 @@ public class ApiGeneralController
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    //POST /api/moderation
+    //TODO POST /api/moderation
     //{
     // "post_id":31,
     // "decision":"accept"
@@ -176,7 +174,7 @@ public class ApiGeneralController
         String stringYear = Integer.toString(year);
 
         //перебираем все посты
-        for (Post post : postsRepository.findAll()) {
+        for (Post post : postService.getPosts()) {
             //запомним год публикации данного поста
             String postYear = yearDF.format(post.getTime());
             //занесем его в список
@@ -201,7 +199,7 @@ public class ApiGeneralController
         return response;
     }
 
-    //POST /api/profile/my
+    //TODO POST /api/profile/my
     //{
     // "name":"Sendel",
     // "email":"sndl@mail.ru"
@@ -242,7 +240,7 @@ public class ApiGeneralController
     // }
     //}
 
-    //GET /api/statistics/my
+    //TODO GET /api/statistics/my
     //{
     //"postsCount":7,
     //"likesCount":15,
@@ -281,11 +279,11 @@ public class ApiGeneralController
         Date firstPublication = new Date(System.currentTimeMillis());
 
         //перебираем все посты
-        for (Post post : postsRepository.findAll()) {
+        for (Post post : postService.getInitPosts()) {
             //считаем общ. кол-во лайков
-            likesCount += post.getLikesDislikesCount(1);
+            likesCount += postService.getLikesDislikesCount(post,1);
             //считаем общее кол-во дислайков
-            dislikesCount += post.getLikesDislikesCount(-1);
+            dislikesCount += postService.getLikesDislikesCount(post,-1);
             //считаем общее кол-во просмотров
             viewsCount += post.getViewCount();
             //ищем дату самого первого поста
@@ -293,13 +291,19 @@ public class ApiGeneralController
                 firstPublication = post.getTime();
             }
         }
+        int postsCount = postService.getPosts().size();
+        String firstPublicationString = firstPublication.toString();
+
+        if (postsCount == 0) {
+            firstPublicationString = "none";
+        }
 
         //собираем ответ
-        response.put("postsCount", (int) postsRepository.count());
+        response.put("postsCount", postsCount);
         response.put("likesCount", likesCount);
         response.put("dislikesCount", dislikesCount);
         response.put("viewsCount", viewsCount);
-        response.put("firstPublication", firstPublication);
+        response.put("firstPublication", firstPublicationString); //TODO при пустом списке возвращает текущую дату!
         //и возвращаем его
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -307,12 +311,13 @@ public class ApiGeneralController
     //GET /api/settings
     @GetMapping("/api/settings")
     public TreeMap<String, Boolean> getApiSettings() {
-        //TODO требования - запрашивающий пользователь авторизован и является модератором
-
+        //TODO Метод возвращает глобальные настройки блога из таблицы global_settings, если
+        //TODO запрашивающий пользователь авторизован и является модератором.
+        //TODO Авторизация: не требуется     ???????????????
         //init response
         TreeMap<String, Boolean> response = new TreeMap<>();
         //перебираем все настройки
-        for (GlobalSetting globalSetting : globalSettingsRepository.findAll()) {
+        for (GlobalSetting globalSetting : globalSettingService.getAllGlobalSettings()) {
             //и запоминаем их в ответе -> сразу переводим value String в boolean
             response.put(globalSetting.getCode(),
                     globalSetting.getValue().equals(GlobalSettingsValues.YES.toString()));
@@ -321,7 +326,7 @@ public class ApiGeneralController
         return response;
     }
 
-    //PUT /api/settings/
+    //TODO PUT /api/settings/
     //{
     // "MULTIUSER_MODE": false,
     //"POST_PREMODERATION": true,

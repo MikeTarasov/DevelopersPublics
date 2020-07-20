@@ -1,11 +1,10 @@
-package main.com.skillbox.ru.developerspublics.model;
+package main.com.skillbox.ru.developerspublics.model.pojo;
 
 import lombok.*;
-import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
 import org.hibernate.annotations.ColumnDefault;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.*;
-
 import java.util.Date;
 import java.util.List;
 
@@ -16,10 +15,6 @@ import java.util.List;
 @Entity
 public class Post
 {
-    //размер анонса
-    @Transient
-    private static final int announceSize = 1000;
-
     //id в БД
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -33,7 +28,7 @@ public class Post
     //статус проверки модератором
     @Column(columnDefinition = "ENUM('NEW','ACCEPTED','DECLINED')", nullable = false)
     @ColumnDefault("'NEW'")
-    private Enum<ModerationStatuses> moderationStatus;
+    private String moderationStatus;
 
     //id модератора, установившего статус или null
     @Column(name = "moderator_id")
@@ -62,13 +57,13 @@ public class Post
     //привязанный модератор поста
     @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "moderator_id", insertable = false, updatable = false)
+    @JoinColumn(name = "moderator_id")
     private User moderatorPost;
 
     //привязанный автор поста
     @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JoinColumn(name = "user_id")
     private User userPost;
 
     //привязанный список лайков/дислайков
@@ -85,37 +80,4 @@ public class Post
     @Transient
     @OneToMany(mappedBy = "postTag", fetch = FetchType.LAZY)
     private List<TagToPost> tagToPosts;
-
-
-    public String getAnnounce() {
-        return ((text.length() > announceSize) ? text.substring(0, announceSize) : text);
-    }
-
-    public int getLikesDislikesCount(int value) {
-        //value = +1 -> like
-        //value = -1 -> dislike
-        int count = 0;
-        for (PostVote postVote : postVotes) {
-            if (postVote.getValue() == value) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    public int getCommentsCount() {
-        return postComments.size();
-    }
-
-    public String toString() {
-        return "{\"id\": " + id +
-                ",\"time\": " + time +  //TODO GET /api/post/ -> "time": "Вчера, 17:32"
-                ",\"user\":" + userPost +
-                ",\"title\": " + title +
-                ",\"announce\": " + getAnnounce() +
-                ",\"likeCount\": " + getLikesDislikesCount(1) +
-                ",\"dislikeCount\": " + getLikesDislikesCount(-1) +
-                ",\"commentCount\": " + getCommentsCount() +
-                ",\"viewCount\": " + viewCount + "}";
-    }
 }
