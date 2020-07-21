@@ -1,9 +1,9 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 
-import main.com.skillbox.ru.developerspublics.model.pojo.Tag;
-import main.com.skillbox.ru.developerspublics.model.pojo.TagToPost;
-import main.com.skillbox.ru.developerspublics.model.pojo.Post;
+import main.com.skillbox.ru.developerspublics.model.entity.Tag;
+import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
+import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.repository.TagToPostsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;

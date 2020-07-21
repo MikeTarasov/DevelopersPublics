@@ -1,7 +1,6 @@
 package main.com.skillbox.ru.developerspublics.service;
 
-import lombok.Data;
-import main.com.skillbox.ru.developerspublics.model.pojo.GlobalSetting;
+import main.com.skillbox.ru.developerspublics.model.entity.GlobalSetting;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsCodes;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsValues;
 import main.com.skillbox.ru.developerspublics.repository.GlobalSettingsRepository;
@@ -35,7 +34,6 @@ public class GlobalSettingService {
     }
 
     public void initGlobalSettings() {
-        System.out.println("init");
         //проверяем, что все настройки есть
         if (globalSettingsRepository.count() != GlobalSettingsCodes.values().length) {
             //если нет - перезаполняем таблицу БД настройками по умолчанию

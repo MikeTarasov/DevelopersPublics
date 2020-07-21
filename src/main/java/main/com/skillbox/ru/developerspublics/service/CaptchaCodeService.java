@@ -2,7 +2,7 @@ package main.com.skillbox.ru.developerspublics.service;
 
 
 import lombok.SneakyThrows;
-import main.com.skillbox.ru.developerspublics.model.pojo.CaptchaCode;
+import main.com.skillbox.ru.developerspublics.model.entity.CaptchaCode;
 import main.com.skillbox.ru.developerspublics.repository.CaptchaCodesRepository;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;

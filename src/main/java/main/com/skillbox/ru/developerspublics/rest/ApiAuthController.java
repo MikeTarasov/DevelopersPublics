@@ -4,16 +4,14 @@ package main.com.skillbox.ru.developerspublics.rest;
 import lombok.Data;
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.config.AuthenticationProviderImpl;
-import main.com.skillbox.ru.developerspublics.model.pojo.CaptchaCode;
-import main.com.skillbox.ru.developerspublics.model.pojo.User;
+import main.com.skillbox.ru.developerspublics.model.entity.CaptchaCode;
+import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.service.CaptchaCodeService;
 import main.com.skillbox.ru.developerspublics.service.PostService;
 import main.com.skillbox.ru.developerspublics.service.UserService;
-import org.apache.tomcat.util.http.parser.Authorization;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.servlet.server.Session;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -110,14 +108,10 @@ public class ApiAuthController
     //"result": false
     //}
     @GetMapping("/api/auth/check")
-    public JSONObject authCheck() { //TODO why I not use Model model.addAttribute(key, value)????????
+    public JSONObject authCheck() {
         //приготовим ответ
         JSONObject response = new JSONObject();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-
-        System.out.println("check-auth -> " + SecurityContextHolder.getContext().getAuthentication().getAuthorities());
-
 
         //если авторизован
         if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
@@ -144,11 +138,7 @@ public class ApiAuthController
         }
 
         //иначе польз. не авторизирован
-
-            response.put("result", false);
-            System.out.println("check => " + false);
-
-
+        response.put("result", false);
         return response;
     }
 

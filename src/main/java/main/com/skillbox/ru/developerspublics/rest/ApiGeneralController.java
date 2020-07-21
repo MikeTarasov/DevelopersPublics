@@ -4,9 +4,9 @@ package main.com.skillbox.ru.developerspublics.rest;
 import lombok.Data;
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.init.BlogInfo;
-import main.com.skillbox.ru.developerspublics.model.pojo.GlobalSetting;
-import main.com.skillbox.ru.developerspublics.model.pojo.Post;
-import main.com.skillbox.ru.developerspublics.model.pojo.Tag;
+import main.com.skillbox.ru.developerspublics.model.entity.GlobalSetting;
+import main.com.skillbox.ru.developerspublics.model.entity.Post;
+import main.com.skillbox.ru.developerspublics.model.entity.Tag;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsValues;
 import main.com.skillbox.ru.developerspublics.service.GlobalSettingService;
 import main.com.skillbox.ru.developerspublics.service.PostService;
@@ -308,7 +308,7 @@ public class ApiGeneralController
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    //GET /api/settings
+    //TODO GET /api/settings
     @GetMapping("/api/settings")
     public TreeMap<String, Boolean> getApiSettings() {
         //TODO Метод возвращает глобальные настройки блога из таблицы global_settings, если

@@ -1,7 +1,7 @@
 package main.com.skillbox.ru.developerspublics.service;
 
-import main.com.skillbox.ru.developerspublics.model.pojo.Tag;
-import main.com.skillbox.ru.developerspublics.model.pojo.TagToPost;
+import main.com.skillbox.ru.developerspublics.model.entity.Tag;
+import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
 
 import main.com.skillbox.ru.developerspublics.repository.TagsRepository;
 import org.json.simple.JSONObject;
@@ -38,6 +38,15 @@ public class TagService {
 
     public Tag getTagById(int tagId) {
         return tagsRepository.findById(tagId).orElseThrow();
+    }
+
+    private Tag getTagByName(String name) {
+        for (Tag tagDB : tagsRepository.findAll()) {
+            if (tagDB.getName().equals(name)) {
+                return tagDB;
+            }
+        }
+        return null;
     }
 
     public List<Tag> getInitTags() {
@@ -108,12 +117,16 @@ public class TagService {
     }
 
     public void saveTag(String tagName, int postId) {
-        //создадим новый тэг
-        Tag tag = new Tag();
-        //заполним обязательные поля
-        tag.setName(tagName);
-        //заносим в репозиторий
-        tagsRepository.save(tag);
+        //пробуем найти тэг в БД
+        Tag tag = getTagByName(tagName);
+        //нет такого в БД - создадим новый тэг
+        if (tag == null) {
+            tag = new Tag();
+            //заполним обязательные поля
+            tag.setName(tagName);
+            //заносим в репозиторий
+            tagsRepository.save(tag);
+        }
 
         //привяжем тэг к посту
         tagToPostService.saveTagToPost(postId, tag.getId());

@@ -3,8 +3,8 @@ package main.com.skillbox.ru.developerspublics.service;
 
 import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
-import main.com.skillbox.ru.developerspublics.model.pojo.Post;
-import main.com.skillbox.ru.developerspublics.model.pojo.User;
+import main.com.skillbox.ru.developerspublics.model.entity.Post;
+import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.repository.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -71,7 +71,6 @@ public class UserService implements UserDetailsService {
     }
 
     public User getUserById(int id) {
-        System.out.println("\n\tgetUserById -->> " + id);
         return userRepository.findById(id).orElseGet(User::new);
     }
 

@@ -3,7 +3,7 @@ package main.com.skillbox.ru.developerspublics.service;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsCodes;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsValues;
 import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
-import main.com.skillbox.ru.developerspublics.model.pojo.*;
+import main.com.skillbox.ru.developerspublics.model.entity.*;
 import main.com.skillbox.ru.developerspublics.repository.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -11,6 +11,7 @@ import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.DateFormat;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -122,7 +123,7 @@ public class PostService {
 
 
 
-    public JSONArray responsePosts(List<Post> posts, int offset, int limit, String mode) {
+    public JSONArray responsePosts(List<Post> posts, int offset, int limit, String mode, DateFormat dateFormat) {
         List<Post> responsePosts = new ArrayList<>();
         //сортируем -> обрезаем -> переносим в список ответа
         sortedByMode(posts.stream(), mode)
@@ -132,23 +133,47 @@ public class PostService {
         JSONArray jsonArray = new JSONArray();
         //приводим к нужному виду
         for (Post post : responsePosts) {
-            jsonArray.add(postToJSON(post));
+            jsonArray.add(postToJSON(post, dateFormat));
         }
         return jsonArray;
     }
 
-    public JSONObject postToJSON(Post post) {
+    public JSONObject postToJSON(Post post, DateFormat dateFormat) {
         JSONObject jsonObject = new JSONObject();
 
         jsonObject.put("id", post.getId());
-        jsonObject.put("time", post.getTime());  //TODO GET /api/post/ -> "time": "Вчера, 17:32"
-        jsonObject.put("user", post.getUserPost());
+        jsonObject.put("time", dateFormat.format(post.getTime()));  //TODO GET /api/post/ -> "time": "Вчера, 17:32"
+
+        JSONObject user = new JSONObject();
+        user.put("id", post.getUserPost().getId());
+        user.put("name", post.getUserPost().getName());
+        jsonObject.put("user", user);
+
         jsonObject.put("title", post.getTitle());
         jsonObject.put("announce", getAnnounce(post));
         jsonObject.put("likeCount", getLikesDislikesCount(post,1));
         jsonObject.put("dislikeCount", getLikesDislikesCount(post,-1));
         jsonObject.put("commentCount", getCommentsCount(post));
         jsonObject.put("viewCount", post.getViewCount());
+
+        return jsonObject;
+    }
+
+    public JSONObject postByIdToJSON(Post post, DateFormat dateFormat) {
+        //добавили инфо по посту
+        JSONObject jsonObject = postToJSON(post, dateFormat);
+
+        jsonObject.remove("announce");
+        jsonObject.put("text", post.getText());
+
+        //добавили инфо по комментариям
+        JSONArray comments = new JSONArray();
+        for (PostComment postComment : post.getPostComments()) {
+            comments.add(postCommentService.postCommentToJSON(postComment));
+        }
+        jsonObject.put("comments", comments);
+        //добавляем инфо по тэгам
+        jsonObject.put("tags", new JSONArray().addAll(getPostTagsList(post)));
 
         return jsonObject;
     }
@@ -187,6 +212,14 @@ public class PostService {
         return post.getPostComments() == null ? 0 : post.getPostComments().size();
     }
 
+    private List<String> getPostTagsList(Post post) {
+        List<String> list = new ArrayList<>();
+        for (TagToPost tagToPost : post.getTagToPosts()) {
+            list.add(tagService.getTagById(tagToPost.getTagId()).getName());
+        }
+        return list;
+    }
+
     private Stream<Post> sortedByMode(Stream<Post> stream, String mode) {
         if (mode.equals("")) {
             mode = "recent";
@@ -221,5 +254,34 @@ public class PostService {
         for (String tagName : tagsNames) {
             tagService.saveTag(tagName, post.getId());
         }
+    }
+
+    public void editPost(int id, Date time, int isActive, String title, String text, int userId, List<String> tagsNames) {
+        //находим в базе
+        Post post = getPostById(id);
+        //заполняем обязательные поля
+        post.setTime(time);
+        post.setIsActive(isActive);
+        post.setTitle(title);
+        post.setText(text);
+
+        //редактирует user -> ModerationStatuses.NEW
+        //редактирует moderator -> ModerationStatus не меняем!
+        if (userService.getUserById(userId).getIsModerator() == 0) {
+            post.setModerationStatus(ModerationStatuses.NEW.getStatus());
+        }
+
+        //отправляем в репозиторий
+        postsRepository.save(post);
+
+        //сохраним тэги и привяжем их к посту
+        for (String tagName : tagsNames) {
+            tagService.saveTag(tagName, post.getId());
+        }
+    }
+
+    public void incrementViewCount(Post post) {
+        post.setViewCount(post.getViewCount() + 1);
+        postsRepository.save(post);
     }
 }

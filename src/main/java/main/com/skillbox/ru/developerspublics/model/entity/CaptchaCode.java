@@ -1,4 +1,4 @@
-package main.com.skillbox.ru.developerspublics.model.pojo;
+package main.com.skillbox.ru.developerspublics.model.entity;
 
 import lombok.*;
 

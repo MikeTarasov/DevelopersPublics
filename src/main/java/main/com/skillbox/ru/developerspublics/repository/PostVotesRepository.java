@@ -1,6 +1,6 @@
 package main.com.skillbox.ru.developerspublics.repository;
 
-import main.com.skillbox.ru.developerspublics.model.pojo.PostVote;
+import main.com.skillbox.ru.developerspublics.model.entity.PostVote;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
