@@ -6,9 +6,8 @@ import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.repository.PostVotesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 
@@ -74,7 +73,7 @@ public class PostVoteService {
         }   //если нашли - одинаковые оценки - не делаем, противоположные меняем местами
         else if (postVote.getValue() == value) return false;
 
-        postVote.setTime(new Date(System.currentTimeMillis()));
+        postVote.setTime(Instant.now().toEpochMilli());
         postVote.setValue(value);
         postVotesRepository.save(postVote);
         return true;

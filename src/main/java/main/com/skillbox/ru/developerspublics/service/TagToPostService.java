@@ -66,9 +66,17 @@ public class TagToPostService {
     }
 
     public void saveTagToPost(int postId, int tagId) {
-        TagToPost tagToPost = new TagToPost();
-        tagToPost.setPostId(postId);
-        tagToPost.setTagId(tagId);
-        tagToPostsRepository.save(tagToPost);
+        //проверим на уникальность
+        TagToPost tagToPost = null;
+        for (TagToPost tagToPostDB : tagToPostsRepository.findAll()) {
+            if (tagToPostDB.getPostId() == postId && tagToPostDB.getTagId() == tagId) tagToPost = tagToPostDB;
+        }
+
+        if (tagToPost == null) {
+            tagToPost = new TagToPost();
+            tagToPost.setPostId(postId);
+            tagToPost.setTagId(tagId);
+            tagToPostsRepository.save(tagToPost);
+        }
     }
 }

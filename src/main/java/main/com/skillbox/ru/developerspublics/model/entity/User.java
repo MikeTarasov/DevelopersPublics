@@ -8,6 +8,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 
 import javax.persistence.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.*;
 
 
@@ -73,13 +76,23 @@ public class User implements UserDetails
     @Transient
     private Set<Role> roles = new HashSet<>();
 
+    //get timestamp in seconds
+    public long getTimestamp() {
+        return regTime.getTime() / 1000;
+    }
+
+    //timestamp in milliseconds to java.util.Date
+    public void setRegTime(long timestamp) {
+        regTime = Date.from(Instant.ofEpochMilli(timestamp));
+    }
+
 
     //конструктор для регистрации
     public User(String email, String name, String password) {
         this.email = email;
         this.name = name;
         this.password = password;
-        regTime = new Date(System.currentTimeMillis());
+        setRegTime(Instant.now().toEpochMilli());
         setRoles();
     }
 
@@ -129,13 +142,14 @@ public class User implements UserDetails
         return true;
     }
 
-    //    public String toString() {
-//        //TODO убрать!!!
-//        return "{\"id\": " + id + ", \"name\": " + name + "}";
-//    }
-//
-//    public String toStringIdNamePhoto() {
-//        //TODO убрать!!!
-//        return "{\"id\": " + id + ", \"name\": " + name + ", \"photo\": " + photo + "}";
-//    }
+    public int hashCode() {
+        int result = id;
+        result = id * result + (isModerator == 1 ? id : 0);
+        DateFormat dateFormat = new SimpleDateFormat("HHmmssddMMyyyy");
+        result = id * result + Integer.parseInt(dateFormat.format(regTime));
+        result = id * result + name.length();
+        result = id * result + email.length();
+        result = id * result + password.length();
+        return result;
+    }
 }

@@ -20,16 +20,13 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-
 import java.util.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 
-
-
 @RestController
+@RequestMapping("/api/post")
 public class ApiPostController
 {
     @Autowired
@@ -50,7 +47,7 @@ public class ApiPostController
 
     //GET /api/post/
     @SneakyThrows
-    @GetMapping("/api/post")
+    @GetMapping("")
     public JSONObject getApiPost(@RequestParam(name = "offset") int offset,
                            @RequestParam(name = "limit") int limit,
                            @RequestParam(name = "mode") String mode) {
@@ -76,8 +73,7 @@ public class ApiPostController
         //собираем ответ
         response.put("count", posts.size());
         //сортируем -> обрезаем -> переносим в список ответа
-        DateFormat dateFormat = new SimpleDateFormat("HH:mm, dd.MM.yyyy");
-        response.put("posts", postService.responsePosts(posts, offset, limit, mode, dateFormat));
+        response.put("posts", postService.responsePosts(posts, offset, limit, mode));
         // и возвращаем его
         return response;
     }
@@ -86,7 +82,7 @@ public class ApiPostController
 
     //GET /api/post/search/
     @SneakyThrows
-    @GetMapping("/api/post/search")
+    @GetMapping("/search")
     public JSONObject getApiPostSearch(@RequestParam(name = "offset") int offset,
                                     @RequestParam(name = "limit") int limit,
                                     @RequestParam(name = "query") String query) {
@@ -125,8 +121,8 @@ public class ApiPostController
 
         //собираем ответ
         response.put("count", findPosts.size());
-        DateFormat dateFormat = new SimpleDateFormat("HH:mm, dd.MM.yyyy");
-        response.put("posts", postService.responsePosts(findPosts, offset, limit, "", dateFormat));
+
+        response.put("posts", postService.responsePosts(findPosts, offset, limit, ""));
         // и возвращаем его
         return response;
     }
@@ -134,39 +130,40 @@ public class ApiPostController
 
     //TODO GET /api/post/{ID}
     @SneakyThrows
-    @GetMapping("/api/post/{ID}")
+    @GetMapping("/{ID}")
     public ResponseEntity<JSONObject> getApiPostId(@PathVariable(name = "ID") int id) {
-        //входной параметр - id
-        //обязательные условия:
-        //  isActive = 1
-        //  moderation_status = ACCEPTED
-        //  посты с датой публикации не позднее текущего момента
-        //выходные параметры:
-        //  id: 34
-        //  time: "17:32, 25.05.2020"
-        //  user: { "id": 88, "name": "Дмитрий Петров" }
-        //  title": "Заголовок поста"
-        //  announce: "Текст анонса поста без HTML-тэгов"
-        //  likeCount": 36
-        //  dislikeCount": 36
-        //  commentCount": 15
-        //  viewCount": 55
-        //  comments [ { "id": 776, "time": "Вчера, 17:32", "text": "Текст комментария в формате HTML", "user":
-        //             { "id": 88, "name": "Дмитрий Петров", "photo": "/avatars/ab/cd/ef/52461.jpg" } }, {...} ]
-        //  tags: ["Статьи", "Java"]
-
         //ищем нужный пост по id
         Post post = postService.getInitPostById(id);
+
+        //При успешном запросе увеличиваем количество просмотров поста на 1, кроме случаев:
+        // - Если модератор авторизован, то не считаем его просмотры вообще
+        // - Если автор авторизован, то не считаем просмотры своих же публикаций
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userService.findUserByLogin(authentication.getName());
+
+        boolean isNewView = true;
+        if (user != null && post != null) {
+            if (user.getIsModerator() == 1 || post.getUserId() == user.getId()) isNewView = false;
+        }
 
         //если находим
         if (post != null) {
             //проверяем его активность
             if (postService.isPostActive(post)) {
-                //запоминаем просмотр
-                postService.incrementViewCount(post);
+                //увеличиваем просмотры
+                if (isNewView) {
+                    postService.incrementViewCount(post);
+                }
                 //собираем ответ и возвращаем его
-                DateFormat dateFormat = new SimpleDateFormat("HH:mm, dd.MM.yyyy");
-                return ResponseEntity.status(HttpStatus.OK).body(postService.postByIdToJSON(post, dateFormat));
+                return ResponseEntity.status(HttpStatus.OK).body(postService.postByIdToJSON(post));
+            }
+
+            //если редактирует модератор - проверяем только дату и isActive
+            if (user != null) {
+                if (user.getIsModerator() == 1 && postService.isPostReadyToEditByModerator(post)) {
+                    //собираем ответ и возвращаем его
+                    return ResponseEntity.status(HttpStatus.OK).body(postService.postByIdToJSON(post));
+                }
             }
         }
         //не нашли или не активен
@@ -176,7 +173,7 @@ public class ApiPostController
 
     //GET /api/post/byDate
     @SneakyThrows
-    @GetMapping("/api/post/byDate")
+    @GetMapping("/byDate")
     public JSONObject getApiPostByDate(@RequestParam(name = "offset") int offset,
                                        @RequestParam(name = "limit") int limit,
                                        @RequestParam(name = "date") String date) {
@@ -204,17 +201,17 @@ public class ApiPostController
                 posts.add(post);
             }
         }
-        dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+
         //собираем ответ
         response.put("count", posts.size());
-        response.put("posts", postService.responsePosts(posts, offset, limit, "", dateFormat));
+        response.put("posts", postService.responsePosts(posts, offset, limit, ""));
         //и возвращаем его
         return response;
     }
 
     //GET /api/post/byTag
     @SneakyThrows
-    @GetMapping("/api/post/byTag")
+    @GetMapping("/byTag")
     public JSONObject getApiPostByTag(@RequestParam(name = "offset") int offset,
                                       @RequestParam(name = "limit") int limit,
                                       @RequestParam(name = "tag") String tagName) {
@@ -249,40 +246,18 @@ public class ApiPostController
 
         //собираем ответ
         response.put("count", posts.size());
-        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-        response.put("posts", postService.responsePosts(posts, offset, limit, "", dateFormat));
+        response.put("posts", postService.responsePosts(posts, offset, limit, ""));
         return response;
     }
 
-    //TODO GET /api/post/moderation
-    //{
-    //"count": 3,
-    //"posts": [
-    // {
-    // "id": 31,
-    // "time": "17.10.2019 17:32",
-    // "title": "Заголовок поста",
-    // "announce": "Текст анонса (часть основного текста) поста без HTML-тэгов",
-    // "likeCount": 36,
-    // "dislikeCount": 3,
-    // "commentCount": 15,
-    // "viewCount": 55,
-    // "user":
-    // {
-    // "id": 88,
-    // "name": "Дмитрий Петров"
-    // }
-    // },
-    // {...}
-    //]
-    //}
+    //GET /api/post/moderation
     @Secured(MODERATOR)
-    @GetMapping("/api/post/moderation")
+    @GetMapping("/moderation")
     public JSONObject getApiPostModeration(@RequestParam(name = "offset") int offset,
                                            @RequestParam(name = "limit") int limit,
                                            @RequestParam(name = "status") String status) {
         JSONObject response = new JSONObject();
-        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+
         //выдергиваем из контекста пользователя
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = userService.findUserByLogin(authentication.getName());
@@ -294,47 +269,29 @@ public class ApiPostController
             //NEW - выводим все
             //ACCEPTED-DECLINED -> выводим только для текущего пользователя
             if (post.getIsActive() == 1) {
-                if (status.equals(ModerationStatuses.NEW.toString())) {
+                if (status.equals(ModerationStatuses.NEW.getStatus()) &&
+                        post.getModerationStatus().equals(ModerationStatuses.NEW.toString())) {
                     posts.add(post);
                 }
-                else if (post.getModeratorId() == user.getId()) {
-                    posts.add(post);
+                else if (post.getModeratorId() != null && post.getModerationStatus().equals(status.toUpperCase())) {
+                    if (post.getModeratorId() == user.getId()) {
+                        posts.add(post);
+                    }
                 }
             }
         }
 
         //собираем ответ
         response.put("count", posts.size());
-        response.put("posts", postService.responsePosts(posts, offset, limit, "", dateFormat));
+        response.put("posts", postService.responsePosts(posts, offset, limit, ""));
 
         return response;
     }
 
     //TODO GET /api/post/my
-    //{
-    //"count": 3,
-    //"posts": [
-    // {
-    // "id": 31,
-    // "time": "17.10.2019 17:32",
-    // "title": "Заголовок поста",
-    // "announce": "Текст анонса (часть основного текста) поста без HTML-тэгов",
-    // "likeCount": 36,
-    // "dislikeCount": 3,
-    // "commentCount": 15,
-    // "viewCount": 55,
-    // "user":
-    // {
-    // "id": 88,
-    // "name": "Дмитрий Петров"
-    // }
-    // },
-    // {...}
-    //]
-    //}
     @Secured(USER)
-    @GetMapping("/api/post/my")
-    public JSONObject getApiPostMy(@RequestParam(name = "offset") int offset,       //TODO error String -> int ???????
+    @GetMapping("/my")
+    public JSONObject getApiPostMy(@RequestParam(name = "offset") int offset,
                                    @RequestParam(name = "limit") int limit,
                                    @RequestParam(name = "status") String status) {
         //status - статус модерации:
@@ -344,7 +301,7 @@ public class ApiPostController
         //  published - опубликованные по итогам модерации (is_active = 1, moderation_status = ACCEPTED)
 
         JSONObject response = new JSONObject();
-        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+
         //выдергиваем из контекста пользователя
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = userService.findUserByLogin(authentication.getName());
@@ -376,59 +333,21 @@ public class ApiPostController
 
         //собираем ответ
         response.put("count", posts.size());
-        response.put("posts", postService.responsePosts(posts, offset, limit, "", dateFormat));
+        response.put("posts", postService.responsePosts(posts, offset, limit, ""));
 
         return response;
     }
 
     //POST /api/post
-    //{
-    // "time":"2020-05-23 02:55",
-    // "active":1,
-    // "title":"заголовок",
-    // "tags":["java","spring"],
-    // "text":"Текст поста включащий <b>тэги форматирования</b>"
-    //}
-    //
-    //{
-    //"result": true
-    //}
-    //
-    //{
-    // "result": false,
-    // "errors": {
-    // "title": "Заголовок не установлен",
-    // "text": "Текст публикации слишком короткий"
-    // }
-    //}
-    @Secured(USER)  //доступ с правами ROLE_USER
-    @PostMapping("/api/post")
+    @Secured(USER)
+    @PostMapping("")
     public JSONObject postApiPost(@RequestBody String requestBody) {
        return postPutApiPost(requestBody, null);
     }
 
-    //TODO PUT /api/post/{ID}
-    //{
-    // "time":"2020-05-23 02:55",
-    // "active":1,
-    // "title":"заголовок",
-    // "tags":["java","spring"],
-    // "text":"Текст поста включащий <b>тэги форматирования</b>"
-    //}
-    //
-    //{
-    //"result": true
-    //}
-    //
-    //{
-    // "result": false,
-    // "errors": {
-    // "title": "Заголовок слишком короткий",
-    // "text": "Текст публикации слишком короткий"
-    // }
-    //}
+    //PUT /api/post/{ID}
     @Secured(USER)
-    @PutMapping("/api/post/{ID}")
+    @PutMapping("/{ID}")
     public JSONObject putApiPostId(@RequestBody String requestBody, @PathVariable(name = "ID") int postId) {
         return postPutApiPost(requestBody, postId);
     }
@@ -440,9 +359,8 @@ public class ApiPostController
 
         JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
-        Date time = dateFormat.parse(request.get("time").toString());
+        long timestamp = Long.parseLong(request.get("timestamp").toString());
         int isActive = Integer.parseInt(request.get("active").toString());
         String title = request.get("title").toString();
         JSONArray tagsArray = (JSONArray) request.get("tags");
@@ -453,8 +371,8 @@ public class ApiPostController
         tagsArray.forEach(e -> tagsNames.add(e.toString()));
 
         //актуализируем время
-        if (time.before(new Date(System.currentTimeMillis()))) {
-            time = new Date(System.currentTimeMillis());
+        if (timestamp < System.currentTimeMillis()) {
+            timestamp = System.currentTimeMillis();
         }
 
         //заголовок не короче 3х символов
@@ -478,48 +396,24 @@ public class ApiPostController
         //POST /api/post  -> postId = null -> создаем новый
         //PUT /api/post/{ID}  -> postId != null -> изменяем
         if (postId == null) {
-            postService.savePost(time, isActive, title, text, userId, tagsNames);
+            postService.savePost(timestamp, isActive, title, text, userId, tagsNames);
         }
-        else postService.editPost(postId, time, isActive, title, text, userId, tagsNames);
+        else postService.editPost(postId, timestamp, isActive, title, text, userId, tagsNames);
         //возвращаем ответ
         response.put("result", true);
         return response;
     }
 
-    //TODO POST /api/post/like
-    //{
-    // "post_id": 151
-    //}
-    //
-    //{
-    // "result": true
-    //}
-    //
-    //{
-    // "result": false
-    //}
+    //POST /api/post/like
     @Secured(USER)
-    @PostMapping("/api/post/like")
+    @PostMapping("/like")
     public JSONObject postApiPostLike(@RequestBody String requestBody) {
         return postApiPostLikeDislike(requestBody, 1);
     }
 
-
-
-    //TODO POST /api/post/dislike
-    //{
-    // "post_id": 151
-    //}
-    //
-    //{
-    // "result": true
-    //}
-    //
-    //{
-    // "result": false
-    //}
+    //POST /api/post/dislike
     @Secured(USER)
-    @PostMapping("/api/post/dislike")
+    @PostMapping("/dislike")
     public JSONObject postApiPostDislike(@RequestBody String requestBody) {
         return postApiPostLikeDislike(requestBody, -1);
     }

@@ -1,9 +1,9 @@
 package main.com.skillbox.ru.developerspublics.model.enums;
 
 public enum ModerationStatuses {
-    NEW("NEW"),
-    ACCEPTED("ACCEPTED"),
-    DECLINED("DECLINED");
+    NEW("new"),
+    ACCEPTED("accepted"),
+    DECLINED("declined");
 
     String status;
     ModerationStatuses(String status) {

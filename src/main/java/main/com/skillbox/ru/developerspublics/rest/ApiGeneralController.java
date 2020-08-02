@@ -1,35 +1,31 @@
 package main.com.skillbox.ru.developerspublics.rest;
 
 
-import lombok.Data;
 import lombok.SneakyThrows;
-import main.com.skillbox.ru.developerspublics.init.BlogInfo;
-import main.com.skillbox.ru.developerspublics.model.entity.GlobalSetting;
-import main.com.skillbox.ru.developerspublics.model.entity.Post;
-import main.com.skillbox.ru.developerspublics.model.entity.Tag;
-import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsValues;
-import main.com.skillbox.ru.developerspublics.service.GlobalSettingService;
-import main.com.skillbox.ru.developerspublics.service.PostService;
-import main.com.skillbox.ru.developerspublics.service.TagService;
-import main.com.skillbox.ru.developerspublics.service.UserService;
+import main.com.skillbox.ru.developerspublics.init.*;
+import main.com.skillbox.ru.developerspublics.model.entity.*;
+import main.com.skillbox.ru.developerspublics.model.enums.*;
+import main.com.skillbox.ru.developerspublics.service.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+import java.text.*;
 import java.util.*;
 
-@Data
+
 @RestController
 public class ApiGeneralController
 {
+    @Autowired
+    private CaptchaCodeService captchaCodeService;
+
     @Autowired
     private GlobalSettingService globalSettingService;
 
@@ -41,6 +37,9 @@ public class ApiGeneralController
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PostCommentService postCommentService;
 
     private final String USER = "ROLE_USER";
     private final String MODERATOR = "ROLE_MODERATOR";
@@ -59,53 +58,98 @@ public class ApiGeneralController
     //image - файл изображения
     //
     //  /upload/ab/cd/ef/52461.jpg
+    @SneakyThrows
+    @Secured(USER)
+    @PostMapping(value = "/api/image", consumes = {"multipart/form-data"})
+    public String postApiImage(@RequestBody String requestBody) {
+//        JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
+//        int postId = Integer.parseInt(request.get("post_id").toString());
 
-    //TODO POST /api/comment/
-    //{
-    // "parent_id":"",
-    // "post_id":21,
-    // "text":"привет, какой <span style="font-weight: bold;">интересный</span>
-    //<span style="font-style: italic;">пост!</span>"
-    //}
-    //
-    //{
-    // "parent_id":"31",
-    // "post_id":21,
-    // "text":"текст комментария"
-    //}
-    //
-    //{
-    //"id": 345
-    //}
-    //
-    //{
-    //"result": false,
-    //"errors": {
-    //"text": "Текст комментария не задан или слишком короткий"
-    //}
-    //}
+        //получаем пользователя
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userService.findUserByLogin(authentication.getName());
+
+        //считаем хэш
+        String hashString = Integer.toString(user.hashCode());
+
+        //разбиваем хэш на 4 части
+        String[] hash = new String[4];
+        hash[0] = hashString.substring(0, 1);
+        hash[1] = hashString.substring(2, 3);
+        hash[2] = hashString.substring(4, 5);
+        hash[3] = hashString.substring(6);
+
+        return "/" + hash[0] + "/" + hash[1] + "/" + hash[2] + "/" + hash[3] + ".jpg";
+    }
+
+    //POST /api/comment/
+    @SneakyThrows
+    @Secured(USER)
+    @PostMapping("/api/comment")
+    public ResponseEntity<JSONObject> postApiComment(@RequestBody String requestBody) {
+        System.out.println("POST /api/comment/");
+        JSONObject response = new JSONObject();
+
+        //получаем запрос
+        JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
+        String parentIdString;
+        try {
+            parentIdString = request.get("parent_id").toString();
+        }
+        catch (Exception ex) {
+            parentIdString = "";
+        }
+        int postId = Integer.parseInt(request.get("post_id").toString());
+        String text = request.get("text").toString();
+
+        System.out.println(parentIdString + " - parentID");
+        System.out.println(postId + " - postId");
+        System.out.println(text + " - text");
+
+        //выдергиваем из контекста пользователя
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userService.findUserByLogin(authentication.getName());
+
+        //test parenId
+        int parentId = 0;
+        if (!parentIdString.equals("")) parentId = Integer.parseInt(parentIdString);
+
+        if (parentId != 0) {
+            //try to find parent comment
+            if (postCommentService.getPostCommentById(parentId) == null)
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+
+        //test postId
+        if (postService.getPostById(postId) == null)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+
+        //test text
+        if (text.length() < 3) {
+            response.put("result", false);
+            JSONObject error = new JSONObject();
+            error.put("text", "Текст комментария не задан или слишком короткий");
+            response.put("errors", error);
+            return ResponseEntity.status(200).body(response);
+        }
+
+        //ошибок нет - сохраняем
+        int commentId = postCommentService.saveComment(parentId, postId, user.getId(), text);
+
+        //собираем ответ
+        response.put("id", commentId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 
     //GET /api/tag/
-    //{
-    // "tags":
-    // [
-    // {
-    // "name": "PHP",
-    // "weight": 1
-    // },
-    // {
-    // "name": "Python",
-    // "weight": 0.33
-    // }
-    // ]
-    //}
     @SneakyThrows
     @GetMapping("/api/tag")
     public ResponseEntity<JSONObject> getApiTag(@RequestParam(name = "query", required = false) String query) {
         //входной параметр
         //  query - часть тэга или тэг, может быть не задан или быть пустым (в этом случае выводятся все тэги)
         //выходной параметр
-        // tags -> array {"name": ,"weight": }
+        // tags -> array {"name": , "weight": }
 
         //init response
         JSONObject response = new JSONObject();
@@ -117,9 +161,11 @@ public class ApiGeneralController
         }
 
         //перебираем все тэги
-        for (Tag tag : tagService.getInitTags()) {
-            //ищем совпадения
-            if (tag.getName().contains(query)) {
+        for (Tag tag : tagService.getTags()) {
+            if (query.equals("")) {
+                jsonArray.add(tagService.tagToJSON(tag));
+            }   //ищем совпадения
+            else if (tag.getName().contains(query)) {
                 //все совпадения заносим в список по шаблону
                 jsonArray.add(tagService.tagToJSON(tag));
             }
@@ -131,34 +177,49 @@ public class ApiGeneralController
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    //TODO POST /api/moderation
-    //{
-    // "post_id":31,
-    // "decision":"accept"
-    //}
+    //POST /api/moderation
+    @SneakyThrows
+    @Secured(MODERATOR)
+    @PostMapping("/api/moderation")
+    public JSONObject postApiModeration(@RequestBody String requestBody) {
+        JSONObject response = new JSONObject();
+        boolean hasErrors = false;
+        String status = "";
 
-    //GET /api/calendar/
-    //{
-    //"years": [2017, 2018, 2019, 2020],
-    //"posts": {
-    //"2019-12-17": 56,
-    //"2019-12-14": 11,
-    //"2019-06-17": 1,
-    //"2020-03-12": 6
-    //}
-    //}
+        //получаем входные параметры
+        JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
+        int postId = Integer.parseInt(request.get("post_id").toString());
+        String decision = request.get("decision").toString();
+        //получаем пользователя
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User moderator = userService.findUserByLogin(authentication.getName());
+
+        //переводим decision -> status
+        if (decision.equals("accept")) status = ModerationStatuses.ACCEPTED.toString();
+        else if (decision.equals("decline")) status = ModerationStatuses.DECLINED.toString();
+
+        //проверяем на ошибки: не найден модератор, не правильный статус, не найден пост
+        if (moderator == null || status.equals("")) hasErrors = true;
+        else if (!postService.setModerationStatus(postId, status, moderator.getId())) hasErrors = true;
+
+        //собираем ответ
+        response.put("result", !hasErrors);
+        return response;
+    }
+
+    //GET /api/calendar
     @SneakyThrows
     @GetMapping("/api/calendar")
     public JSONObject getApiCalendar(@RequestParam(name = "year", required = false) Integer year) {
         //входной параметр - year - год в виде четырёхзначного числа, если не передан - возвращать за текущий год
         //выходные параметры
-        //  years - список всех годов, за которые была хотя бы одна публикация, в порядке убывания
+        //  years - список всех годов, за которые была хотя бы одна публикация, в порядке возврастания
         //  posts - мапа из (дата, кол-во) в порядке убывания даты -> посты за год year
 
         //init response
         JSONObject response = new JSONObject();
         //init списка всех годов публикаций
-        TreeSet<String> yearsWithPosts = new TreeSet<>(Comparator.reverseOrder());
+        TreeSet<String> yearsWithPosts = new TreeSet<>();
         //init списка дата - кол-во постов
         TreeMap<String, Integer> dateCountPosts = new TreeMap<>(Comparator.reverseOrder());
 
@@ -240,43 +301,70 @@ public class ApiGeneralController
     // }
     //}
 
-    //TODO GET /api/statistics/my
-    //{
-    //"postsCount":7,
-    //"likesCount":15,
-    //"dislikesCount":2,
-    //"viewsCount":58,
-    //"firstPublication":"2018-07-16 17:35"
-    //}
+    //GET /api/statistics/my
+    @Secured(USER)
+    @GetMapping("/api/statistics/my")
+    public JSONObject getApiStatisticsMy() {
+        JSONObject response = new JSONObject();
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userService.findUserByLogin(authentication.getName());
+
+        int postsCount = 0;
+        int likesCount = 0;
+        int dislikesCount = 0;
+        int viewsCount = 0;
+        long firstPublication = System.currentTimeMillis() / 1000;
+
+        if (user != null) {
+            for (Post post : postService.getActivePosts()) {
+                if (post.getUserId() == user.getId()) {
+
+                    postsCount++;
+                    viewsCount += post.getViewCount();
+
+                    for (PostVote postVote : post.getPostVotes()) {
+                        if (postVote.getValue() == 1) likesCount++;
+                        else dislikesCount++;
+                    }
+
+                    if (post.getTimestamp() < firstPublication) firstPublication = post.getTimestamp();
+                }
+            }
+        }
+
+        if (postsCount == 0) firstPublication = 0;
+
+        response.put("postsCount", postsCount);
+        response.put("likesCount", likesCount);
+        response.put("dislikesCount", dislikesCount);
+        response.put("viewsCount", viewsCount);
+        response.put("firstPublication", firstPublication);
+
+        return response;
+    }
 
     //GET /api/statistics/all
-    //{
-    //"postsCount":7,
-    //"likesCount":15,
-    //"dislikesCount":2,
-    //"viewsCount":58,
-    //"firstPublication":"2018-07-16 17:35"
-    //}
     @SneakyThrows
     @GetMapping("/api/statistics/all")
     public ResponseEntity<JSONObject> getApiStatisticsAll() {
-        //входные параметры - нет
-        //требования
-        //TODO  if STATISTICS_IS_PUBLIC = NO & Auth=false -> HTTP.401
+        //получим пользователя
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userService.findUserByLogin(authentication.getName());
+        //получим настройку
+        GlobalSetting globalSetting = globalSettingService.findGlobalSettingByCode(GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString());
 
-//        for (GlobalSetting globalSetting : globalSettingsRepository.findAll()) {
-//            if (globalSetting.getCode().equals(GlobalSettingsCodes.STATISTICS_IS_PUBLIC) &&
-//                    globalSetting.getValue().equals(GlobalSettingsValues.NO)) {
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-//            }
-//        }
+        //if STATISTICS_IS_PUBLIC = NO & Auth=false -> HTTP.401
+        if (globalSetting.getValue().equals(GlobalSettingsValues.NO.toString()) && user == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 
         //init response & out parameters
         JSONObject response = new JSONObject();
         int likesCount = 0;
         int dislikesCount = 0;
         int viewsCount = 0;
-        Date firstPublication = new Date(System.currentTimeMillis());
+        //timestamp of first publication
+        long firstPublication = System.currentTimeMillis() / 1000;
 
         //перебираем все посты
         for (Post post : postService.getInitPosts()) {
@@ -287,33 +375,23 @@ public class ApiGeneralController
             //считаем общее кол-во просмотров
             viewsCount += post.getViewCount();
             //ищем дату самого первого поста
-            if (firstPublication.after(post.getTime())) {
-                firstPublication = post.getTime();
-            }
+            if (firstPublication > post.getTimestamp()) firstPublication = post.getTimestamp();
         }
         int postsCount = postService.getPosts().size();
-        String firstPublicationString = firstPublication.toString();
-
-        if (postsCount == 0) {
-            firstPublicationString = "none";
-        }
 
         //собираем ответ
         response.put("postsCount", postsCount);
         response.put("likesCount", likesCount);
         response.put("dislikesCount", dislikesCount);
         response.put("viewsCount", viewsCount);
-        response.put("firstPublication", firstPublicationString); //TODO при пустом списке возвращает текущую дату!
+        response.put("firstPublication", (postsCount == 0) ? 0 : firstPublication);
         //и возвращаем его
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    //TODO GET /api/settings
+    //GET /api/settings
     @GetMapping("/api/settings")
     public TreeMap<String, Boolean> getApiSettings() {
-        //TODO Метод возвращает глобальные настройки блога из таблицы global_settings, если
-        //TODO запрашивающий пользователь авторизован и является модератором.
-        //TODO Авторизация: не требуется     ???????????????
         //init response
         TreeMap<String, Boolean> response = new TreeMap<>();
         //перебираем все настройки
@@ -326,10 +404,28 @@ public class ApiGeneralController
         return response;
     }
 
-    //TODO PUT /api/settings/
-    //{
-    // "MULTIUSER_MODE": false,
-    //"POST_PREMODERATION": true,
-    //"STATISTICS_IS_PUBLIC": null
-    //}
+    //PUT /api/settings
+    @SneakyThrows
+    @Secured(MODERATOR)
+    @PutMapping("/api/settings")
+    public ResponseEntity postApiSettings(@RequestBody String requestBody) {
+        JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
+        boolean multiUserMode;
+        boolean postPremoderation;
+        boolean statisticsIsPublic;
+
+        try {
+            multiUserMode = Boolean.getBoolean(request.get("MULTIUSER_MODE").toString());
+            postPremoderation = Boolean.getBoolean(request.get("POST_PREMODERATION").toString());
+            statisticsIsPublic = Boolean.getBoolean(request.get("STATISTICS_IS_PUBLIC").toString());
+        }
+        catch (Exception e) {
+            return ResponseEntity.status(400).body(null);
+        }
+
+        if (!globalSettingService.setGlobalSettings(multiUserMode, postPremoderation, statisticsIsPublic))
+            return ResponseEntity.status(400).body(null);
+
+        return ResponseEntity.status(200).body(null);
+    }
 }

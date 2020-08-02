@@ -1,7 +1,6 @@
 package main.com.skillbox.ru.developerspublics.rest;
 
 
-import lombok.Data;
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.config.AuthenticationProviderImpl;
 import main.com.skillbox.ru.developerspublics.model.entity.CaptchaCode;
@@ -12,17 +11,21 @@ import main.com.skillbox.ru.developerspublics.service.UserService;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpSession;
+import java.util.HashSet;
+import java.util.Set;
 
 
-@Data
 @RestController
+@RequestMapping("/api/auth")
 public class ApiAuthController
 {
     @Autowired
@@ -37,14 +40,15 @@ public class ApiAuthController
     @Autowired
     private AuthenticationProviderImpl authenticationProvider;
 
+    private final String USER = "ROLE_USER";
+
 
     //POST /api/auth/login
     @SneakyThrows
-    @PostMapping("/api/auth/login")
+    @PostMapping("/login")
     public JSONObject postApiAuthLogin(@RequestBody String requestBody, HttpSession httpSession) {
-
+        //запоминаем входные параметры
         JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
-
         String email = request.get("e_mail").toString();
         String password = request.get("password").toString();
 
@@ -67,11 +71,10 @@ public class ApiAuthController
                 .setAuthentication(
                     authenticationProvider
                         .authenticate(
-                                new UsernamePasswordAuthenticationToken(authUser.getUsername(), password)));
+                                new UsernamePasswordAuthenticationToken(authUser.getUsername(), password))); //TODO PASS w/out encoding!
 
         //запоминаем сессию
         userService.addHttpSession(httpSession.getId(), authUser.getId());
-
 
         //и заполняем ответ
         response.put("result", true);
@@ -90,25 +93,8 @@ public class ApiAuthController
     }
 
     //GET /api/auth/check
-    // TODO Он должен проверять, сохранён ли идентификатор текущей сессии в списке авторизованных.
-    //{
-    // "result": true,
-    // "user": {
-    // "id": 576,
-    // "name": "Дмитрий Петров",
-    // "photo": "/avatars/ab/cd/ef/52461.jpg",
-    // "email": "petrov@petroff.ru",
-    // "moderation": true,
-    // "moderationCount": 56,
-    // "settings": true
-    // }
-    //}
-    //
-    //{
-    //"result": false
-    //}
-    @GetMapping("/api/auth/check")
-    public JSONObject authCheck() {
+    @GetMapping("/check")
+    public JSONObject authCheck(HttpSession httpSession) {
         //приготовим ответ
         JSONObject response = new JSONObject();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -122,108 +108,138 @@ public class ApiAuthController
             //вытаскиваем пользователя
             User user = userService.findUserByLogin(authentication.getName());
 
-            //собираем ответ
-            response.put("result", true);
+            if (user != null) {
+                //проверяем сохранён ли идентификатор текущей сессии в списке авторизованных TODO спросить зачем это?
+                if (!userService.isHttpSessionSaved(user.getId())) {
+                    userService.addHttpSession(httpSession.toString(), user.getId());
+                }
 
-            userProperties.put("id", user.getId());
-            userProperties.put("name", user.getName());
-            userProperties.put("photo", user.getPhoto());
-            userProperties.put("email", user.getEmail());
-            userProperties.put("moderation", user.getIsModerator() == 1);
-            userProperties.put("moderationCount", userService.getModerationCount(user));
-            userProperties.put("settings", user.getIsModerator() == 1);
+                //собираем ответ
+                response.put("result", true);
 
-            response.put("user", userProperties);
-            return response;
+                userProperties.put("id", user.getId());
+                userProperties.put("name", user.getName());
+                userProperties.put("photo", user.getPhoto());
+                userProperties.put("email", user.getEmail());
+                userProperties.put("moderation", user.getIsModerator() == 1);
+                userProperties.put("moderationCount", userService.getModerationCount(user));
+                userProperties.put("settings", user.getIsModerator() == 1);
+
+                response.put("user", userProperties);
+                return response;
+            }
         }
 
-        //иначе польз. не авторизирован
+        //иначе польз. не авторизирован / не найден
         response.put("result", false);
         return response;
     }
 
 
-    //TODO POST /api/auth/restore
-    //{
-    // "email":"petrov@petroff.ru"
-    //}
-    //
-    //{
-    //"result": true
-    //}
-    //
-    //{
-    //"result": false
-    //}
-
-    //TODO POST /api/auth/password
-    //{
-    // "code":"b55ca6ea6cb103c6384cfa366b7ce0bdcac092be26bc0",
-    // "password":"123456",
-    // "captcha":"3166",
-    // "captcha_secret":"eqKIqurpZs"
-    //}
-    //
-    //{
-    // "result": true
-    // }
-    //
-    //{
-    //"result": false,
-    //"errors": {
-    //"code": "Ссылка для восстановления пароля устарела.
-    //<a href=
-    //\"/auth/restore\">Запросить ссылку снова</a>",
-    //"password": "Пароль короче 6-ти символов",
-    //"captcha": "Код с картинки введён неверно"
-    //}
-    //}
-
-    //TODO POST /api/auth/register
+    //POST /api/auth/restore
     @SneakyThrows
-    @PostMapping("/api/auth/register")
+    @PostMapping("/restore")
+    public JSONObject postApiAuthRestore(@RequestBody String requestBody) {
+        JSONObject response = new JSONObject();
+
+        JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
+        String email = request.get("email").toString();
+
+        boolean result = false;
+        User user = null;
+
+        for (User userDB : userService.allUsers()) {
+            if (userDB.getEmail().equals(email)) {
+                user = userDB;
+                result = true;
+                break;
+            }
+        }
+
+        if (result) {
+           result = userService.sendEmail(user);
+        }
+
+        response.put("result", result);
+        return response;
+    }
+
+    //POST /api/auth/password
+    @SneakyThrows
+    @PostMapping("/password")
+    public JSONObject postApiAuthPassword(@RequestBody String requestBody) {
+        JSONObject response = new JSONObject();
+
+        JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
+        String code = request.get("code").toString();
+        String password = request.get("password").toString();
+        String captcha = request.get("captcha").toString();
+        String captchaSecret = request.get("captcha_secret").toString();
+
+        boolean isCodeCorrect = false;
+        boolean isPasswordCorrect = true;
+        boolean isCaptchaCorrect = false;
+        User user = null;
+
+        //test code
+        for (User userDB : userService.allUsers()) {
+            if (userDB.getCode().equals(code)) {
+                isCodeCorrect = true;
+                user = userDB;
+                break;
+            }
+        }
+
+        //test password
+        if (password.length() < 6) isPasswordCorrect = false;
+        else if (user != null) user.setPassword(password);
+
+        //test captcha
+        for (CaptchaCode captchaCode : captchaCodeService.getAllCaptchaCodes()) {
+            if (captchaCode.getCode().equals(captcha) && captchaCode.getSecretCode().equals(captchaSecret)) {
+                isCaptchaCorrect = true;
+                break;
+            }
+        }
+
+        JSONObject errors = new JSONObject();
+        if (!isCodeCorrect) errors.put("code", "Ссылка для восстановления пароля устарела." +
+                "<a href=\"/auth/restore\">Запросить ссылку снова</a>");
+        if (!isPasswordCorrect) errors.put("password", "Пароль короче 6-ти символов");
+        if (!isCaptchaCorrect) errors.put("captcha", "Код с картинки введён неверно");
+
+        if (errors.size() != 0) {
+            response.put("result", false);
+            response.put("errors", errors);
+        }
+        else response.put("result", true);
+
+        return response;
+    }
+
+    //POST /api/auth/register
+    @SneakyThrows
+    @PostMapping("/register")
     public JSONObject postApiAuthRegister(@RequestBody String body) {
         JSONObject response = new JSONObject();
         boolean isEmailExist = false;
         boolean isNameWrong = false;
-        boolean isPasswordInCorrect = false;
+        boolean isPasswordCorrect = true;
         boolean isCaptchaCorrect = false;
 
         JSONObject requestBody = (JSONObject) new JSONParser().parse(body);
 
-        System.out.println("\tbody attr -> " + body);
+        String email = requestBody.get("e_mail").toString();
+        String name = requestBody.get("name").toString();
+        String password = requestBody.get("password").toString();
+        String captcha = requestBody.get("captcha").toString();
+        String captchaSecret = requestBody.get("captcha_secret").toString();
 
-        String email = "";
-        String name = "";
-        String password = "";
-        String captcha = "";
-        String captchaSecret = "";
-
-
-        for (Object attribute : requestBody.keySet()) {
-            String value = requestBody.get(attribute).toString();
-            switch (attribute.toString()) {
-                case "e_mail" : email = value; break;
-                case "name" :   name = value;  break;
-                case "password" : password = value; break;
-                case "captcha" : captcha = value; break;
-                case "captcha_secret" : captchaSecret = value; break;
-            }
-        }
-
-
-        System.out.println("register");
         //проверяем email
         for (User user : userService.allUsers()) {
             if (user.getEmail().equals(email)) {
                 isEmailExist = true;
-                if (isNameWrong) break;
-            }
-
-            //и имя заодно
-            if (user.getName().equals(name)) {
-                isNameWrong = true;
-                if (isEmailExist) break;
+                break;
             }
         }
         //проверяем name
@@ -232,7 +248,7 @@ public class ApiAuthController
         }
         //проверяем password
         if (password.length() < 6) {
-            isPasswordInCorrect = true;
+            isPasswordCorrect = false;
         }
         //проверяем captcha
         for (CaptchaCode captchaCode : captchaCodeService.getAllCaptchaCodes()) {
@@ -243,13 +259,12 @@ public class ApiAuthController
         }
 
         //собираем ответ
-        if (!isEmailExist && !isNameWrong && !isPasswordInCorrect && isCaptchaCorrect) {
+        if (!isEmailExist && !isNameWrong && isPasswordCorrect && isCaptchaCorrect) {
             //создаем new User и отправляем true
             User user = new User(email, name, password);
-            boolean is = userService.saveUser(user);
-            System.out.println("<is-> " + is);
+            boolean isUserSaved = userService.saveUser(user);
             //собираем ответ
-            response.put("result", true);
+            response.put("result", isUserSaved);
             return response;
         }
 
@@ -259,7 +274,7 @@ public class ApiAuthController
         JSONObject errors = new JSONObject();
         if (isEmailExist)           errors.put("email", "Этот e-mail уже зарегистрирован");
         if (isNameWrong)            errors.put("name", "Имя указано неверно");
-        if (isPasswordInCorrect)    errors.put("password", "Пароль короче 6-ти символов");
+        if (!isPasswordCorrect)     errors.put("password", "Пароль короче 6-ти символов");
         if (!isCaptchaCorrect)      errors.put("captcha", "Код с картинки введён неверно");
 
         response.put("errors", errors);
@@ -269,29 +284,47 @@ public class ApiAuthController
 
     //GET /api/auth/captcha
     @SneakyThrows
-    @GetMapping("/api/auth/captcha")
+    @GetMapping("/captcha")
     public JSONObject getApiAuthCaptcha() {
+        //TODO Время устаревания должно быть задано в конфигурации приложения (по умолчанию, 1 час)
         JSONObject response = new JSONObject();
 
-        //сначала удалим все старое
-        //процесс долгий - убираем в фоновый поток
-        new Thread(() -> captchaCodeService.deleteOldCaptcha()).start();
-
         //создадим новую капчу
-        String base64 = captchaCodeService.createNewCaptcha().get("base64").toString();
-        String code = captchaCodeService.createNewCaptcha().get("code").toString();
+        JSONObject newCaptcha = captchaCodeService.createNewCaptcha();
 
         //собираем ответ
-        response.put("secret", code);
-        response.put("image", "data:image/png;base64, " + base64);
+        response.put("secret", newCaptcha.get("code").toString());
+        response.put("image", "data:image/png;base64, " + newCaptcha.get("base64").toString());
         //и возвращаем его
         return response;
     }
 
     //TODO GET /api/auth/logout
-    //{
-    // "result": true
-    //}
+    @Secured(USER)
+    @GetMapping("/logout")
+    public JSONObject getApiAuthLogout() {
+        JSONObject response = new JSONObject();
 
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        Authentication authentication = securityContext.getAuthentication();
+        User user = userService.findUserByLogin(authentication.getName());
 
+        if (user != null) {
+            Set<GrantedAuthority> grantedAuthority = new HashSet<>();
+            grantedAuthority.add(new SimpleGrantedAuthority("ROLE_ANONYMOUS"));
+            authentication.setAuthenticated(false);
+//            securityContext.setAuthentication(
+//                    authenticationProvider.authenticate(
+//                            new AnonymousAuthenticationToken(
+//                                    "anonymous",
+//                                    new org.springframework.security.core.userdetails
+//                                            .User("anonymous", "anonymous", grantedAuthority),
+//                                    grantedAuthority
+//                            )));
+            userService.deleteHttpSession(user.getId());
+        }
+
+        response.put("result", true);
+        return response;
+    }
 }

@@ -14,6 +14,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.file.Files;
+import java.time.Instant;
 import java.util.*;
 import java.util.List;
 
@@ -23,9 +24,7 @@ public class CaptchaCodeService {
     @Autowired
     private CaptchaCodesRepository captchaCodesRepository;
 
-    private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-
-    private final long captchaLifeTime = 60 * 60 * 1000; //1 час
+    private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     public List<CaptchaCode> getAllCaptchaCodes() {
         List<CaptchaCode> captchaCodes = new ArrayList<>();
@@ -38,16 +37,16 @@ public class CaptchaCodeService {
     public void saveCaptcha(String code) {
         CaptchaCode captchaCode = new CaptchaCode();
         captchaCode.setCode(code);
-        captchaCode.setTime(new Date(System.currentTimeMillis()));
+        captchaCode.setTime(Instant.now().toEpochMilli());
         captchaCode.setSecretCode(bCryptPasswordEncoder.encode(code));
         captchaCodesRepository.save(captchaCode);
     }
 
-    //TODO время жизни капчи 1 час!!!!!
-    public void deleteOldCaptcha() {
+    public void deleteOldCaptcha(long captchaLifeTime) {
+        long timestampLifeTime = Instant.now().toEpochMilli() - captchaLifeTime;
         ArrayList<CaptchaCode> oldCaptchaList = new ArrayList<>();
         for (CaptchaCode captchaCode : captchaCodesRepository.findAll()) {
-            if (captchaCode.getTime().before(new Date(System.currentTimeMillis() - captchaLifeTime))) {
+            if (captchaCode.getTimestamp() < timestampLifeTime) {
                 oldCaptchaList.add(captchaCode);
             }
         }
@@ -60,9 +59,9 @@ public class CaptchaCodeService {
         //кол-во символов
         int iTotalChars = 6;
         //высота капчи
-        int iHeight = 50;
+        int iHeight = 35;
         //ширина капчи
-        int iWidth = 110;
+        int iWidth = 100;
         //шрифт
         int fontSize = (int) (1.67 * iWidth / iTotalChars);
         //фон

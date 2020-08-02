@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import javax.persistence.*;
+import java.time.Instant;
 import java.util.Date;
 
 
@@ -44,19 +45,13 @@ public class PostComment
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User commentUser;
 
-//    public String toString() {
-//        return "{\"id\": " + id +
-//                ",\"time\": " + time + //TODO "Вчера, 17:32"
-//                ", \"text\": " + text + //TODO "Текст комментария в формате HTML"
-//                ", \"user\": " + getCommentUser().toStringIdNamePhoto() + "}";
-//    }
-    // "id": 776,
-    // "time": "Вчера, 17:32",
-    // "text": "Текст комментария в формате HTML",
-    // "user":
-    // {
-    // "id": 88,
-    // "name": "Дмитрий Петров",
-    // "photo": "/avatars/ab/cd/ef/52461.jpg"
-    // }
+    //get timestamp in seconds
+    public long getTimestamp() {
+        return time.getTime() / 1000;
+    }
+
+    //timestamp in milliseconds to java.util.Date
+    public void setTime(long timestamp) {
+        time = Date.from(Instant.ofEpochMilli(timestamp));
+    }
 }

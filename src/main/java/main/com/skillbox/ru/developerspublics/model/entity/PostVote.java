@@ -2,6 +2,7 @@ package main.com.skillbox.ru.developerspublics.model.entity;
 
 import lombok.*;
 import javax.persistence.*;
+import java.time.Instant;
 import java.util.Date;
 
 
@@ -37,4 +38,14 @@ public class PostVote
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)
     private Post postVote;
+
+    //get timestamp in seconds
+    public long getTimestamp() {
+        return time.getTime() / 1000;
+    }
+
+    //timestamp in milliseconds to java.util.Date
+    public void setTime(long timestamp) {
+        time = Date.from(Instant.ofEpochMilli(timestamp));
+    }
 }

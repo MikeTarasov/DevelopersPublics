@@ -51,4 +51,18 @@ public class GlobalSettingService {
             }
         }
     }
+
+    public boolean setGlobalSettings(boolean multiUserMode, boolean postPremoderation, boolean statisticsIsPublic) {
+        boolean hasErrors = false;
+        for (GlobalSetting gs : getAllGlobalSettings()) {
+            if (gs.getCode().equals(GlobalSettingsCodes.MULTI_USER_MODE.toString()))
+                gs.setValue(multiUserMode ? GlobalSettingsValues.YES.toString() : GlobalSettingsValues.NO.toString());
+            else if (gs.getCode().equals(GlobalSettingsCodes.POST_PREMODERATION.toString()))
+                gs.setValue(postPremoderation ? GlobalSettingsValues.YES.toString() : GlobalSettingsValues.NO.toString());
+            else if (gs.getCode().equals(GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString()))
+                gs.setValue(statisticsIsPublic ? GlobalSettingsValues.YES.toString() : GlobalSettingsValues.NO.toString());
+            else hasErrors = true;
+        }
+        return !hasErrors;
+    }
 }

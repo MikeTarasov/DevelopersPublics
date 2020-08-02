@@ -24,8 +24,4 @@ public class Tag
 
     @Transient
     private float tagWeight;
-
-//    public String toString(PostsRepository postsRepository, TagsRepository tagsRepository) {
-//        return "{\"name\": \"" + name + "\", \"weight\": " + getWeight(postsRepository, tagsRepository) + "}";
-//    }
 }

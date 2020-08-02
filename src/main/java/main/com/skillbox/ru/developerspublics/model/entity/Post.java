@@ -4,6 +4,7 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import javax.persistence.*;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -79,4 +80,14 @@ public class Post
     @Transient
     @OneToMany(mappedBy = "postTag", fetch = FetchType.LAZY)
     private List<TagToPost> tagToPosts;
+
+    //get timestamp in seconds
+    public long getTimestamp() {
+        return time.getTime() / 1000;
+    }
+
+    //timestamp in milliseconds to java.util.Date
+    public void setTime(long timestamp) {
+        time = Date.from(Instant.ofEpochMilli(timestamp));
+    }
 }

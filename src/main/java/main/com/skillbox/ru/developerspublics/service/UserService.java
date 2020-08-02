@@ -7,6 +7,8 @@ import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.repository.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.mail.internet.MimeMessage;
 import java.util.*;
 
 
@@ -29,6 +32,9 @@ public class UserService implements UserDetailsService {
 
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Autowired
+    public JavaMailSender emailSender;
 
     private HashMap<String, Integer> httpSession = new HashMap<>(); //<sessionId, userId>
 
@@ -51,8 +57,11 @@ public class UserService implements UserDetailsService {
             grantedAuthorities.add(new SimpleGrantedAuthority(role.getAuthority()));
         }
 
-        UserDetails userDetails = new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),
-                grantedAuthorities);
+        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                grantedAuthorities
+        );
 
         System.out.println("userDetails " + userDetails);
         return userDetails;
@@ -66,8 +75,8 @@ public class UserService implements UserDetailsService {
                 return user;
             }
         }
-        //если не нашли - возвращаем new
-        return new User();
+        //если не нашли - возвращаем null
+        return null;
     }
 
     public User getUserById(int id) {
@@ -115,6 +124,19 @@ public class UserService implements UserDetailsService {
         httpSession.put(sessionId, userId);
     }
 
+    public boolean isHttpSessionSaved(int userId) {
+        return httpSession.containsValue(userId);
+    }
+
+    public void deleteHttpSession(int userId) {
+        for (String key : httpSession.keySet()) {
+            if (httpSession.get(key) == userId) {
+                httpSession.remove(key);
+                break;
+            }
+        }
+    }
+
     public int getModerationCount(User user) {
         int moderationCount = 0;
         if (user.getIsModerator() == 1) {
@@ -125,5 +147,37 @@ public class UserService implements UserDetailsService {
             }
         }
         return moderationCount;
+    }
+
+    public boolean sendEmail(User user) {
+        boolean result = true;
+        try {
+            String hash = Integer.toString(user.hashCode());
+
+            user.setCode(hash);
+
+            MimeMessage message = emailSender.createMimeMessage();
+
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "utf-8");
+
+            helper.setTo(user.getEmail());
+
+            helper.setSubject("Восстановление пароля на сайте developerspublics.ru");
+
+            String htmlMsg = "<h3>Здравствуйте, " + user.getName() + "!</h3>\n" +
+                    "\tОт Вашего имени подана заявка на смену пароля на сайте developerspublics.ru.\n" +
+                    "Для подтверждения смены пароля перейдите по ссылке http://localhost/login/change-password/"
+                    + hash + "\nЕсли вы не инициировали это действие, возможно, ваша учетная запись была " +
+                    "взломана. \nПожалуйста, свяжитесь с администрацией сайта developerspublics.ru\n\nС уважением,\n" +
+                    "администрация сайта developerspublics.ru";
+
+            message.setContent(htmlMsg, "text/html");
+
+            this.emailSender.send(message);
+        }
+        catch (Exception e) {
+            result = false;
+        }
+        return result;
     }
 }

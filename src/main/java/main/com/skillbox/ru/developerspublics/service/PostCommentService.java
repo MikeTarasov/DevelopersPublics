@@ -7,9 +7,7 @@ import main.com.skillbox.ru.developerspublics.repository.PostCommentsRepository;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -50,21 +48,22 @@ public class PostCommentService {
     }
 
     public PostComment getPostCommentById(int id) {
-        return postCommentsRepository.findById(id).get();
+        if (postCommentsRepository.findById(id).isPresent()) return postCommentsRepository.findById(id).get();
+        return null;
     }
 
     public JSONObject postCommentToJSON(PostComment postComment) {
         JSONObject jsonObject = new JSONObject();
-        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
         jsonObject.put("id", postComment.getId());
-        jsonObject.put("time", dateFormat.format(postComment.getTime())); //TODO  "Вчера, 17:32"
+        jsonObject.put("timestamp", postComment.getTimestamp());
         jsonObject.put("text", postComment.getText());
 
         JSONObject user = new JSONObject();
-        user.put("id", postComment.getCommentUser().getId());
-        user.put("name", postComment.getCommentUser().getName());
-        user.put("photo", postComment.getCommentUser().getPhoto());
+        User commentUser = getCommentUser(postComment);
+        user.put("id", commentUser.getId());
+        user.put("name", commentUser.getName());
+        user.put("photo", commentUser.getPhoto());
 
         jsonObject.put("user", user);
         return jsonObject;
@@ -83,5 +82,17 @@ public class PostCommentService {
         return userService.getUserById(postComment.getUserId());
     }
 
+    public int saveComment(Integer parentId, int postId, int userId, String text) {
+        PostComment postComment = new PostComment();
 
+        if (parentId != null) postComment.setParentId(parentId);
+        postComment.setPostId(postId);
+        postComment.setUserId(userId);
+        postComment.setTime(System.currentTimeMillis());
+        postComment.setText(text);
+
+        postCommentsRepository.saveAndFlush(postComment);
+
+        return postComment.getId();
+    }
 }

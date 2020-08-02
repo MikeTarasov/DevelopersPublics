@@ -1,5 +1,6 @@
 package main.com.skillbox.ru.developerspublics.service;
 
+import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
 
@@ -8,14 +9,14 @@ import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 
 @Service
 public class TagService {
     private float maxWeight;
+
+    private HashMap<Integer, Float> weightMap;  //TODO загнать вес в сет!!!!!!!!!!!!!!!!!!!!!
 
     @Autowired
     private TagsRepository tagsRepository;
@@ -55,7 +56,7 @@ public class TagService {
             tagDB.setTagToPosts(getTagToPost(tagDB));
             tags.add(tagDB);
         }
-        setWeights(tags);
+        if (weightMap == null) setWeights();
         return tags;
     }
 
@@ -79,29 +80,35 @@ public class TagService {
     }
 
     private float getWeight(Tag tag) {
-        float tagWeight = 0F;
-        int activePosts = postService.getActivePosts().size();
-        if (maxWeight != 0 && activePosts != 0) {
-            tagWeight =(float) tag.getTagToPosts().size() / activePosts / maxWeight;
-        }
-        return tagWeight;
+//        float tagWeight = 0F;
+//        int activePosts = postService.getActivePosts().size();
+//        if (maxWeight != 0 && activePosts != 0) {
+//            tagWeight =(float) tag.getTagToPosts().size() / activePosts / maxWeight;
+//        }
+//        System.out.println("tagWeight " + tag.getName() + " = " + tagWeight);
+//        return tagWeight;
+        if (weightMap == null) setWeights();
+        return weightMap.get(tag.getId());
     }
 
-    private void setWeights(List<Tag> tagList) {
+    private void setWeights() {
         //считаем кол-во активных постов
-        int count = postService.getActivePosts().size();
+        List<Post> activePosts = postService.getActivePosts();
+        int count = activePosts.size();
+        weightMap = new HashMap<>();
 
         //считаем вес тэгов  и ищем мах
         maxWeight = 0.0F;
 
-        for (Tag tag : tagList) {
+
+        for (Tag tag : tagsRepository.findAll()) {
             //если активных постов нет - присваиваем 0
             if (count == 0) {
-                tag.setTagWeight(0F);
+                weightMap.put(tag.getId(), 0F);
             } //иначе заполняем абс. значениями и запоминаем мах
             else {
-                float tagWeight = (float) tag.getTagToPosts().size() / count;
-                tag.setTagWeight(tagWeight);
+                float tagWeight = (float) getTagToPost(tag).size() / count;
+                weightMap.put(tag.getId(), tagWeight);
                 if (tagWeight > maxWeight) {
                     maxWeight = tagWeight;
                 }
@@ -110,13 +117,14 @@ public class TagService {
 
         //если есть акт. посты и мах вес - приводим вес к удельному
         if (count != 0 && maxWeight != 0) {
-            for (Tag tag : tagList) {
-                tag.setTagWeight(tag.getTagWeight() / maxWeight);
-            }
+            weightMap.replaceAll((k, v) -> weightMap.get(k) / maxWeight);
         }
+
+        System.out.println(weightMap);
     }
 
     public void saveTag(String tagName, int postId) {
+        tagName = tagName.toUpperCase();
         //пробуем найти тэг в БД
         Tag tag = getTagByName(tagName);
         //нет такого в БД - создадим новый тэг
@@ -130,12 +138,16 @@ public class TagService {
 
         //привяжем тэг к посту
         tagToPostService.saveTagToPost(postId, tag.getId());
+
+        //пересчитаем удельный вес
+        setWeights();
     }
 
-    public JSONObject tagToJSON(Tag tag) {
+    public JSONObject tagToJSON(Tag tag) {  //TODO 5 sec!!!!!!!
+        if (weightMap == null) setWeights();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("name", tag.getName());
-        jsonObject.put("weight", tag.getTagWeight());
+        jsonObject.put("weight", getWeight(tag));
         return jsonObject;
     }
 }

@@ -10,8 +10,6 @@ import org.json.simple.JSONObject;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.text.DateFormat;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -54,7 +52,8 @@ public class PostService {
     }
 
     public Post getPostById(int id) {
-        return postsRepository.findById(id).orElseThrow();
+        if (postsRepository.findById(id).isPresent()) return postsRepository.findById(id).get();
+        return null;
     }
 
     public Post getPostByTitle(String title) {
@@ -123,7 +122,7 @@ public class PostService {
 
 
 
-    public JSONArray responsePosts(List<Post> posts, int offset, int limit, String mode, DateFormat dateFormat) {
+    public JSONArray responsePosts(List<Post> posts, int offset, int limit, String mode) {
         List<Post> responsePosts = new ArrayList<>();
         //сортируем -> обрезаем -> переносим в список ответа
         sortedByMode(posts.stream(), mode)
@@ -133,16 +132,16 @@ public class PostService {
         JSONArray jsonArray = new JSONArray();
         //приводим к нужному виду
         for (Post post : responsePosts) {
-            jsonArray.add(postToJSON(post, dateFormat));
+            jsonArray.add(postToJSON(post));
         }
         return jsonArray;
     }
 
-    public JSONObject postToJSON(Post post, DateFormat dateFormat) {
+    public JSONObject postToJSON(Post post) {
         JSONObject jsonObject = new JSONObject();
 
         jsonObject.put("id", post.getId());
-        jsonObject.put("time", dateFormat.format(post.getTime()));  //TODO GET /api/post/ -> "time": "Вчера, 17:32"
+        jsonObject.put("timestamp", post.getTimestamp());
 
         JSONObject user = new JSONObject();
         user.put("id", post.getUserPost().getId());
@@ -159,12 +158,13 @@ public class PostService {
         return jsonObject;
     }
 
-    public JSONObject postByIdToJSON(Post post, DateFormat dateFormat) {
+    public JSONObject postByIdToJSON(Post post) {
         //добавили инфо по посту
-        JSONObject jsonObject = postToJSON(post, dateFormat);
+        JSONObject jsonObject = postToJSON(post);
 
         jsonObject.remove("announce");
         jsonObject.put("text", post.getText());
+        jsonObject.put("active", post.getIsActive() == 1);
 
         //добавили инфо по комментариям
         JSONArray comments = new JSONArray();
@@ -179,16 +179,19 @@ public class PostService {
     }
 
     public boolean isPostActive(Post post) {
-        boolean premoderation = globalSettingService.findGlobalSettingByCode(
-                GlobalSettingsCodes.POST_PREMODERATION.name()).getValue().
-                equals(GlobalSettingsValues.YES.name());
         //проверяем выполнение сразу 3х условий
         //1 - стоит галочка "пост активен"
-        //2 - премодерация включена -> проверяем статус -> д.б. ACCEPTED
-        //3 - премодерация выключена -> статус игнорируем, проверяем дату публикации
+        //2 - проверяем статус -> д.б. ACCEPTED
+        //3 - проверяем дату публикации -> д.б. не в будующем
         return post.getIsActive() == 1 &&
-                (!premoderation || post.getModerationStatus().equals(ModerationStatuses.ACCEPTED.toString()))
-                && post.getTime().before(new Date(System.currentTimeMillis()));
+                post.getModerationStatus().equals(ModerationStatuses.ACCEPTED.toString())
+                && post.getTimestamp() <= (System.currentTimeMillis() / 1000);
+    }
+
+    public boolean isPostReadyToEditByModerator(Post post) {
+        //не проверяем статус модерации
+        return post.getIsActive() == 1 &&
+                post.getTimestamp() <= (System.currentTimeMillis() / 1000);
     }
 
     public String getAnnounce(Post post) {
@@ -225,27 +228,35 @@ public class PostService {
             mode = "recent";
         }
         switch (mode){
-            case "recent": return stream.sorted(Comparator.comparing(Post::getTime));
+            case "recent": return stream.sorted(Comparator.comparing(Post::getTime).reversed());
 
             case "popular": return stream.sorted(Comparator.comparing(e -> getCommentsCount((Post) e)).reversed());
 
-            case "best": return stream.sorted(Comparator.comparing(e -> getLikesDislikesCount(e,1)));
+            case "best": return stream.sorted(Comparator.comparing(e -> getLikesDislikesCount((Post) e,1)).reversed());
 
-            case "early": return stream.sorted(Comparator.comparing(Post::getTime).reversed());
+            case "early": return stream.sorted(Comparator.comparing(Post::getTime));
         }
         return stream;
     }
 
-    public void savePost(Date time, int isActive, String title, String text, int userId, List<String> tagsNames) {
+    public void savePost(long timestamp, int isActive, String title, String text, int userId, List<String> tagsNames) {
         //создаем новый
         Post post = new Post();
         //заполняем обязательные поля
-        post.setTime(time);
+        post.setTime(timestamp);
         post.setIsActive(isActive);
         post.setTitle(title);
         post.setText(text);
         post.setUserId(userId);
-        post.setModerationStatus(ModerationStatuses.NEW.getStatus());
+        //проверяем настройку премодерации:
+        // - YES -> NEW
+        // - NO  -> ACCEPTED
+        if (globalSettingService.findGlobalSettingByCode(GlobalSettingsCodes.POST_PREMODERATION.toString()).getValue()
+                .equals(GlobalSettingsValues.YES.toString())) {
+            post.setModerationStatus(ModerationStatuses.NEW.getStatus());
+        }
+        else post.setModerationStatus(ModerationStatuses.ACCEPTED.toString());
+
         post.setViewCount(0);
         //отправляем в репозиторий
         postsRepository.save(post);
@@ -256,11 +267,12 @@ public class PostService {
         }
     }
 
-    public void editPost(int id, Date time, int isActive, String title, String text, int userId, List<String> tagsNames) {
+    public void editPost(int id, long timestamp, int isActive, String title, String text, int userId,
+                         List<String> tagsNames) {
         //находим в базе
         Post post = getPostById(id);
         //заполняем обязательные поля
-        post.setTime(time);
+        post.setTime(timestamp);
         post.setIsActive(isActive);
         post.setTitle(title);
         post.setText(text);
@@ -283,5 +295,14 @@ public class PostService {
     public void incrementViewCount(Post post) {
         post.setViewCount(post.getViewCount() + 1);
         postsRepository.save(post);
+    }
+
+    public boolean setModerationStatus(int postId, String status, int moderatorId) {
+        Post post = getPostById(postId);
+        if (post == null) return false;
+        post.setModerationStatus(status);
+        post.setModeratorId(moderatorId);
+        postsRepository.save(post);
+        return true;
     }
 }
