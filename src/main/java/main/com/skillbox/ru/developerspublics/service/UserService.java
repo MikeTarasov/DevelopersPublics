@@ -1,11 +1,13 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 
+import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
 import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.repository.UsersRepository;
+import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -17,8 +19,18 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.imageio.ImageIO;
 import javax.mail.internet.MimeMessage;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
 import java.util.*;
+import java.util.List;
 
 
 @Service
@@ -179,5 +191,118 @@ public class UserService implements UserDetailsService {
             result = false;
         }
         return result;
+    }
+
+    public boolean changeUserName(User user, String newName) {
+        boolean isCorrectName = isCorrectUserName(newName);
+        if (isCorrectName) {
+            user.setName(newName);
+            userRepository.save(user);
+        }
+        return isCorrectName;
+    }
+
+    public boolean isCorrectUserName(String name) {
+        return name.replaceAll("[0-9a-zA-Zа-яА-ЯёЁ]", "").equals("") &&
+                !name.equals("") && name.length() > 3;
+    }
+
+    public boolean isEmailExist(String email) {
+        boolean isEmailExist = false;
+        for (User user : userRepository.findAll()) {
+            if (user.getEmail().equals(email)) {
+                isEmailExist = true;
+                break;
+            }
+        }
+        return isEmailExist;
+    }
+
+    public void changeUserPassword(User user, String newPassword) {
+        String password = bCryptPasswordEncoder.encode(newPassword);
+        if (!user.getPassword().equals(password)) {
+            user.setPassword(password);
+            userRepository.save(user);
+        }
+    }
+
+    public boolean changeUserEmail(User user, String email) {
+        boolean isEmailNotExist = !isEmailExist(email);
+        if (isEmailNotExist) {
+            user.setEmail(email);
+            userRepository.save(user);
+        }
+        return isEmailNotExist;
+    }
+
+    @SneakyThrows
+    public void removePhoto(User user) {
+        String path = user.getPhoto();
+        user.setPhoto("");
+        userRepository.save(user);
+        //TODO удалить файл с сервера!
+        File avatar = new File(new URI("localhost:8080" + path));
+        if (avatar.delete()) System.out.println("avatar deleted");
+    }
+
+    @SneakyThrows
+    public void changeUserPhoto(User user, InputStream inputStream) {
+        String path = "localhost:8080" + user.getPhoto();
+        //подключаемся к серверу
+        HttpURLConnection httpConn = (HttpURLConnection) new URL(path).openConnection();
+        httpConn.setUseCaches(false);
+        httpConn.setDoOutput(true);
+        httpConn.setDoInput(true);
+        //открываем стрим
+        OutputStream outputStream = httpConn.getOutputStream();
+
+        //сжимаем до 36*36 пикс
+        int newWidth = 36;
+        int newHeight = 36;
+        //получаем исходное изображение
+        BufferedImage image = ImageIO.read(inputStream);
+
+        //Сначала грубо уменьшаем до smartStep (width = newWidth * smartStep),потом плавно уменьшаем до нужного р-ра
+        int smartStep = 4;  //оптимальное значение скорость/качество = 4
+
+        //Вычисляем промежуточные размеры
+        int width = newWidth * smartStep;
+        int height = newHeight * smartStep;
+
+        //Получаем промежуточное изображение
+        BufferedImage imageXStep = Scalr.resize(image, Scalr.Method.SPEED,
+                width, height, null);
+
+        //Задаем окончательные размеры и плавно сжимаем
+        BufferedImage newImage = Scalr.resize(imageXStep, Scalr.Method.ULTRA_QUALITY,
+                newWidth, newHeight, null);
+
+        //Записываем результат в файл
+        ImageIO.write(newImage, "jpg", outputStream);
+
+        //сохраняемся и разрываем соединение
+        outputStream.flush();
+        inputStream.close();
+        httpConn.disconnect();
+    }
+
+    public String saveAvatar(User user, InputStream inputStream) { //TODO
+        //считаем хэш
+        String hashString = Integer.toString(user.hashCode());
+
+        //разбиваем хэш на 4 части
+        String[] hash = new String[4];
+        hash[0] = hashString.substring(0, 1);
+        hash[1] = hashString.substring(2, 3);
+        hash[2] = hashString.substring(4, 5);
+        hash[3] = hashString.substring(6);
+
+        String path = "/upload/" + hash[0] + "/" + hash[1] + "/" + hash[2] + "/" + hash[3] + ".jpg";
+
+        user.setPhoto(path);
+        userRepository.save(user);
+        changeUserPhoto(user, inputStream);
+
+        return path;
     }
 }

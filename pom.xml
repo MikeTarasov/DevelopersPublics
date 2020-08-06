@@ -167,6 +167,14 @@
         </dependency>
 <!--        /e-mail-->
 
+<!--        image-resize-->
+        <dependency>
+            <groupId>org.imgscalr</groupId>
+            <artifactId>imgscalr-lib</artifactId>
+            <version>4.2</version>
+        </dependency>
+<!--        /image-resize-->
+
 
 <!--        <dependency>-->
 <!--            <groupId>org.apache.tomcat.embed</groupId>-->

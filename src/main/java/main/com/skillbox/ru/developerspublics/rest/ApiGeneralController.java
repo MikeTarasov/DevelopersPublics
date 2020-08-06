@@ -16,6 +16,9 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.InputStream;
 import java.text.*;
 import java.util.*;
 
@@ -51,35 +54,6 @@ public class ApiGeneralController
         globalSettingService.initGlobalSettings();
         //и возвращаем инфо о блоге
         return ResponseEntity.status(HttpStatus.OK).body(new BlogInfo());
-    }
-
-    //TODO POST /api/image
-    //Запрос: Content-Type: multipart/form-data
-    //image - файл изображения
-    //
-    //  /upload/ab/cd/ef/52461.jpg
-    @SneakyThrows
-    @Secured(USER)
-    @PostMapping(value = "/api/image", consumes = {"multipart/form-data"})
-    public String postApiImage(@RequestBody String requestBody) {
-//        JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
-//        int postId = Integer.parseInt(request.get("post_id").toString());
-
-        //получаем пользователя
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = userService.findUserByLogin(authentication.getName());
-
-        //считаем хэш
-        String hashString = Integer.toString(user.hashCode());
-
-        //разбиваем хэш на 4 части
-        String[] hash = new String[4];
-        hash[0] = hashString.substring(0, 1);
-        hash[1] = hashString.substring(2, 3);
-        hash[2] = hashString.substring(4, 5);
-        hash[3] = hashString.substring(6);
-
-        return "/" + hash[0] + "/" + hash[1] + "/" + hash[2] + "/" + hash[3] + ".jpg";
     }
 
     //POST /api/comment/
@@ -283,7 +257,7 @@ public class ApiGeneralController
     //{
     // "name":"Sendel",
     // "email":"sndl@mail.ru",
-    // "removePhoto":0,
+    // "removePhoto":1,
     // "photo": ""
     //}
     //
@@ -300,6 +274,101 @@ public class ApiGeneralController
     // "password": "Пароль короче 6-ти символов",
     // }
     //}
+    @SneakyThrows
+    @Secured(USER)
+    @PostMapping(value = "/api/profile/my", consumes = {"multipart/form-data", "application/json"})
+    public JSONObject postApiProfileMy(@RequestBody String requestBody,
+                                       @RequestPart(value = "photo", required = false) MultipartFile avatar) {
+        JSONObject response = new JSONObject();
+        JSONObject errors = new JSONObject();
+
+        JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
+        String email = request.get("email").toString();
+        String name = request.get("name").toString();
+        String password = null;
+        if (request.get("password") != null) password = request.get("password").toString();
+        String removePhoto = null;
+        if (request.get("removePhoto") != null) removePhoto = request.get("removePhoto").toString();
+
+        //получаем user
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userService.findUserByLogin(authentication.getName());
+
+        if (user == null) {
+            response.put("result", false);
+            errors.put("user", "Пользователь не найден!");
+            response.put("errors", errors);
+            return response;
+        }
+
+        //проверяем изменение имени
+        if (!user.getName().equals(name)) {
+            if (!userService.changeUserName(user, name)) errors.put("name", "Имя указано неверно");
+        }
+
+        //проверяем изменение e-mail
+        if (!user.getEmail().equals(email)) {
+            if (!userService.changeUserEmail(user, email)) errors.put("email", "Этот e-mail уже зарегистрирован");
+        }
+
+        //проверяем изменение пароля
+        if (password != null) {
+            if (password.length() >= 6) {
+                userService.changeUserPassword(user, password);
+            }
+            else errors.put("password", "Пароль короче 6-ти символов");
+        }
+
+        if (removePhoto != null) {
+            //удаление фото
+            if (removePhoto.equals("1")) {
+                userService.removePhoto(user);
+            }
+
+            //изменение фото
+            if (removePhoto.equals("0")) {
+                if (avatar.getSize() <= 5*1024*1024) {
+                    InputStream inputStream = avatar.getInputStream();
+                    userService.changeUserPhoto(user, inputStream); //TODO
+                }
+                else errors.put("photo", "Фото слишком большое, нужно не более 5 Мб");
+            }
+        }
+
+        if (errors.size() == 0) {
+            response.put("result", true);
+        }
+        else {
+            response.put("result", false);
+            response.put("errors", errors);
+        }
+        return response;
+    }
+
+    //TODO POST /api/image
+    //Запрос: Content-Type: multipart/form-data
+    //image - файл изображения
+    //javascript - "photo" /// avatar
+    //
+    //  /upload/ab/cd/ef/52461.jpg
+    @SneakyThrows
+    @Secured(USER)
+    @PostMapping(value = "/api/image", consumes = {"multipart/form-data"})
+    public @ResponseBody String postApiImage(@RequestPart("image") MultipartFile avatar) {
+
+        //получаем пользователя
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userService.findUserByLogin(authentication.getName());
+
+        String path = "";
+
+        if (avatar != null) {
+            InputStream inputStream = avatar.getInputStream();
+            path = userService.saveAvatar(user, inputStream);
+        }
+
+        return path;
+    }
 
     //GET /api/statistics/my
     @Secured(USER)

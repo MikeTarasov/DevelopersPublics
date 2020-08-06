@@ -222,8 +222,6 @@ public class ApiAuthController
     @PostMapping("/register")
     public JSONObject postApiAuthRegister(@RequestBody String body) {
         JSONObject response = new JSONObject();
-        boolean isEmailExist = false;
-        boolean isNameWrong = false;
         boolean isPasswordCorrect = true;
         boolean isCaptchaCorrect = false;
 
@@ -236,16 +234,11 @@ public class ApiAuthController
         String captchaSecret = requestBody.get("captcha_secret").toString();
 
         //проверяем email
-        for (User user : userService.allUsers()) {
-            if (user.getEmail().equals(email)) {
-                isEmailExist = true;
-                break;
-            }
-        }
+        boolean isEmailExist = userService.isEmailExist(email);
+
         //проверяем name
-        if (!name.replaceAll("[0-9a-zA-Zа-яА-ЯёЁ]", "").equals("") || name.equals("")) {
-            isNameWrong = true;
-        }
+        boolean isNameWrong = !userService.isCorrectUserName(name);
+
         //проверяем password
         if (password.length() < 6) {
             isPasswordCorrect = false;
