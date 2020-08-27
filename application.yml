@@ -6,12 +6,12 @@ spring.dataSource.username: root
 spring.dataSource.password: test123341
 spring.jpa.hibernate.ddl-auto: update
 
-#spring.jpa.properties.hibernate.jdbc.time_zone: UTC
+spring.servlet.multipart.max-file-size: 10MB
+spring.servlet.multipart.max-request-size: 10MB
 
-#spring.jpa.show-sql: true
-#spring.jpa.generate-ddl: false
-#spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
-
-#spring.mvc.view.prefix: /src/main/resources/templates/
-#spring.mvc.view.suffix: .html
-#spring.messages.basename: validation
+#spring.mail.host: smtp.gmail.com
+#spring.mail.port: 587
+#spring.mail.username: developerspublics@gmail.com
+#spring.mail.password: wzhaqlnptimbivpl
+#spring.mail.properties.mail.smtp.auth: true
+#spring.mail.properties.mail.smtp.starttls.enable: true

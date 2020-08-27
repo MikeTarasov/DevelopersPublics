@@ -10,6 +10,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -18,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.text.*;
 import java.util.*;
@@ -61,7 +63,6 @@ public class ApiGeneralController
     @Secured(USER)
     @PostMapping("/api/comment")
     public ResponseEntity<JSONObject> postApiComment(@RequestBody String requestBody) {
-        System.out.println("POST /api/comment/");
         JSONObject response = new JSONObject();
 
         //получаем запрос
@@ -75,10 +76,6 @@ public class ApiGeneralController
         }
         int postId = Integer.parseInt(request.get("post_id").toString());
         String text = request.get("text").toString();
-
-        System.out.println(parentIdString + " - parentID");
-        System.out.println(postId + " - postId");
-        System.out.println(text + " - text");
 
         //выдергиваем из контекста пользователя
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -234,61 +231,35 @@ public class ApiGeneralController
         return response;
     }
 
-    //TODO POST /api/profile/my
-    //{
-    // "name":"Sendel",
-    // "email":"sndl@mail.ru"
-    //}
-    //
-    //{
-    // "name":"Sendel",
-    // "email":"sndl@mail.ru",
-    // "password":"123456"
-    //}
-    //
-    //{
-    // "photo": <binary_file>,
-    // "name":"Sendel",
-    // "email":"sndl@mail.ru",
-    // "password":"123456",
-    // "removePhoto":0
-    //}
-    //
-    //{
-    // "name":"Sendel",
-    // "email":"sndl@mail.ru",
-    // "removePhoto":1,
-    // "photo": ""
-    //}
-    //
-    //{
-    // "result": true
-    // }
-    //
-    //{
-    // "result": false,
-    // "errors": {
-    // "email": "Этот e-mail уже зарегистрирован",
-    // "photo": "Фото слишком большое, нужно не более 5 Мб",
-    // "name": "Имя указано неверно",
-    // "password": "Пароль короче 6-ти символов",
-    // }
-    //}
+    //POST /api/profile/my
     @SneakyThrows
     @Secured(USER)
     @PostMapping(value = "/api/profile/my", consumes = {"multipart/form-data", "application/json"})
-    public JSONObject postApiProfileMy(@RequestBody String requestBody,
-                                       @RequestPart(value = "photo", required = false) MultipartFile avatar) {
+    public JSONObject postApiProfileMy(@RequestBody(required = false) String requestBody,
+                                       @RequestPart(value = "photo", required = false) MultipartFile avatar,
+                                       @RequestPart(value = "email", required = false) String emailMP,
+                                       @RequestPart(value = "name", required = false) String nameMP,
+                                       @RequestPart(value = "password", required = false) String passwordMP,
+                                       @RequestPart(value = "removePhoto", required = false) String removePhotoMP,
+                                       HttpServletRequest httpServletRequest) {
         JSONObject response = new JSONObject();
         JSONObject errors = new JSONObject();
 
-        JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
-        String email = request.get("email").toString();
-        String name = request.get("name").toString();
-        String password = null;
-        if (request.get("password") != null) password = request.get("password").toString();
-        String removePhoto = null;
-        if (request.get("removePhoto") != null) removePhoto = request.get("removePhoto").toString();
+        //if consumes = "multipart/form-data"
+        String email = emailMP;
+        String name = nameMP;
+        String password = passwordMP;
+        String removePhoto = removePhotoMP;
+        String rootPath = httpServletRequest.getServletContext().getRealPath("upload");
+
+        //else consumes = "application/json"
+        if (requestBody != null) {
+            JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
+            if (request.get("email") != null) email = request.get("email").toString();
+            if (request.get("name") != null) name = request.get("name").toString();
+            if (request.get("password") != null) password = request.get("password").toString();
+            if (request.get("removePhoto") != null) removePhoto = request.get("removePhoto").toString();
+        }
 
         //получаем user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -329,7 +300,7 @@ public class ApiGeneralController
             if (removePhoto.equals("0")) {
                 if (avatar.getSize() <= 5*1024*1024) {
                     InputStream inputStream = avatar.getInputStream();
-                    userService.changeUserPhoto(user, inputStream); //TODO
+                    userService.saveAvatar(user, inputStream);
                 }
                 else errors.put("photo", "Фото слишком большое, нужно не более 5 Мб");
             }
@@ -345,17 +316,11 @@ public class ApiGeneralController
         return response;
     }
 
-    //TODO POST /api/image
-    //Запрос: Content-Type: multipart/form-data
-    //image - файл изображения
-    //javascript - "photo" /// avatar
-    //
-    //  /upload/ab/cd/ef/52461.jpg
+    //POST /api/image
     @SneakyThrows
     @Secured(USER)
     @PostMapping(value = "/api/image", consumes = {"multipart/form-data"})
     public @ResponseBody String postApiImage(@RequestPart("image") MultipartFile avatar) {
-
         //получаем пользователя
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = userService.findUserByLogin(authentication.getName());
@@ -477,24 +442,54 @@ public class ApiGeneralController
     @SneakyThrows
     @Secured(MODERATOR)
     @PutMapping("/api/settings")
-    public ResponseEntity postApiSettings(@RequestBody String requestBody) {
+    public ResponseEntity<JSONObject> postApiSettings(@RequestBody String requestBody) {
+        JSONObject response = new JSONObject();
         JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
-        boolean multiUserMode;
-        boolean postPremoderation;
-        boolean statisticsIsPublic;
+        Boolean multiUserMode = null;
+        Boolean postPremoderation = null;
+        Boolean statisticsIsPublic = null;
 
-        try {
-            multiUserMode = Boolean.getBoolean(request.get("MULTIUSER_MODE").toString());
-            postPremoderation = Boolean.getBoolean(request.get("POST_PREMODERATION").toString());
-            statisticsIsPublic = Boolean.getBoolean(request.get("STATISTICS_IS_PUBLIC").toString());
+        for (Object key : request.keySet()) {
+            switch (key.toString()) {
+                case "MULTIUSER_MODE" :
+                    multiUserMode = Boolean.valueOf(request.get("MULTIUSER_MODE").toString());
+                    break;
+                case "POST_PREMODERATION" :
+                    postPremoderation = Boolean.valueOf(request.get("POST_PREMODERATION").toString());
+                    break;
+                case "STATISTICS_IS_PUBLIC" :
+                    statisticsIsPublic = Boolean.valueOf(request.get("STATISTICS_IS_PUBLIC").toString());
+                    break;
+            }
         }
-        catch (Exception e) {
-            return ResponseEntity.status(400).body(null);
+
+        //Если при запросе данные не найдены - код 404
+        if (multiUserMode == null && postPremoderation == null && statisticsIsPublic == null) {
+            response.put("result", false);
+            return ResponseEntity.status(404).body(response);
         }
 
-        if (!globalSettingService.setGlobalSettings(multiUserMode, postPremoderation, statisticsIsPublic))
-            return ResponseEntity.status(400).body(null);
+        //Неверный параметр на входе - ответ с кодом 400 (Bad request)
+        if (!globalSettingService.setGlobalSettings(multiUserMode, postPremoderation, statisticsIsPublic)) {
+            response.put("message", "Глобальная настройка не найдена!");
+            return ResponseEntity.status(400).body(response);
+        }
 
-        return ResponseEntity.status(200).body(null);
+        response.put("result", true);
+        return ResponseEntity.status(200).body(response);
+    }
+
+    @SneakyThrows
+    @GetMapping("/upload/{A}/{B}/{C}/{FILENAME}")
+    @ResponseBody
+    public ResponseEntity<Resource> getAvatar(@PathVariable("A") String a,
+                                @PathVariable("B") String b,
+                                @PathVariable("C") String c,
+                                @PathVariable("FILENAME") String name) {
+
+        Resource file = userService.getAvatar(a, b, c, name);
+
+        if (file.exists()) return ResponseEntity.ok().body(file);
+        return ResponseEntity.notFound().build();
     }
 }

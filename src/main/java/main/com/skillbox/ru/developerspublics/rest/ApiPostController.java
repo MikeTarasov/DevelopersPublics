@@ -128,7 +128,7 @@ public class ApiPostController
     }
 
 
-    //TODO GET /api/post/{ID}
+    //GET /api/post/{ID}
     @SneakyThrows
     @GetMapping("/{ID}")
     public ResponseEntity<JSONObject> getApiPostId(@PathVariable(name = "ID") int id) {

@@ -19,7 +19,6 @@ public class Initializer implements WebApplicationInitializer
     @Override
     @SneakyThrows
     public void onStartup(ServletContext servletContext) {
-        System.out.println("\t -> onStartup <-");  //TODO хоть раз вызывалось?
         //создаем контекст
         AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
 

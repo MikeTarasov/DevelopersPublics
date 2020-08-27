@@ -16,14 +16,12 @@ public class WebMVCConfig implements WebMvcConfigurer {
     // Позволяет видеть все ресурсы в папке pages, такие как картинки, стили и т.п.
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        System.out.println("\t6 - addResourceHandlers");
         registry.addResourceHandler("/css/**", "/js/**", "/fonts/**", "/img/**", "/resources/**", "/html/**")
                 .addResourceLocations("classpath:src/main/resources/");
     }
 
     @Override
     public void configureViewResolvers(ViewResolverRegistry registry) {
-        System.out.println("\t - configureViewResolvers");
         InternalResourceViewResolver resolver = new InternalResourceViewResolver();
         resolver.setPrefix("/static/");
         resolver.setSuffix(".html");
@@ -32,7 +30,6 @@ public class WebMVCConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        System.out.println("\t - addViewControllers");
         registry.addViewController("/login").setViewName("login");
     }
 }

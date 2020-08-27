@@ -80,13 +80,6 @@ public class TagService {
     }
 
     private float getWeight(Tag tag) {
-//        float tagWeight = 0F;
-//        int activePosts = postService.getActivePosts().size();
-//        if (maxWeight != 0 && activePosts != 0) {
-//            tagWeight =(float) tag.getTagToPosts().size() / activePosts / maxWeight;
-//        }
-//        System.out.println("tagWeight " + tag.getName() + " = " + tagWeight);
-//        return tagWeight;
         if (weightMap == null) setWeights();
         return weightMap.get(tag.getId());
     }
@@ -119,8 +112,6 @@ public class TagService {
         if (count != 0 && maxWeight != 0) {
             weightMap.replaceAll((k, v) -> weightMap.get(k) / maxWeight);
         }
-
-        System.out.println(weightMap);
     }
 
     public void saveTag(String tagName, int postId) {

@@ -5,5 +5,5 @@ public class MailConstants {
     public static final String MY_EMAIL = "developerspublics@gmail.com";
 
     // Replace password!!
-    public static final String MY_PASSWORD = "cfvnfrjq123341";
+    public static final String MY_PASSWORD = "wzhaqlnptimbivpl";
 }

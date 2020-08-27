@@ -28,9 +28,9 @@ public class CaptchaCode
     @Column(name = "secret_code", columnDefinition = "TINYTEXT", nullable = false)
     private String secretCode;
 
-    //get timestamp in seconds
+    //get timestamp
     public long getTimestamp() {
-        return time.getTime() / 1000;
+        return time.getTime();
     }
 
     //timestamp in milliseconds to java.util.Date

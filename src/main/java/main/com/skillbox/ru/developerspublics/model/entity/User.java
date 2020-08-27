@@ -76,7 +76,7 @@ public class User implements UserDetails
     @Transient
     private Set<Role> roles = new HashSet<>();
 
-    //get timestamp in seconds
+    //get timestamp in seconds TODO
     public long getTimestamp() {
         return regTime.getTime() / 1000;
     }
@@ -142,11 +142,11 @@ public class User implements UserDetails
         return true;
     }
 
-    public int hashCode() {
-        int result = id;
+    public long userHashCode() {
+        long result = id;
         result = id * result + (isModerator == 1 ? id : 0);
-        DateFormat dateFormat = new SimpleDateFormat("HHmmssddMMyyyy");
-        result = id * result + Integer.parseInt(dateFormat.format(regTime));
+        DateFormat dateFormat = new SimpleDateFormat("HHmmddMMyy");
+        result = id * result + Long.parseLong(dateFormat.format(regTime));
         result = id * result + name.length();
         result = id * result + email.length();
         result = id * result + password.length();

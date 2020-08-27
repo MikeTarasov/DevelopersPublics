@@ -40,7 +40,6 @@ public class GlobalSettingService {
             globalSettingsRepository.deleteAll();
             int id = 1;
             for (GlobalSettingsCodes code : GlobalSettingsCodes.values()) {
-                System.out.println(code.name() + " <=> " + code.getDesc());
                 globalSettingsRepository.save(new GlobalSetting(
                         id,
                         code.name(),
@@ -52,15 +51,21 @@ public class GlobalSettingService {
         }
     }
 
-    public boolean setGlobalSettings(boolean multiUserMode, boolean postPremoderation, boolean statisticsIsPublic) {
+    public boolean setGlobalSettings(Boolean multiUserMode, Boolean postPremoderation, Boolean statisticsIsPublic) {
         boolean hasErrors = false;
         for (GlobalSetting gs : getAllGlobalSettings()) {
-            if (gs.getCode().equals(GlobalSettingsCodes.MULTI_USER_MODE.toString()))
+            if (gs.getCode().equals(GlobalSettingsCodes.MULTIUSER_MODE.toString()) && multiUserMode != null) {
                 gs.setValue(multiUserMode ? GlobalSettingsValues.YES.toString() : GlobalSettingsValues.NO.toString());
-            else if (gs.getCode().equals(GlobalSettingsCodes.POST_PREMODERATION.toString()))
+                globalSettingsRepository.save(gs);
+            }
+            else if (gs.getCode().equals(GlobalSettingsCodes.POST_PREMODERATION.toString()) && postPremoderation != null) {
                 gs.setValue(postPremoderation ? GlobalSettingsValues.YES.toString() : GlobalSettingsValues.NO.toString());
-            else if (gs.getCode().equals(GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString()))
+                globalSettingsRepository.save(gs);
+            }
+            else if (gs.getCode().equals(GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString()) && statisticsIsPublic != null) {
                 gs.setValue(statisticsIsPublic ? GlobalSettingsValues.YES.toString() : GlobalSettingsValues.NO.toString());
+                globalSettingsRepository.save(gs);
+            }
             else hasErrors = true;
         }
         return !hasErrors;

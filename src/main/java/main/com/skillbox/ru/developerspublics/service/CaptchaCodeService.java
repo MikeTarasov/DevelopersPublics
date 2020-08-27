@@ -6,7 +6,6 @@ import main.com.skillbox.ru.developerspublics.model.entity.CaptchaCode;
 import main.com.skillbox.ru.developerspublics.repository.CaptchaCodesRepository;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -21,10 +20,9 @@ import java.util.List;
 
 @Service
 public class CaptchaCodeService {
+
     @Autowired
     private CaptchaCodesRepository captchaCodesRepository;
-
-    private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     public List<CaptchaCode> getAllCaptchaCodes() {
         List<CaptchaCode> captchaCodes = new ArrayList<>();
@@ -38,7 +36,7 @@ public class CaptchaCodeService {
         CaptchaCode captchaCode = new CaptchaCode();
         captchaCode.setCode(code);
         captchaCode.setTime(Instant.now().toEpochMilli());
-        captchaCode.setSecretCode(bCryptPasswordEncoder.encode(code));
+        captchaCode.setSecretCode(code);
         captchaCodesRepository.save(captchaCode);
     }
 
@@ -87,7 +85,7 @@ public class CaptchaCodeService {
             }
         }
         //создаем временный файл в нужном формате
-        File file = new File("target/1.png");
+        File file = new File("target/" + code + ".png");
         ImageIO.write(biImage, "png", file);
         //кодируем картинку в текст
         String base64 = Base64.getEncoder().encodeToString(Files.readAllBytes(file.toPath()));

@@ -12,6 +12,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -49,6 +50,7 @@ public class ApiAuthController
     public JSONObject postApiAuthLogin(@RequestBody String requestBody, HttpSession httpSession) {
         //запоминаем входные параметры
         JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
+
         String email = request.get("e_mail").toString();
         String password = request.get("password").toString();
 
@@ -65,13 +67,21 @@ public class ApiAuthController
             return response;
         }
 
-        //если нашли - заносим user'а в контекст
-        SecurityContext securityContext = SecurityContextHolder.getContext();
-        securityContext
-                .setAuthentication(
-                    authenticationProvider
-                        .authenticate(
-                                new UsernamePasswordAuthenticationToken(authUser.getUsername(), password))); //TODO PASS w/out encoding!
+        //если нашли - проверяем пароль и заносим user'а в контекст
+        if (userService.isPasswordCorrect(authUser, password)) {
+            SecurityContextHolder.getContext()
+                    .setAuthentication(
+                            authenticationProvider.authenticate(
+                                    new UsernamePasswordAuthenticationToken(
+                                            userService.loadUserByUsername(authUser.getEmail()),
+                                            password)
+                            )
+                    );
+        }
+        else {
+            response.put("result", false);
+            return response;
+        }
 
         //запоминаем сессию
         userService.addHttpSession(httpSession.getId(), authUser.getId());
@@ -145,6 +155,8 @@ public class ApiAuthController
         JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
         String email = request.get("email").toString();
 
+        System.out.println("email = " + email);
+
         boolean result = false;
         User user = null;
 
@@ -183,16 +195,17 @@ public class ApiAuthController
 
         //test code
         for (User userDB : userService.allUsers()) {
-            if (userDB.getCode().equals(code)) {
-                isCodeCorrect = true;
-                user = userDB;
-                break;
+            if (userDB.getCode() != null) {
+                if (userDB.getCode().equals(code)) {
+                    isCodeCorrect = true;
+                    user = userDB;
+                    break;
+                }
             }
         }
 
         //test password
         if (password.length() < 6) isPasswordCorrect = false;
-        else if (user != null) user.setPassword(password);
 
         //test captcha
         for (CaptchaCode captchaCode : captchaCodeService.getAllCaptchaCodes()) {
@@ -212,7 +225,12 @@ public class ApiAuthController
             response.put("result", false);
             response.put("errors", errors);
         }
-        else response.put("result", true);
+        else {
+            //ошибок нет - меняем пароль
+            assert user != null;
+            user.setPassword(password);
+            response.put("result", true);
+        }
 
         return response;
     }
@@ -292,32 +310,37 @@ public class ApiAuthController
         return response;
     }
 
-    //TODO GET /api/auth/logout
+    //GET /api/auth/logout
     @Secured(USER)
     @GetMapping("/logout")
     public JSONObject getApiAuthLogout() {
         JSONObject response = new JSONObject();
-
         SecurityContext securityContext = SecurityContextHolder.getContext();
-        Authentication authentication = securityContext.getAuthentication();
-        User user = userService.findUserByLogin(authentication.getName());
+        boolean result = false;
+
+        User user = userService.findUserByLogin(securityContext.getAuthentication().getName());
 
         if (user != null) {
             Set<GrantedAuthority> grantedAuthority = new HashSet<>();
             grantedAuthority.add(new SimpleGrantedAuthority("ROLE_ANONYMOUS"));
-            authentication.setAuthenticated(false);
-//            securityContext.setAuthentication(
-//                    authenticationProvider.authenticate(
-//                            new AnonymousAuthenticationToken(
-//                                    "anonymous",
-//                                    new org.springframework.security.core.userdetails
-//                                            .User("anonymous", "anonymous", grantedAuthority),
-//                                    grantedAuthority
-//                            )));
+
+            securityContext.setAuthentication(
+                    new AnonymousAuthenticationToken(
+                            String.valueOf(System.currentTimeMillis()),
+                            new org.springframework.security.core.userdetails.User(
+                                    "anonymous",
+                                    "anonymous",
+                                    grantedAuthority
+                            ),
+                            grantedAuthority
+                    ));
+
             userService.deleteHttpSession(user.getId());
+            result = true;
         }
 
-        response.put("result", true);
+        response.put("result", result);
+
         return response;
     }
 }

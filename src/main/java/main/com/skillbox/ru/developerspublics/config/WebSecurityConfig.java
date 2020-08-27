@@ -15,36 +15,25 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 
 
-//@Order(1)
 @Configuration
 @EnableWebSecurity
-//@EnableConfigurationProperties
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-
 
     @Autowired
     private UserService userService;
 
-    @Autowired AuthenticationProviderImpl authenticationProvider;
+    @Autowired
+    private AuthenticationProviderImpl authenticationProvider;
 
     //заставляем Spring использовать кодировщик BCrypt для хеширования и сравнения паролей
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
-        System.out.println("\t4 - BCryptPasswordEncoder");
         return new BCryptPasswordEncoder();
     }
 
     @Override
     public void configure(HttpSecurity httpSecurity) throws Exception {
-        System.out.println("\t2 - http security");
-//        httpSecurity
-//                .csrf().disable()
-//                .authorizeRequests()
-//                .antMatchers("/").not().fullyAuthenticated()
-//                .antMatchers("/v2/api-docs", "/swagger-ui.html", "/resources/**").hasRole("MODERATOR")
-//                .antMatchers("/resources/**").permitAll();
-//
         httpSecurity
                 .csrf().disable()
                 .formLogin()
@@ -54,32 +43,24 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .successForwardUrl("/")
                 .and()
                 .logout()
-                .logoutSuccessUrl("/")
+                .logoutSuccessUrl("/")  //TODO don't work!!!!
                 .deleteCookies("JSESSIONID")
-                .invalidateHttpSession(true);
-
+                .invalidateHttpSession(true)
+                .and()
+                .authorizeRequests()
+                .antMatchers("/v2/api-docs", "/swagger-ui.html").hasRole("MODERATOR")
+                .antMatchers("/login/change-password/*").anonymous();
     }
 
-//    @Bean
-//    public AuthenticationManager customAuthenticationManager() throws Exception {
-//        System.out.println("\t - customAuthenticationManager()");
-//        return authenticationManager();
-//    }
-
-
-    //мы хотим использовать UserService для нашей аутентификации
+    //мы хотим использовать AuthenticationProviderImpl для нашей аутентификации
     @Override
     public void configure(AuthenticationManagerBuilder builder) throws Exception {
-        System.out.println("\t1 - AuthenticationManagerBuilder");
-//        builder.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder());
         builder.authenticationProvider(authenticationProvider);
     }
-
 
     //скрываем содержимое view от пользователей
     @Override
     public void configure(WebSecurity web) throws Exception {
-        System.out.println("\t3 - WebSecurity");
         web
                 .ignoring()
                 .antMatchers("/resources/**", "/static/**", "/css/**", "/js/**", "/images/**");

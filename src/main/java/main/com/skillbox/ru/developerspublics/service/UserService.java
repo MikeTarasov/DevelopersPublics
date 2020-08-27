@@ -9,6 +9,8 @@ import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.repository.UsersRepository;
 import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,19 +20,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import javax.imageio.ImageIO;
 import javax.mail.internet.MimeMessage;
-import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
+import java.io.*;
 import java.util.*;
-import java.util.List;
 
 
 @Service
@@ -48,20 +42,20 @@ public class UserService implements UserDetailsService {
     @Autowired
     public JavaMailSender emailSender;
 
-    private HashMap<String, Integer> httpSession = new HashMap<>(); //<sessionId, userId>
+    private final HashMap<String, Integer> httpSession = new HashMap<>(); //<sessionId, userId>
+
+    private final String rootPage = "localhost:8080";
 
 
     @Override
     public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
         User user = null;
         for (User userDB : userRepository.findAll()) {
-            System.out.println(userDB.getEmail() + " <==> " + login);
             if (userDB.getUsername().equals(login)) {
                 user = userDB;
             }
         }
 
-        System.out.println("\t user == " + user);
         if (user == null) throw new UsernameNotFoundException("User not found");
 
         Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
@@ -69,18 +63,14 @@ public class UserService implements UserDetailsService {
             grantedAuthorities.add(new SimpleGrantedAuthority(role.getAuthority()));
         }
 
-        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+        return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
                 grantedAuthorities
         );
-
-        System.out.println("userDetails " + userDetails);
-        return userDetails;
     }
 
     public User findUserByLogin(String login) {
-        System.out.println("findUserByName ==> " + login);
         //ищем в БД
         for (User user : userRepository.findAll()) {
             if (user.getEmail().equals(login)) {
@@ -96,7 +86,6 @@ public class UserService implements UserDetailsService {
     }
 
     public List<User> allUsers() {
-        System.out.println("allUsers");
         List<User> users = new ArrayList<>();
         for (User user : userRepository.findAll()) {
             users.add(user);
@@ -105,7 +94,6 @@ public class UserService implements UserDetailsService {
     }
 
     public boolean isPasswordCorrect(User user, String password) {
-        System.out.println("isPasswordCorrect");
         return bCryptPasswordEncoder.matches(password, user.getPassword());
     }
 
@@ -164,30 +152,35 @@ public class UserService implements UserDetailsService {
     public boolean sendEmail(User user) {
         boolean result = true;
         try {
-            String hash = Integer.toString(user.hashCode());
+            String hash = bCryptPasswordEncoder.encode(Long.toString(System.currentTimeMillis()))
+                    .substring(10).toLowerCase();
 
             user.setCode(hash);
+            userRepository.save(user);
 
             MimeMessage message = emailSender.createMimeMessage();
 
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "utf-8");
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            String htmlMsg = "<h3>Здравствуйте, " + user.getName() + "!</h3>" +
+                    "<p><br>&nbsp;&nbsp;&nbsp;&nbsp;От Вашего имени подана заявка на смену пароля на сайте developerspublics.ru.<br>" +
+                    "Для подтверждения смены пароля перейдите по ссылке " +
+                    "<a href=\"http://" + rootPage + "/login/change-password/"+hash+"\">СМЕНИТЬ ПАРОЛЬ</a>" +
+                    "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;Если вы не инициировали это действие, возможно, ваша учетная запись была взломана.<br>" +
+                    "Пожалуйста, свяжитесь с администрацией сайта developerspublics.ru<br><br>" +
+                    "С уважением,<br>" +
+                    "администрация сайта developerspublics.ru</p>";
+
+            message.setContent(htmlMsg, "text/html; charset=utf-8");
 
             helper.setTo(user.getEmail());
 
             helper.setSubject("Восстановление пароля на сайте developerspublics.ru");
 
-            String htmlMsg = "<h3>Здравствуйте, " + user.getName() + "!</h3>\n" +
-                    "\tОт Вашего имени подана заявка на смену пароля на сайте developerspublics.ru.\n" +
-                    "Для подтверждения смены пароля перейдите по ссылке http://localhost/login/change-password/"
-                    + hash + "\nЕсли вы не инициировали это действие, возможно, ваша учетная запись была " +
-                    "взломана. \nПожалуйста, свяжитесь с администрацией сайта developerspublics.ru\n\nС уважением,\n" +
-                    "администрация сайта developerspublics.ru";
-
-            message.setContent(htmlMsg, "text/html");
-
-            this.emailSender.send(message);
+            emailSender.send(message);
         }
         catch (Exception e) {
+            e.printStackTrace();
             result = false;
         }
         return result;
@@ -240,22 +233,12 @@ public class UserService implements UserDetailsService {
         String path = user.getPhoto();
         user.setPhoto("");
         userRepository.save(user);
-        //TODO удалить файл с сервера!
-        File avatar = new File(new URI("localhost:8080" + path));
+        File avatar = new File(path);
         if (avatar.delete()) System.out.println("avatar deleted");
     }
 
     @SneakyThrows
-    public void changeUserPhoto(User user, InputStream inputStream) {
-        String path = "localhost:8080" + user.getPhoto();
-        //подключаемся к серверу
-        HttpURLConnection httpConn = (HttpURLConnection) new URL(path).openConnection();
-        httpConn.setUseCaches(false);
-        httpConn.setDoOutput(true);
-        httpConn.setDoInput(true);
-        //открываем стрим
-        OutputStream outputStream = httpConn.getOutputStream();
-
+    private void changeUserPhoto(String path, String name, InputStream inputStream) {
         //сжимаем до 36*36 пикс
         int newWidth = 36;
         int newHeight = 36;
@@ -270,39 +253,54 @@ public class UserService implements UserDetailsService {
         int height = newHeight * smartStep;
 
         //Получаем промежуточное изображение
-        BufferedImage imageXStep = Scalr.resize(image, Scalr.Method.SPEED,
+        BufferedImage imageXStep = Scalr.resize(image, Scalr.Method.SPEED, Scalr.Mode.FIT_EXACT,
                 width, height, null);
+        imageXStep.flush();
 
         //Задаем окончательные размеры и плавно сжимаем
         BufferedImage newImage = Scalr.resize(imageXStep, Scalr.Method.ULTRA_QUALITY,
                 newWidth, newHeight, null);
+        newImage.flush();
 
-        //Записываем результат в файл
-        ImageIO.write(newImage, "jpg", outputStream);
+        //скидываем на сервер
+        File folder = new File(path);
+        if (!folder.exists()) folder.mkdirs();
 
-        //сохраняемся и разрываем соединение
-        outputStream.flush();
+        File file = new File(folder.getAbsolutePath() + File.separator + name);
+        ImageIO.write(newImage, "jpg", file);
+
+        //закрываем стрим
         inputStream.close();
-        httpConn.disconnect();
     }
 
-    public String saveAvatar(User user, InputStream inputStream) { //TODO
+    public String saveAvatar(User user, InputStream inputStream) { //TODO защита от дубля хеша!!!!!
         //считаем хэш
-        String hashString = Integer.toString(user.hashCode());
+        String hashString = Long.toString(user.userHashCode());
 
         //разбиваем хэш на 4 части
         String[] hash = new String[4];
-        hash[0] = hashString.substring(0, 1);
-        hash[1] = hashString.substring(2, 3);
-        hash[2] = hashString.substring(4, 5);
+        hash[0] = hashString.substring(0, 2);
+        hash[1] = hashString.substring(2, 4);
+        hash[2] = hashString.substring(4, 6);
         hash[3] = hashString.substring(6);
 
-        String path = "/upload/" + hash[0] + "/" + hash[1] + "/" + hash[2] + "/" + hash[3] + ".jpg";
+        String path = getAvatarPath(hash[0], hash[1], hash[2]);
+        String name = hash[3] + ".jpg";
 
-        user.setPhoto(path);
+        user.setPhoto(path + name);
         userRepository.save(user);
-        changeUserPhoto(user, inputStream);
+        changeUserPhoto(path, name, inputStream);
 
         return path;
+    }
+
+    @SneakyThrows
+    public Resource getAvatar(String a, String b, String c, String name) {
+        return new FileSystemResource(getAvatarPath(a, b, c) + name);
+    }
+
+    public String getAvatarPath(String a, String b, String c) {
+        return File.separator + "upload" + File.separator + a +
+                File.separator + b + File.separator + c + File.separator;
     }
 }
