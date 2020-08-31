@@ -11,11 +11,9 @@ import org.springframework.stereotype.Service;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.nio.file.Files;
+import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.*;
-import java.util.List;
 
 
 @Service
@@ -24,31 +22,22 @@ public class CaptchaCodeService {
     @Autowired
     private CaptchaCodesRepository captchaCodesRepository;
 
-    public List<CaptchaCode> getAllCaptchaCodes() {
-        List<CaptchaCode> captchaCodes = new ArrayList<>();
-        for (CaptchaCode captchaCodeDB : captchaCodesRepository.findAll()) {
-            captchaCodes.add(captchaCodeDB);
-        }
-        return captchaCodes;
-    }
+    @Autowired
+    private UserService userService;
 
-    public void saveCaptcha(String code) {
+    public void saveCaptcha(String code, String secretCode) {
         CaptchaCode captchaCode = new CaptchaCode();
         captchaCode.setCode(code);
         captchaCode.setTime(Instant.now().toEpochMilli());
-        captchaCode.setSecretCode(code);
+        captchaCode.setSecretCode(secretCode);
         captchaCodesRepository.save(captchaCode);
     }
 
     public void deleteOldCaptcha(long captchaLifeTime) {
-        long timestampLifeTime = Instant.now().toEpochMilli() - captchaLifeTime;
-        ArrayList<CaptchaCode> oldCaptchaList = new ArrayList<>();
-        for (CaptchaCode captchaCode : captchaCodesRepository.findAll()) {
-            if (captchaCode.getTimestamp() < timestampLifeTime) {
-                oldCaptchaList.add(captchaCode);
-            }
-        }
-        captchaCodesRepository.deleteAll(oldCaptchaList);
+        captchaCodesRepository.deleteAll(
+                new ArrayList<>(
+                        captchaCodesRepository.findByTimeLessThan(Instant.now().toEpochMilli() - captchaLifeTime))
+        );
     }
 
     @SneakyThrows
@@ -84,21 +73,25 @@ public class CaptchaCodeService {
                 g2dImage.drawString(code.substring(i, i + 1), (int)(fontSize * i * 0.6), (int)(iHeight-fontSize/4));
             }
         }
-        //создаем временный файл в нужном формате
-        File file = new File("target/" + code + ".png");
-        ImageIO.write(biImage, "png", file);
+        //создаем stream в нужном формате
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        ImageIO.write(biImage, "png", stream);
         //кодируем картинку в текст
-        String base64 = Base64.getEncoder().encodeToString(Files.readAllBytes(file.toPath()));
+        String base64 = Base64.getEncoder().encodeToString(stream.toByteArray());
         //убираем мусор
-        file.delete();
         g2dImage.dispose();
 
         //сохраняем капчу в репозиторий
-        saveCaptcha(code);
+        String secretCode = userService.encodePassword(code);
+        saveCaptcha(code, secretCode);
 
-        result.put("code", code);
+        result.put("secretCode", secretCode);
         result.put("base64", base64);
 
         return result;
+    }
+
+    public CaptchaCode getCaptchaCodeByCodeAndSecret(String code, String secretCode) {
+        return captchaCodesRepository.findByCodeAndSecretCode(code, secretCode);
     }
 }

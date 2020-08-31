@@ -2,7 +2,7 @@ package main.com.skillbox.ru.developerspublics.rest;
 
 
 import lombok.SneakyThrows;
-import main.com.skillbox.ru.developerspublics.init.*;
+import main.com.skillbox.ru.developerspublics.api.response.BlogInfo;
 import main.com.skillbox.ru.developerspublics.model.entity.*;
 import main.com.skillbox.ru.developerspublics.model.enums.*;
 import main.com.skillbox.ru.developerspublics.service.*;

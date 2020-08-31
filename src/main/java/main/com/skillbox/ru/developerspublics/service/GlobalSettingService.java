@@ -17,20 +17,11 @@ public class GlobalSettingService {
     private GlobalSettingsRepository globalSettingsRepository;
 
     public List<GlobalSetting> getAllGlobalSettings() {
-        List<GlobalSetting> globalSettings = new ArrayList<>();
-        for (GlobalSetting globalSettingDB : globalSettingsRepository.findAll()) {
-            globalSettings.add(globalSettingDB);
-        }
-        return globalSettings;
+        return new ArrayList<>(globalSettingsRepository.findAll());
     }
 
     public GlobalSetting findGlobalSettingByCode(String code) {
-        for (GlobalSetting globalSetting : globalSettingsRepository.findAll()) {
-            if (globalSetting.getCode().equals(code)) {
-                return globalSetting;
-            }
-        }
-        return null;
+        return globalSettingsRepository.findGlobalSettingByCode(code);
     }
 
     public void initGlobalSettings() {

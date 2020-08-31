@@ -1,5 +1,7 @@
 package main.com.skillbox.ru.developerspublics.service;
 
+import main.com.skillbox.ru.developerspublics.api.response.PostCommentResponse;
+import main.com.skillbox.ru.developerspublics.api.response.UserIdNamePhotoResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.PostComment;
 import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
@@ -7,7 +9,6 @@ import main.com.skillbox.ru.developerspublics.repository.PostCommentsRepository;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,17 +25,8 @@ public class PostCommentService {
     @Autowired
     private UserService userService;
 
-    public List<PostComment> getInitPostComments() {
-        List<PostComment> postComments = new ArrayList<>();
-        for (PostComment postCommentDB : postCommentsRepository.findAll()) {
-            initPostComment(postCommentDB);
-            postComments.add(postCommentDB);
-        }
-        return postComments;
-    }
-
-    public List<PostComment> getPostComments() {
-        return new ArrayList<>(postCommentsRepository.findAll());
+    public List<PostComment> getPostCommentsByPostId(int postId) {
+        return postCommentsRepository.findByPostId(postId);
     }
 
     public PostComment getInitPostCommentById(int id) {
@@ -52,21 +44,36 @@ public class PostCommentService {
         return null;
     }
 
-    public JSONObject postCommentToJSON(PostComment postComment) {
-        JSONObject jsonObject = new JSONObject();
+    public List<PostCommentResponse> getPostCommentResponseList(List<PostComment> postComments) {
+        List<PostCommentResponse> list = new ArrayList<>();
+        for (PostComment postComment : postComments) {
+            User commentUser = getCommentUser(postComment);
+            list.add(new PostCommentResponse(
+                    postComment.getId(),
+                    postComment.getTimestamp(),
+                    postComment.getText(),
+                    new UserIdNamePhotoResponse(
+                            commentUser.getId(),
+                            commentUser.getName(),
+                            commentUser.getPhoto()
+                    )
+            ));
+        }
+        return list;
+    }
 
-        jsonObject.put("id", postComment.getId());
-        jsonObject.put("timestamp", postComment.getTimestamp());
-        jsonObject.put("text", postComment.getText());
-
-        JSONObject user = new JSONObject();
+    public PostCommentResponse postCommentToJSON(PostComment postComment) {
         User commentUser = getCommentUser(postComment);
-        user.put("id", commentUser.getId());
-        user.put("name", commentUser.getName());
-        user.put("photo", commentUser.getPhoto());
-
-        jsonObject.put("user", user);
-        return jsonObject;
+        return new PostCommentResponse(
+                postComment.getId(),
+                postComment.getTimestamp(),
+                postComment.getText(),
+                new UserIdNamePhotoResponse(
+                        commentUser.getId(),
+                        commentUser.getName(),
+                        commentUser.getPhoto()
+                )
+        );
     }
 
     private void initPostComment(PostComment postComment) {

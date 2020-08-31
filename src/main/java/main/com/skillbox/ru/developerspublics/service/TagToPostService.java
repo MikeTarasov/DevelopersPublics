@@ -25,18 +25,18 @@ public class TagToPostService {
     @Autowired
     private TagService tagService;
 
-    public List<TagToPost> getInitTagToPosts() {
-        List<TagToPost> tagToPosts = new ArrayList<>();
-        for (TagToPost tagToPostDB : tagToPostsRepository.findAll()) {
-            initTagToPost(tagToPostDB);
-            tagToPosts.add(tagToPostDB);
-        }
-        return tagToPosts;
+
+    public List<TagToPost> getTagToPostsByTagName(String tagName) {
+        return tagToPostsRepository.findByTagId(tagService.getTagByName(tagName).getId());
     }
 
-    public List<TagToPost> getTagToPosts() {
-        return new ArrayList<>(tagToPostsRepository.findAll());
+    public List<TagToPost> getTagToPostsByPostId(int postId) {
+        return tagToPostsRepository.findByPostId(postId);
     }
+
+//    public List<TagToPost> getTagToPosts() {
+//        return new ArrayList<>(tagToPostsRepository.findAll());
+//    }
 
     public TagToPost getInitTagToPostById(int id) {
         Optional<TagToPost> optionalTagToPost = tagToPostsRepository.findById(id);
@@ -46,10 +46,6 @@ public class TagToPostService {
             return tagToPost;
         }
         return null;
-    }
-
-    public TagToPost getTagToPostById(int id) {
-        return tagToPostsRepository.findById(id).orElseThrow();
     }
 
     private void initTagToPost(@NonNull TagToPost tagToPost) {
@@ -67,10 +63,7 @@ public class TagToPostService {
 
     public void saveTagToPost(int postId, int tagId) {
         //проверим на уникальность
-        TagToPost tagToPost = null;
-        for (TagToPost tagToPostDB : tagToPostsRepository.findAll()) {
-            if (tagToPostDB.getPostId() == postId && tagToPostDB.getTagId() == tagId) tagToPost = tagToPostDB;
-        }
+        TagToPost tagToPost = tagToPostsRepository.findByPostIdAndTagId(postId, tagId);
 
         if (tagToPost == null) {
             tagToPost = new TagToPost();

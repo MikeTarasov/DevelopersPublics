@@ -2,9 +2,10 @@ package main.com.skillbox.ru.developerspublics.service;
 
 
 import lombok.SneakyThrows;
+import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ResultUserResponse;
+import main.com.skillbox.ru.developerspublics.api.response.UserResponse;
 import main.com.skillbox.ru.developerspublics.model.Role;
-import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
-import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.repository.UsersRepository;
 import org.imgscalr.Scalr;
@@ -34,9 +35,6 @@ public class UserService implements UserDetailsService {
     private UsersRepository userRepository;
 
     @Autowired
-    private PostService postService;
-
-    @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
@@ -48,13 +46,8 @@ public class UserService implements UserDetailsService {
 
 
     @Override
-    public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
-        User user = null;
-        for (User userDB : userRepository.findAll()) {
-            if (userDB.getUsername().equals(login)) {
-                user = userDB;
-            }
-        }
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = findUserByLogin(email);
 
         if (user == null) throw new UsernameNotFoundException("User not found");
 
@@ -70,35 +63,23 @@ public class UserService implements UserDetailsService {
         );
     }
 
-    public User findUserByLogin(String login) {
-        //ищем в БД
-        for (User user : userRepository.findAll()) {
-            if (user.getEmail().equals(login)) {
-                return user;
-            }
-        }
-        //если не нашли - возвращаем null
-        return null;
+    public User findUserByLogin(String email) {
+        return userRepository.findUserByEmail(email);
     }
 
     public User getUserById(int id) {
         return userRepository.findById(id).orElseGet(User::new);
     }
 
-    public List<User> allUsers() {
-        List<User> users = new ArrayList<>();
-        for (User user : userRepository.findAll()) {
-            users.add(user);
-        }
-        return users;
-    }
+//    public List<User> allUsers() {
+//        return new ArrayList<>(userRepository.findAll());
+//    }
 
     public boolean isPasswordCorrect(User user, String password) {
         return bCryptPasswordEncoder.matches(password, user.getPassword());
     }
 
     public boolean saveUser(User user) {
-        System.out.print("saveUser");
         //ищем пользователя в БД
         User userFromDB = null;
         if (userRepository.findById(user.getId()).isPresent()) {
@@ -116,7 +97,7 @@ public class UserService implements UserDetailsService {
         return true;
     }
 
-    public Object encodePassword(String password) {
+    public String encodePassword(String password) {
         return bCryptPasswordEncoder.encode(password);
     }
 
@@ -138,15 +119,7 @@ public class UserService implements UserDetailsService {
     }
 
     public int getModerationCount(User user) {
-        int moderationCount = 0;
-        if (user.getIsModerator() == 1) {
-            for (Post post : postService.getPosts()) {
-                if (post.getModerationStatus().equals(ModerationStatuses.NEW.toString())) {
-                    moderationCount++;
-                }
-            }
-        }
-        return moderationCount;
+        return user.getIsModerator() == 1 ? userRepository.getModerationCount() : 0;
     }
 
     public boolean sendEmail(User user) {
@@ -196,19 +169,7 @@ public class UserService implements UserDetailsService {
     }
 
     public boolean isCorrectUserName(String name) {
-        return name.replaceAll("[0-9a-zA-Zа-яА-ЯёЁ]", "").equals("") &&
-                !name.equals("") && name.length() > 3;
-    }
-
-    public boolean isEmailExist(String email) {
-        boolean isEmailExist = false;
-        for (User user : userRepository.findAll()) {
-            if (user.getEmail().equals(email)) {
-                isEmailExist = true;
-                break;
-            }
-        }
-        return isEmailExist;
+        return name.length() > 3 && name.length() < 30;
     }
 
     public void changeUserPassword(User user, String newPassword) {
@@ -220,7 +181,7 @@ public class UserService implements UserDetailsService {
     }
 
     public boolean changeUserEmail(User user, String email) {
-        boolean isEmailNotExist = !isEmailExist(email);
+        boolean isEmailNotExist = findUserByLogin(email) == null;
         if (isEmailNotExist) {
             user.setEmail(email);
             userRepository.save(user);
@@ -302,5 +263,23 @@ public class UserService implements UserDetailsService {
     public String getAvatarPath(String a, String b, String c) {
         return File.separator + "upload" + File.separator + a +
                 File.separator + b + File.separator + c + File.separator;
+    }
+
+    public ResultUserResponse getResultUserResponse(User user) {
+        return new ResultUserResponse(
+                new ResultResponse(true),
+                new UserResponse(
+                        user.getId(),
+                        user.getName(),
+                        user.getPhoto(), user.getEmail(),
+                        user.getIsModerator() == 1,
+                        getModerationCount(user),
+                        user.getIsModerator() == 1
+                )
+        );
+    }
+
+    public User getUserByCode(String code) {
+        return userRepository.findByCode(code);
     }
 }

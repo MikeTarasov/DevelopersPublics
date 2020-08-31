@@ -230,17 +230,14 @@ public class ApiPostController
         JSONObject response = new JSONObject();
         ArrayList<Post> posts = new ArrayList<>();
 
-        //перебираем таблицу тэг-пост
-        for (TagToPost tagToPost : tagToPostService.getInitTagToPosts()) {
-            //ищем теги по наименованию
-            if (tagToPost.getTagPost().getName().equals(tagName)) {
-                //находим пост по id
-                Post post = postService.getInitPostById(tagToPost.getPostId());
-                //проверяем на активность
-                if (postService.isPostActive(post)) {
-                    //и запоминаем
-                    posts.add(post);
-                }
+        //получаем список тэг-пост для тега по имени тэга
+        for (TagToPost tagToPost : tagToPostService.getTagToPostsByTagName(tagName)) {
+            //находим пост по id
+            Post post = postService.getInitPostById(tagToPost.getPostId());
+            //проверяем на активность
+            if (postService.isPostActive(post)) {
+                //и запоминаем
+                posts.add(post);
             }
         }
 

@@ -1,9 +1,14 @@
 package main.com.skillbox.ru.developerspublics.repository;
 
 import main.com.skillbox.ru.developerspublics.model.entity.CaptchaCode;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
-public interface CaptchaCodesRepository extends CrudRepository<CaptchaCode, Integer> {
+public interface CaptchaCodesRepository extends JpaRepository<CaptchaCode, Integer> {
+    List<CaptchaCode> findByTimeLessThan(long time);
+
+    CaptchaCode findByCodeAndSecretCode(String code, String secretCode);
 }

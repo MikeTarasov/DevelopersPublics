@@ -1,11 +1,10 @@
 package main.com.skillbox.ru.developerspublics.service;
 
-import main.com.skillbox.ru.developerspublics.model.entity.Post;
+import main.com.skillbox.ru.developerspublics.api.response.TagResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
 
 import main.com.skillbox.ru.developerspublics.repository.TagsRepository;
-import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +26,10 @@ public class TagService {
     @Autowired
     private TagToPostService tagToPostService;
 
+    public Tag getTagByName(String tagName) {
+        return tagsRepository.findByName(tagName);
+    }
+
     public Tag getInitTagById(int tagId) {
         Optional<Tag> optionalTag = tagsRepository.findById(tagId);
         if (optionalTag.isPresent()) {
@@ -41,28 +44,19 @@ public class TagService {
         return tagsRepository.findById(tagId).orElseThrow();
     }
 
-    private Tag getTagByName(String name) {
-        for (Tag tagDB : tagsRepository.findAll()) {
-            if (tagDB.getName().equals(name)) {
-                return tagDB;
-            }
-        }
-        return null;
-    }
-
-    public List<Tag> getInitTags() {
-        List<Tag> tags = new ArrayList<>();
-        for (Tag tagDB : tagsRepository.findAll()) {
-            tagDB.setTagToPosts(getTagToPost(tagDB));
-            tags.add(tagDB);
-        }
-        if (weightMap == null) setWeights();
-        return tags;
-    }
-
-    public List<Tag> getTags() {
-        return new ArrayList<>(tagsRepository.findAll());
-    }
+//    public List<Tag> getInitTags() {
+//        List<Tag> tags = new ArrayList<>();
+//        for (Tag tagDB : tagsRepository.findAll()) {
+//            tagDB.setTagToPosts(getTagToPost(tagDB));
+//            tags.add(tagDB);
+//        }
+//        if (weightMap == null) setWeights();
+//        return tags;
+//    }
+//
+//    public List<Tag> getTags() {
+//        return new ArrayList<>(tagsRepository.findAll());
+//    }
 
     private void initTag(Tag tag) {
         tag.setTagToPosts(getTagToPost(tag));
@@ -70,13 +64,7 @@ public class TagService {
     }
 
     private List<TagToPost> getTagToPost(Tag tag) {
-        List<TagToPost> tagToPosts = new ArrayList<>();
-        for (TagToPost tagToPostDB : tagToPostService.getInitTagToPosts()) {
-            if (tagToPostDB.getTagId() == tag.getId()) {
-                tagToPosts.add(tagToPostDB);
-            }
-        }
-        return tagToPosts;
+        return tagToPostService.getTagToPostsByTagName(tag.getName());
     }
 
     private float getWeight(Tag tag) {
@@ -86,8 +74,7 @@ public class TagService {
 
     private void setWeights() {
         //считаем кол-во активных постов
-        List<Post> activePosts = postService.getActivePosts();
-        int count = activePosts.size();
+        int count = postService.getActivePosts().size();
         weightMap = new HashMap<>();
 
         //считаем вес тэгов  и ищем мах
@@ -134,11 +121,16 @@ public class TagService {
         setWeights();
     }
 
-    public JSONObject tagToJSON(Tag tag) {  //TODO 5 sec!!!!!!!
+    public TagResponse getTagResponse(Tag tag) {  //TODO 5 sec!!!!!!!
         if (weightMap == null) setWeights();
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", tag.getName());
-        jsonObject.put("weight", getWeight(tag));
-        return jsonObject;
+        return new TagResponse(tag.getName(), getWeight(tag));
+    }
+
+    public List<TagResponse> getTagResponseList(List<String> tagNameList) {
+        List<TagResponse> list = new ArrayList<>();
+        for (String tagName : tagNameList) {
+            list.add(new TagResponse(tagName, 0F));
+        }
+        return list;
     }
 }
