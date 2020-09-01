@@ -73,6 +73,10 @@ public class PostService {
         return activePosts;
     }
 
+    public List<Post> getPostsByUserId(int userId) {
+        return postsRepository.findByUserId(userId);
+    }
+
 //    public List<Post> getInitPosts() {
 //        List<Post> postList = new ArrayList<>();
 //        for (Post postDB : postsRepository.findAll()) {
@@ -92,9 +96,9 @@ public class PostService {
                 && post.getTimestamp() <= (System.currentTimeMillis() / 1000);
     }
 
-//    public List<Post> getPosts() {
-//        return new ArrayList<>(postsRepository.findAll());
-//    }
+    public List<Post> getPosts() {
+        return new ArrayList<>(postsRepository.findAll());
+    }
 
     private void initPost(Post post) {
         if (post.getModeratorId() != null) {

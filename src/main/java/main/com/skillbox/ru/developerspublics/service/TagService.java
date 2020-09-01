@@ -54,9 +54,9 @@ public class TagService {
 //        return tags;
 //    }
 //
-//    public List<Tag> getTags() {
-//        return new ArrayList<>(tagsRepository.findAll());
-//    }
+    public List<Tag> getTags() {
+        return new ArrayList<>(tagsRepository.findAll());
+    }
 
     private void initTag(Tag tag) {
         tag.setTagToPosts(getTagToPost(tag));

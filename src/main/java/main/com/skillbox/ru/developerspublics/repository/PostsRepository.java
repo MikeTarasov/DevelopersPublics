@@ -12,4 +12,6 @@ public interface PostsRepository extends JpaRepository<Post, Integer> {
     Post findByTitle(String title);
 
     List<Post> findByIsActiveAndModerationStatus(int isActive, String moderationStatus);
+
+    List<Post> findByUserId(int userId);
 }
