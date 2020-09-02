@@ -2,6 +2,12 @@ package main.com.skillbox.ru.developerspublics.rest;
 
 
 import lombok.SneakyThrows;
+import main.com.skillbox.ru.developerspublics.api.request.RequestApiPostLike;
+import main.com.skillbox.ru.developerspublics.api.request.RequestPosPutApiPost;
+import main.com.skillbox.ru.developerspublics.api.response.ApiPostResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ErrorsResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ResultFalseErrorsResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
 import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
 import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
@@ -10,9 +16,6 @@ import main.com.skillbox.ru.developerspublics.service.PostService;
 import main.com.skillbox.ru.developerspublics.service.PostVoteService;
 import main.com.skillbox.ru.developerspublics.service.TagToPostService;
 import main.com.skillbox.ru.developerspublics.service.UserService;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,7 +51,7 @@ public class ApiPostController
     //GET /api/post/
     @SneakyThrows
     @GetMapping("")
-    public JSONObject getApiPost(@RequestParam(name = "offset") int offset,
+    public ResponseEntity<?> getApiPost(@RequestParam(name = "offset") int offset,
                            @RequestParam(name = "limit") int limit,
                            @RequestParam(name = "mode") String mode) {
         //получаем значения параметров из заголовка:
@@ -64,26 +67,21 @@ public class ApiPostController
         //  moderation_status = ACCEPTED
         //  посты с датой публикации не позднее текущего момента
 
-        //создаем пустой ответ
-        JSONObject response = new JSONObject();
-
         //запоминаем активные посты
         List<Post> posts = postService.getActivePosts();
 
         //собираем ответ
-        response.put("count", posts.size());
-        //сортируем -> обрезаем -> переносим в список ответа
-        response.put("posts", postService.responsePosts(posts, offset, limit, mode));
-        // и возвращаем его
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
+                posts.size(),
+                postService.responsePosts(posts, offset, limit, mode)
+        ));
     }
-
 
 
     //GET /api/post/search/
     @SneakyThrows
     @GetMapping("/search")
-    public JSONObject getApiPostSearch(@RequestParam(name = "offset") int offset,
+    public ResponseEntity<?> getApiPostSearch(@RequestParam(name = "offset") int offset,
                                     @RequestParam(name = "limit") int limit,
                                     @RequestParam(name = "query") String query) {
         //входные параметры:
@@ -97,9 +95,6 @@ public class ApiPostController
         //выходные параметры:
         //  count содержит общее кол-во постов, найденых по переданному в параметре query запросу
         //  posts - список постов по запросу
-
-        //создаем пустой ответ
-        JSONObject response = new JSONObject();
 
         //создадим список активных постов posts
         List<Post> posts = postService.getActivePosts();
@@ -120,18 +115,17 @@ public class ApiPostController
         }
 
         //собираем ответ
-        response.put("count", findPosts.size());
-
-        response.put("posts", postService.responsePosts(findPosts, offset, limit, ""));
-        // и возвращаем его
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
+                findPosts.size(),
+                postService.responsePosts(findPosts, offset, limit, "")
+        ));
     }
 
 
     //GET /api/post/{ID}
     @SneakyThrows
     @GetMapping("/{ID}")
-    public ResponseEntity<JSONObject> getApiPostId(@PathVariable(name = "ID") int id) {
+    public ResponseEntity<?> getApiPostId(@PathVariable(name = "ID") int id) {
         //ищем нужный пост по id
         Post post = postService.getInitPostById(id);
 
@@ -174,7 +168,7 @@ public class ApiPostController
     //GET /api/post/byDate
     @SneakyThrows
     @GetMapping("/byDate")
-    public JSONObject getApiPostByDate(@RequestParam(name = "offset") int offset,
+    public ResponseEntity<?> getApiPostByDate(@RequestParam(name = "offset") int offset,
                                        @RequestParam(name = "limit") int limit,
                                        @RequestParam(name = "date") String date) {
         //входные параметры
@@ -189,7 +183,6 @@ public class ApiPostController
         //  count - кол-во найденных
         //  posts - список постов
 
-        JSONObject response = new JSONObject();
         ArrayList<Post> posts = new ArrayList<>();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -203,16 +196,16 @@ public class ApiPostController
         }
 
         //собираем ответ
-        response.put("count", posts.size());
-        response.put("posts", postService.responsePosts(posts, offset, limit, ""));
-        //и возвращаем его
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
+                posts.size(),
+                postService.responsePosts(posts, offset, limit, "")
+        ));
     }
 
     //GET /api/post/byTag
     @SneakyThrows
     @GetMapping("/byTag")
-    public JSONObject getApiPostByTag(@RequestParam(name = "offset") int offset,
+    public ResponseEntity<?> getApiPostByTag(@RequestParam(name = "offset") int offset,
                                       @RequestParam(name = "limit") int limit,
                                       @RequestParam(name = "tag") String tagName) {
         //входные параметры
@@ -227,7 +220,6 @@ public class ApiPostController
         //  count - кол-во найденных
         //  posts - список постов
 
-        JSONObject response = new JSONObject();
         ArrayList<Post> posts = new ArrayList<>();
 
         //получаем список тэг-пост для тега по имени тэга
@@ -242,35 +234,35 @@ public class ApiPostController
         }
 
         //собираем ответ
-        response.put("count", posts.size());
-        response.put("posts", postService.responsePosts(posts, offset, limit, ""));
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
+                posts.size(),
+                postService.responsePosts(posts, offset, limit, "")
+        ));
     }
 
     //GET /api/post/moderation
     @Secured(MODERATOR)
     @GetMapping("/moderation")
-    public JSONObject getApiPostModeration(@RequestParam(name = "offset") int offset,
+    public ResponseEntity<?> getApiPostModeration(@RequestParam(name = "offset") int offset,
                                            @RequestParam(name = "limit") int limit,
                                            @RequestParam(name = "status") String status) {
-        JSONObject response = new JSONObject();
-
         //выдергиваем из контекста пользователя
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = userService.findUserByLogin(authentication.getName());
 
+        status = status.toUpperCase();
+
         //получим список постов
         List<Post> posts = new ArrayList<>();
-        for (Post post : postService.getInitPosts()) {
+        for (Post post : postService.getPostsByModerationStatus(status)) {
             //отбираем активные посты с нужным статусом:
             //NEW - выводим все
             //ACCEPTED-DECLINED -> выводим только для текущего пользователя
             if (post.getIsActive() == 1) {
-                if (status.equals(ModerationStatuses.NEW.getStatus()) &&
-                        post.getModerationStatus().equals(ModerationStatuses.NEW.toString())) {
+                if (status.equals(ModerationStatuses.NEW.toString())) {
                     posts.add(post);
                 }
-                else if (post.getModeratorId() != null && post.getModerationStatus().equals(status.toUpperCase())) {
+                else if (post.getModeratorId() != null) {
                     if (post.getModeratorId() == user.getId()) {
                         posts.add(post);
                     }
@@ -279,16 +271,16 @@ public class ApiPostController
         }
 
         //собираем ответ
-        response.put("count", posts.size());
-        response.put("posts", postService.responsePosts(posts, offset, limit, ""));
-
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
+                posts.size(),
+                postService.responsePosts(posts, offset, limit, "")
+        ));
     }
 
     //TODO GET /api/post/my
     @Secured(USER)
     @GetMapping("/my")
-    public JSONObject getApiPostMy(@RequestParam(name = "offset") int offset,
+    public ResponseEntity<?> getApiPostMy(@RequestParam(name = "offset") int offset,
                                    @RequestParam(name = "limit") int limit,
                                    @RequestParam(name = "status") String status) {
         //status - статус модерации:
@@ -297,22 +289,17 @@ public class ApiPostController
         //  declined - отклонённые по итогам модерации (is_active = 1, moderation_status = DECLINED)
         //  published - опубликованные по итогам модерации (is_active = 1, moderation_status = ACCEPTED)
 
-        JSONObject response = new JSONObject();
-
         //выдергиваем из контекста пользователя
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = userService.findUserByLogin(authentication.getName());
 
         //получим список постов
         List<Post> posts = new ArrayList<>();
-        for (Post post : postService.getInitPosts()) {
-            //выбираем посты user
-            if (post.getUserId() == user.getId()) {
-                //в зависимости от статуса добавляем нужные
-                switch (status) {
+        for (Post post : postService.getPostsByUserId(user.getId())) {
+            //в зависимости от статуса добавляем нужные
+            switch (status) {
                     case "inactive" : if (post.getIsActive() == 0)
                         posts.add(post); break;
-
                     case "pending" : if (post.getIsActive() == 1 &&
                                         post.getModerationStatus().equals(ModerationStatuses.NEW.toString()))
                         posts.add(post); break;
@@ -325,70 +312,64 @@ public class ApiPostController
                                         post.getModerationStatus().equals(ModerationStatuses.ACCEPTED.toString()))
                         posts.add(post); break;
                 }
-            }
+
         }
 
         //собираем ответ
-        response.put("count", posts.size());
-        response.put("posts", postService.responsePosts(posts, offset, limit, ""));
-
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
+                posts.size(),
+                postService.responsePosts(posts, offset, limit, "")
+        ));
     }
 
     //POST /api/post
     @Secured(USER)
     @PostMapping("")
-    public JSONObject postApiPost(@RequestBody String requestBody) {
+    public ResponseEntity<?> postApiPost(@RequestBody RequestPosPutApiPost requestBody) {
        return postPutApiPost(requestBody, null);
     }
 
     //PUT /api/post/{ID}
     @Secured(USER)
     @PutMapping("/{ID}")
-    public JSONObject putApiPostId(@RequestBody String requestBody, @PathVariable(name = "ID") int postId) {
+    public ResponseEntity<?> putApiPostId(@RequestBody RequestPosPutApiPost requestBody,
+                                          @PathVariable(name = "ID") int postId) {
         return postPutApiPost(requestBody, postId);
     }
 
     @SneakyThrows
-    private JSONObject postPutApiPost(String requestBody, Integer postId) {
-        JSONObject response = new JSONObject();
-        JSONObject errors = new JSONObject();
-
-        JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
-
-
-        long timestamp = Long.parseLong(request.get("timestamp").toString());
-        int isActive = Integer.parseInt(request.get("active").toString());
-        String title = request.get("title").toString();
-        JSONArray tagsArray = (JSONArray) request.get("tags");
-        String text = request.get("text").toString();
-
-        //получаем список тэгов
-        List<String> tagsNames = new ArrayList<>();
-        tagsArray.forEach(e -> tagsNames.add(e.toString()));
-
+    private ResponseEntity<?> postPutApiPost(RequestPosPutApiPost requestBody, Integer postId) {
         //актуализируем время
+        long timestamp = requestBody.getTimestamp();
         if (timestamp < System.currentTimeMillis()) {
             timestamp = System.currentTimeMillis();
         }
 
         //заголовок не короче 3х символов
-        if (title.length() < 3) errors.put("title", "Заголовок не установлен");
+        String title = requestBody.getTitle();
+        if (title.length() < 3)
+            return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResultFalseErrorsResponse(
+                        new ResultResponse(false),
+                        ErrorsResponse.builder().title("Заголовок не установлен").build()
+                ));
 
         //текст не короче 50ти символов
-        if (text.length() < 50) errors.put("text", "Текст публикации слишком короткий");
+        String text = requestBody.getText();
+        if (text.length() < 50)
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ResultFalseErrorsResponse(
+                            new ResultResponse(false),
+                            ErrorsResponse.builder().text("Текст публикации слишком короткий").build()
+                    ));
 
-        //если есть ошибки - возвращаем их
-        if (errors.size() != 0) {
-            response.put("result", false);
-            response.put("errors", errors);
-            return response;
-        }
 
         //ошибок нет - добавляем пост
         int userId = userService
                 .findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName())
                 .getId();
+        int isActive = requestBody.getActive();
+        List<String> tagsNames = requestBody.getTags();
 
         //POST /api/post  -> postId = null -> создаем новый
         //PUT /api/post/{ID}  -> postId != null -> изменяем
@@ -396,40 +377,37 @@ public class ApiPostController
             postService.savePost(timestamp, isActive, title, text, userId, tagsNames);
         }
         else postService.editPost(postId, timestamp, isActive, title, text, userId, tagsNames);
+
         //возвращаем ответ
-        response.put("result", true);
-        return response;
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResultResponse(true));
     }
 
     //POST /api/post/like
     @Secured(USER)
     @PostMapping("/like")
-    public JSONObject postApiPostLike(@RequestBody String requestBody) {
+    public ResponseEntity<?> postApiPostLike(@RequestBody RequestApiPostLike requestBody) {
         return postApiPostLikeDislike(requestBody, 1);
     }
 
     //POST /api/post/dislike
     @Secured(USER)
     @PostMapping("/dislike")
-    public JSONObject postApiPostDislike(@RequestBody String requestBody) {
+    public ResponseEntity<?> postApiPostDislike(@RequestBody RequestApiPostLike requestBody) {
         return postApiPostLikeDislike(requestBody, -1);
     }
 
     @SneakyThrows
-    private JSONObject postApiPostLikeDislike(String requestBody, int value) {
-        JSONObject response = new JSONObject();
-
+    private ResponseEntity<?> postApiPostLikeDislike(RequestApiPostLike requestBody, int value) {
         //из запроса достаем ИД поста
-        JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
-        int postId = Integer.parseInt(request.get("post_id").toString());
+        int postId = requestBody.getPostId();
 
         //из контекста достаем пользователя
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = userService.findUserByLogin(authentication.getName());
 
         //пробуем поставить оценку - результат помещаем в ответ
-        response.put("result", postVoteService.setLikeDislike(postId, user.getId(), value));
-
-        return response;
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResultResponse(postVoteService.setLikeDislike(postId, user.getId(), value)));
     }
 }

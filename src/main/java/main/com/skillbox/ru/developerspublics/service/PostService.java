@@ -77,6 +77,10 @@ public class PostService {
         return postsRepository.findByUserId(userId);
     }
 
+    public List<Post> getPostsByModerationStatus(String moderationStatus) {
+        return postsRepository.findByModerationStatus(moderationStatus);
+    }
+
 //    public List<Post> getInitPosts() {
 //        List<Post> postList = new ArrayList<>();
 //        for (Post postDB : postsRepository.findAll()) {

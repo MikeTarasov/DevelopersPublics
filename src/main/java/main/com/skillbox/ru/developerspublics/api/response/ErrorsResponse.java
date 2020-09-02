@@ -1,14 +1,28 @@
 package main.com.skillbox.ru.developerspublics.api.response;
 
 
-public class ErrorsApiAuth {
-    String code;
-    String password;
-    String captcha;
-    String email;
-    String name;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
-    public ErrorsApiAuth(boolean isCodeCorrect,
+
+@AllArgsConstructor
+@Builder(toBuilder = true)
+public class ErrorsResponse {
+    private String text;
+    private String code;
+    private String password;
+    private String captcha;
+    private String email;
+    private String name;
+    private String user;
+    private String photo;
+    private String title;
+
+    public ErrorsResponse(String text) {
+        this.text = "Текст комментария не задан или слишком короткий";
+    }
+
+    public ErrorsResponse(boolean isCodeCorrect,
                          boolean isPasswordCorrect,
                          boolean isCaptchaCorrect,
                          boolean isEmailExist,

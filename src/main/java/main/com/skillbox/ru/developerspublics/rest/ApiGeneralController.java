@@ -88,10 +88,11 @@ public class ApiGeneralController
 
         //test text
         if (text.length() < 3)
-            return new ResponseEntity<>(new FalseApiCommentResponse(
-                    new ResultResponse(false),
-                    new ErrorApiCommentResponse()
-            ), HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ResultFalseErrorsResponse(
+                            new ResultResponse(false),
+                            new ErrorsResponse("text"))
+                    );
 
         //ошибок нет - сохраняем
         int commentId = postCommentService.saveComment(parentId, postId, user.getId(), text);
@@ -231,27 +232,27 @@ public class ApiGeneralController
         User user = userService.findUserByLogin(authentication.getName());
 
         if (user == null) {
-            return new ResponseEntity<>(new FalseApiProfileMy(
+            return new ResponseEntity<>(new ResultFalseErrorsResponse(
                     new ResultResponse(false),
-                    ErrorsApiProfileMy.builder().user("Пользователь не найден!").build()),
+                    ErrorsResponse.builder().user("Пользователь не найден!").build()),
                     HttpStatus.OK);
         }
 
         //проверяем изменение имени
         if (!user.getName().equals(name)) {
             if (!userService.changeUserName(user, name))
-                return new ResponseEntity<>(new FalseApiProfileMy(
+                return new ResponseEntity<>(new ResultFalseErrorsResponse(
                         new ResultResponse(false),
-                        ErrorsApiProfileMy.builder().name("Имя указано неверно").build()
+                        ErrorsResponse.builder().name("Имя указано неверно").build()
                 ), HttpStatus.OK);
         }
 
         //проверяем изменение e-mail
         if (!user.getEmail().equals(email)) {
             if (!userService.changeUserEmail(user, email))
-                return new ResponseEntity<>(new FalseApiProfileMy(
+                return new ResponseEntity<>(new ResultFalseErrorsResponse(
                         new ResultResponse(false),
-                        ErrorsApiProfileMy.builder().email("Этот e-mail уже зарегистрирован").build()
+                        ErrorsResponse.builder().email("Этот e-mail уже зарегистрирован").build()
                 ), HttpStatus.OK);
         }
 
@@ -261,9 +262,9 @@ public class ApiGeneralController
                 userService.changeUserPassword(user, password);
             }
             else
-                return new ResponseEntity<>(new FalseApiProfileMy(
+                return new ResponseEntity<>(new ResultFalseErrorsResponse(
                     new ResultResponse(false),
-                    ErrorsApiProfileMy.builder().password("Пароль короче 6-ти символов").build()), HttpStatus.OK);
+                    ErrorsResponse.builder().password("Пароль короче 6-ти символов").build()), HttpStatus.OK);
         }
 
         if (removePhoto != null) {
@@ -279,9 +280,9 @@ public class ApiGeneralController
                     userService.saveAvatar(user, inputStream);
                 }
                 else
-                    return new ResponseEntity<>(new FalseApiProfileMy(
+                    return new ResponseEntity<>(new ResultFalseErrorsResponse(
                             new ResultResponse(false),
-                            ErrorsApiProfileMy.builder().photo("Фото слишком большое, нужно не более 5 Мб").build()),
+                            ErrorsResponse.builder().photo("Фото слишком большое, нужно не более 5 Мб").build()),
                             HttpStatus.OK);
             }
         }

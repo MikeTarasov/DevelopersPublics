@@ -5,10 +5,7 @@ import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthPassword;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRegister;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRestore;
-import main.com.skillbox.ru.developerspublics.api.response.ErrorsApiAuth;
-import main.com.skillbox.ru.developerspublics.api.response.FalseApiAuth;
-import main.com.skillbox.ru.developerspublics.api.response.ResponseApiAuthCaptcha;
-import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
+import main.com.skillbox.ru.developerspublics.api.response.*;
 import main.com.skillbox.ru.developerspublics.config.AuthenticationProviderImpl;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthLogin;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
@@ -159,11 +156,11 @@ public class ApiAuthController
             return new ResponseEntity<>(new ResultResponse(true), HttpStatus.OK);
         }
 
-        return new ResponseEntity<>(new FalseApiAuth(
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResultFalseErrorsResponse(
                 new ResultResponse(false),
-                new ErrorsApiAuth(isCodeCorrect, isPasswordCorrect,isCaptchaCorrect, false, false)
-        ),
-                HttpStatus.OK);
+                new ErrorsResponse(isCodeCorrect, isPasswordCorrect,isCaptchaCorrect, false, false)
+        ));
     }
 
     //POST /api/auth/register
@@ -205,16 +202,11 @@ public class ApiAuthController
         }
 
         //есть ошибки - собираем сообщение об ошибках
-        return new ResponseEntity<>(new FalseApiAuth(
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResultFalseErrorsResponse(
                 new ResultResponse(false),
-                new ErrorsApiAuth(
-                        false,
-                        isPasswordCorrect,
-                        isCaptchaCorrect,
-                        isEmailExist,
-                        isNameWrong
-                )
-        ), HttpStatus.OK);
+                new ErrorsResponse(false, isPasswordCorrect, isCaptchaCorrect, isEmailExist, isNameWrong))
+                );
     }
 
     //GET /api/auth/captcha
