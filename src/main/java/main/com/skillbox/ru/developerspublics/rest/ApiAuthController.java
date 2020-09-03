@@ -14,6 +14,7 @@ import main.com.skillbox.ru.developerspublics.service.PostService;
 import main.com.skillbox.ru.developerspublics.service.UserService;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -26,6 +27,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpSession;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -219,13 +221,14 @@ public class ApiAuthController
 
         //собираем ответ
         return new ResponseEntity<>(
-                new ResponseApiAuthCaptcha(
+                new ApiAuthCaptchaResponse(
                         newCaptcha.get("secretCode").toString(),
                         "data:image/png;base64, " + newCaptcha.get("base64").toString()
                 ), HttpStatus.OK);
     }
 
     //GET /api/auth/logout
+    @SneakyThrows
     @Secured(USER)
     @GetMapping("/logout")
     public ResponseEntity<?> getApiAuthLogout() {
@@ -253,6 +256,12 @@ public class ApiAuthController
             result = true;
         }
 
-        return new ResponseEntity<>(new ResultResponse(result), HttpStatus.OK);
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setLocation(URI.create("/"));
+
+        return ResponseEntity.status(HttpStatus.OK)
+//                .status(HttpStatus.FOUND)
+//                .headers(headers)
+                .body(new ResultResponse(result));
     }
 }

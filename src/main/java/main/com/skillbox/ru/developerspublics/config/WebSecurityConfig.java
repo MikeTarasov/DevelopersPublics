@@ -43,9 +43,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .successForwardUrl("/")
                 .and()
                 .logout()
-                .logoutSuccessUrl("/")  //TODO don't work!!!!
                 .deleteCookies("JSESSIONID")
                 .invalidateHttpSession(true)
+                .logoutSuccessUrl("/")  //TODO don't work!!!!
                 .and()
                 .authorizeRequests()
                 .antMatchers("/v2/api-docs", "/swagger-ui.html").hasRole("MODERATOR")

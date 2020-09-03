@@ -4,12 +4,13 @@ package main.com.skillbox.ru.developerspublics.rest;
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiComment;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiModeration;
-import main.com.skillbox.ru.developerspublics.api.request.RequestApiProfileMy;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiSettings;
 import main.com.skillbox.ru.developerspublics.api.response.*;
 import main.com.skillbox.ru.developerspublics.model.entity.*;
 import main.com.skillbox.ru.developerspublics.model.enums.*;
 import main.com.skillbox.ru.developerspublics.service.*;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -124,7 +125,8 @@ public class ApiGeneralController
         }
 
         //собираем ответ
-        return ResponseEntity.status(HttpStatus.OK).body(tagService.getTagResponseList(tagNames));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new TagsListResponse(tagService.getTagResponseList(tagNames)));
     }
 
     //POST /api/moderation
@@ -206,7 +208,7 @@ public class ApiGeneralController
     @SneakyThrows
     @Secured(USER)
     @PostMapping(value = "/api/profile/my", consumes = {"multipart/form-data", "application/json"})
-    public ResponseEntity<?> postApiProfileMy(@RequestBody(required = false) RequestApiProfileMy requestBody,
+    public ResponseEntity<?> postApiProfileMy(@RequestBody(required = false) String requestBody,
                                        @RequestPart(value = "photo", required = false) MultipartFile avatar,
                                        @RequestPart(value = "email", required = false) String emailMP,
                                        @RequestPart(value = "name", required = false) String nameMP,
@@ -219,12 +221,15 @@ public class ApiGeneralController
         String password = passwordMP;
         String removePhoto = removePhotoMP;
 
+        System.out.println("request Body = " + requestBody);
+
         //else consumes = "application/json"
         if (requestBody != null) {
-            email = requestBody.getEmail();
-            name = requestBody.getName();
-            password = requestBody.getPassword();
-            removePhoto = requestBody.getRemovePhoto();
+            JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
+            if (request.get("email") != null) email = request.get("email").toString();
+            if (request.get("name") != null) name = request.get("name").toString();
+            if (request.get("password") != null) password = request.get("password").toString();
+            if (request.get("removePhoto") != null) removePhoto = request.get("removePhoto").toString();
         }
 
         //получаем user
@@ -294,7 +299,7 @@ public class ApiGeneralController
     @SneakyThrows
     @Secured(USER)
     @PostMapping(value = "/api/image", consumes = {"multipart/form-data"})
-    public @ResponseBody String postApiImage(@RequestPart("image") MultipartFile avatar) {
+    public @ResponseBody ResponseEntity<?> postApiImage(@RequestPart("image") MultipartFile avatar) {
         //получаем пользователя
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = userService.findUserByLogin(authentication.getName());
@@ -306,7 +311,7 @@ public class ApiGeneralController
             path = userService.saveAvatar(user, inputStream);
         }
 
-        return path;
+        return ResponseEntity.status(HttpStatus.OK).body(path);
     }
 
     //GET /api/statistics/my

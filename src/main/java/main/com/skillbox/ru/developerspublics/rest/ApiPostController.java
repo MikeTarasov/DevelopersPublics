@@ -3,7 +3,7 @@ package main.com.skillbox.ru.developerspublics.rest;
 
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiPostLike;
-import main.com.skillbox.ru.developerspublics.api.request.RequestPosPutApiPost;
+import main.com.skillbox.ru.developerspublics.api.request.RequestPostPutApiPost;
 import main.com.skillbox.ru.developerspublics.api.response.ApiPostResponse;
 import main.com.skillbox.ru.developerspublics.api.response.ErrorsResponse;
 import main.com.skillbox.ru.developerspublics.api.response.ResultFalseErrorsResponse;
@@ -135,32 +135,29 @@ public class ApiPostController
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = userService.findUserByLogin(authentication.getName());
 
-        boolean isNewView = true;
-        if (user != null && post != null) {
-            if (user.getIsModerator() == 1 || post.getUserId() == user.getId()) isNewView = false;
-        }
+        //если пост не найден - возвращаем 404
+        if (post == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
 
-        //если находим
-        if (post != null) {
-            //проверяем его активность
-            if (postService.isPostActive(post)) {
-                //увеличиваем просмотры
-                if (isNewView) {
-                    postService.incrementViewCount(post);
-                }
-                //собираем ответ и возвращаем его
+        postService.initPost(post);
+
+        //смотрит не аноним
+        if (user != null) {
+            //автор смотрит без условий
+            if (post.getUserId() == user.getId())
                 return ResponseEntity.status(HttpStatus.OK).body(postService.postByIdToJSON(post));
-            }
 
-            //если редактирует модератор - проверяем только дату и isActive
-            if (user != null) {
-                if (user.getIsModerator() == 1 && postService.isPostReadyToEditByModerator(post)) {
-                    //собираем ответ и возвращаем его
-                    return ResponseEntity.status(HttpStatus.OK).body(postService.postByIdToJSON(post));
-                }
-            }
+            //если модератор - проверяем дату и isActive
+            if (user.getIsModerator() == 1 && postService.isPostReadyToEditByModerator(post))
+                return ResponseEntity.status(HttpStatus.OK).body(postService.postByIdToJSON(post));
         }
-        //не нашли или не активен
+
+        //если не автор и не модератор - проверяем активность и плюсуем просмотры
+        if (postService.isPostActive(post)) {
+            postService.incrementViewCount(post);
+            return ResponseEntity.status(HttpStatus.OK).body(postService.postByIdToJSON(post));
+        }
+
+        //посторонний пытается посмотреть не активный пост
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 
@@ -259,6 +256,7 @@ public class ApiPostController
             //NEW - выводим все
             //ACCEPTED-DECLINED -> выводим только для текущего пользователя
             if (post.getIsActive() == 1) {
+                postService.initPost(post);
                 if (status.equals(ModerationStatuses.NEW.toString())) {
                     posts.add(post);
                 }
@@ -277,7 +275,7 @@ public class ApiPostController
         ));
     }
 
-    //TODO GET /api/post/my
+    //GET /api/post/my
     @Secured(USER)
     @GetMapping("/my")
     public ResponseEntity<?> getApiPostMy(@RequestParam(name = "offset") int offset,
@@ -296,6 +294,7 @@ public class ApiPostController
         //получим список постов
         List<Post> posts = new ArrayList<>();
         for (Post post : postService.getPostsByUserId(user.getId())) {
+            postService.initPost(post);
             //в зависимости от статуса добавляем нужные
             switch (status) {
                     case "inactive" : if (post.getIsActive() == 0)
@@ -325,20 +324,22 @@ public class ApiPostController
     //POST /api/post
     @Secured(USER)
     @PostMapping("")
-    public ResponseEntity<?> postApiPost(@RequestBody RequestPosPutApiPost requestBody) {
+    public ResponseEntity<?> postApiPost(@RequestBody RequestPostPutApiPost requestBody) {
        return postPutApiPost(requestBody, null);
     }
 
     //PUT /api/post/{ID}
     @Secured(USER)
     @PutMapping("/{ID}")
-    public ResponseEntity<?> putApiPostId(@RequestBody RequestPosPutApiPost requestBody,
+    public ResponseEntity<?> putApiPostId(@RequestBody RequestPostPutApiPost requestBody,
                                           @PathVariable(name = "ID") int postId) {
+        if (userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName()) == null)
+            return ResponseEntity.status(401).body(null);
         return postPutApiPost(requestBody, postId);
     }
 
     @SneakyThrows
-    private ResponseEntity<?> postPutApiPost(RequestPosPutApiPost requestBody, Integer postId) {
+    private ResponseEntity<?> postPutApiPost(RequestPostPutApiPost requestBody, Integer postId) {
         //актуализируем время
         long timestamp = requestBody.getTimestamp();
         if (timestamp < System.currentTimeMillis()) {
@@ -384,14 +385,12 @@ public class ApiPostController
     }
 
     //POST /api/post/like
-    @Secured(USER)
     @PostMapping("/like")
     public ResponseEntity<?> postApiPostLike(@RequestBody RequestApiPostLike requestBody) {
         return postApiPostLikeDislike(requestBody, 1);
     }
 
     //POST /api/post/dislike
-    @Secured(USER)
     @PostMapping("/dislike")
     public ResponseEntity<?> postApiPostDislike(@RequestBody RequestApiPostLike requestBody) {
         return postApiPostLikeDislike(requestBody, -1);
@@ -403,8 +402,10 @@ public class ApiPostController
         int postId = requestBody.getPostId();
 
         //из контекста достаем пользователя
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = userService.findUserByLogin(authentication.getName());
+        User user = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        // === @Secured(USER) ===
+        if (user == null) return ResponseEntity.status(401).body(null);
 
         //пробуем поставить оценку - результат помещаем в ответ
         return ResponseEntity.status(HttpStatus.OK)

@@ -19,5 +19,5 @@ public class PostByIdResponse {
     int commentCount;
     int viewCount;
     List<PostCommentResponse> comments;
-    List<TagResponse> tags;
+    List<String> tags;
 }

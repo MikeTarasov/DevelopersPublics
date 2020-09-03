@@ -36,7 +36,8 @@ public class CaptchaCodeService {
     public void deleteOldCaptcha(long captchaLifeTime) {
         captchaCodesRepository.deleteAll(
                 new ArrayList<>(
-                        captchaCodesRepository.findByTimeLessThan(Instant.now().toEpochMilli() - captchaLifeTime))
+                        captchaCodesRepository.findByTimeLessThan(
+                                new Date(Instant.now().toEpochMilli() - captchaLifeTime)))
         );
     }
 

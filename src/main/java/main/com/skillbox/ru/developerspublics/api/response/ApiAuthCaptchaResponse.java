@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class ResultFalseErrorsResponse {
-    ResultResponse result;
-    ErrorsResponse errors;
+public class ApiAuthCaptchaResponse {
+    String secret;
+    String image;
 }

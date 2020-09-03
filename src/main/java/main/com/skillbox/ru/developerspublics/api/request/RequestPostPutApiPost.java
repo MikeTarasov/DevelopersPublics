@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class RequestPosPutApiPost {
+public class RequestPostPutApiPost {
     long timestamp;
     int active;
     String title;

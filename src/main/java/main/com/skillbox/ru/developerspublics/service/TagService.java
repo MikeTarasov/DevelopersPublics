@@ -1,6 +1,7 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 import main.com.skillbox.ru.developerspublics.api.response.TagResponse;
+import main.com.skillbox.ru.developerspublics.api.response.TagsListResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
 
@@ -44,16 +45,6 @@ public class TagService {
         return tagsRepository.findById(tagId).orElseThrow();
     }
 
-//    public List<Tag> getInitTags() {
-//        List<Tag> tags = new ArrayList<>();
-//        for (Tag tagDB : tagsRepository.findAll()) {
-//            tagDB.setTagToPosts(getTagToPost(tagDB));
-//            tags.add(tagDB);
-//        }
-//        if (weightMap == null) setWeights();
-//        return tags;
-//    }
-//
     public List<Tag> getTags() {
         return new ArrayList<>(tagsRepository.findAll());
     }
@@ -122,14 +113,14 @@ public class TagService {
     }
 
     public TagResponse getTagResponse(Tag tag) {  //TODO 5 sec!!!!!!!
-        if (weightMap == null) setWeights();
         return new TagResponse(tag.getName(), getWeight(tag));
     }
+
 
     public List<TagResponse> getTagResponseList(List<String> tagNameList) {
         List<TagResponse> list = new ArrayList<>();
         for (String tagName : tagNameList) {
-            list.add(new TagResponse(tagName, 0F));
+            list.add(new TagResponse(tagName, getWeight(getTagByName(tagName))));
         }
         return list;
     }

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 public interface UsersRepository extends JpaRepository<User, Integer> {
     User findUserByEmail(String email);
 
-    @Query(value = "SELECT COUNT(*) FROM posts WHERE moderation_status=NEW", nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) FROM posts WHERE moderation_status='NEW'", nativeQuery = true)
     int getModerationCount();
 
     User findByCode(String code);

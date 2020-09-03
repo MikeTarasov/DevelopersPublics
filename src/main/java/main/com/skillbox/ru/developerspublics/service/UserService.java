@@ -271,7 +271,8 @@ public class UserService implements UserDetailsService {
                 new UserResponse(
                         user.getId(),
                         user.getName(),
-                        user.getPhoto(), user.getEmail(),
+                        user.getPhoto(),
+                        user.getEmail(),
                         user.getIsModerator() == 1,
                         getModerationCount(user),
                         user.getIsModerator() == 1

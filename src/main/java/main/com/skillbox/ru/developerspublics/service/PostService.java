@@ -104,7 +104,7 @@ public class PostService {
         return new ArrayList<>(postsRepository.findAll());
     }
 
-    private void initPost(Post post) {
+    public void initPost(Post post) {
         if (post.getModeratorId() != null) {
             post.setModeratorPost(userService.getUserById(post.getModeratorId()));
         }
@@ -162,7 +162,7 @@ public class PostService {
                 getCommentsCount(post),
                 post.getViewCount(),
                 postCommentService.getPostCommentResponseList(post.getPostComments()),
-                tagService.getTagResponseList(getPostTagsList(post))
+                getPostTagsList(post)
         );
     }
 
