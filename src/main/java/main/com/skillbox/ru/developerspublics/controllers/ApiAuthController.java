@@ -1,7 +1,6 @@
 package main.com.skillbox.ru.developerspublics.controllers;
 
 
-import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthPassword;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRegister;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRestore;
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
-import javax.servlet.http.HttpSession;
 
 
 @RestController
@@ -21,7 +19,6 @@ public class ApiAuthController
 {
     @Autowired
     private CaptchaCodeService captchaCodeService;
-
     @Autowired
     private UserService userService;
 
@@ -29,11 +26,9 @@ public class ApiAuthController
 
 
     //POST /api/auth/login
-    @SneakyThrows
     @PostMapping("/login")
-    public ResponseEntity<?> postApiAuthLogin(@RequestBody RequestApiAuthLogin requestApiAuthLogin,
-                                              HttpSession httpSession) {
-        return userService.postApiAuthLogin(requestApiAuthLogin, httpSession);
+    public ResponseEntity<?> postApiAuthLogin(@RequestBody RequestApiAuthLogin requestApiAuthLogin) {
+        return userService.postApiAuthLogin(requestApiAuthLogin);
     }
 
 
@@ -45,7 +40,6 @@ public class ApiAuthController
 
 
     //POST /api/auth/restore
-    @SneakyThrows
     @PostMapping("/restore")
     public ResponseEntity<?> postApiAuthRestore(@RequestBody RequestApiAuthRestore requestBody) {
         return userService.postApiAuthRestore(requestBody);
@@ -53,7 +47,6 @@ public class ApiAuthController
 
 
     //POST /api/auth/password
-    @SneakyThrows
     @PostMapping("/password")
     public ResponseEntity<?> postApiAuthPassword(@RequestBody RequestApiAuthPassword requestBody) {
         return userService.postApiAuthPassword(requestBody);
@@ -61,7 +54,6 @@ public class ApiAuthController
 
 
     //POST /api/auth/register
-    @SneakyThrows
     @PostMapping("/register")
     public ResponseEntity<?> postApiAuthRegister(@RequestBody RequestApiAuthRegister requestBody) {
         return userService.postApiAuthRegister(requestBody);
@@ -69,7 +61,6 @@ public class ApiAuthController
 
 
     //GET /api/auth/captcha
-    @SneakyThrows
     @GetMapping("/captcha")
     public ResponseEntity<?> getApiAuthCaptcha() {
         return captchaCodeService.getApiAuthCaptcha();
@@ -77,7 +68,6 @@ public class ApiAuthController
 
 
     //GET /api/auth/logout
-    @SneakyThrows
     @Secured(USER)
     @GetMapping("/logout")
     public ResponseEntity<?> getApiAuthLogout() {

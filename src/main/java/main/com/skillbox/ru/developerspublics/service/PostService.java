@@ -1,6 +1,6 @@
 package main.com.skillbox.ru.developerspublics.service;
 
-import lombok.SneakyThrows;
+
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiModeration;
 import main.com.skillbox.ru.developerspublics.api.request.RequestPostPutApiPost;
 import main.com.skillbox.ru.developerspublics.api.response.*;
@@ -17,36 +17,26 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Stream;
 
 
-
 @Service
 public class PostService {
     @Autowired
     private PostsRepository postsRepository;
-
     @Autowired
     private GlobalSettingService globalSettingService;
-
     @Autowired
     private PostCommentService postCommentService;
-
     @Autowired
     private PostVoteService postVoteService;
-
     @Autowired
     private TagService tagService;
-
     @Autowired
     private TagToPostService tagToPostService;
-
     @Autowired
     private UserService userService;
 
@@ -236,7 +226,6 @@ public class PostService {
     }
 
 
-    @SneakyThrows
     public void savePost(long timestamp, int isActive, String title, String text, int userId, List<String> tagsNames) {
         //создаем новый
         Post post = new Post();
@@ -318,7 +307,6 @@ public class PostService {
     }
 
 
-    @SneakyThrows
     private ResponseEntity<?> postPutApiPost(RequestPostPutApiPost requestBody, Integer postId) {
         //актуализируем время
         long timestamp = requestBody.getTimestamp();
@@ -549,6 +537,7 @@ public class PostService {
         ));
     }
 
+
     public ResponseEntity<?> postApiModeration(RequestApiModeration requestBody) {
         boolean hasErrors = false;
         String status = "";
@@ -571,6 +560,7 @@ public class PostService {
         //собираем ответ
         return ResponseEntity.status(HttpStatus.OK).body(new ResultResponse(!hasErrors));
     }
+
 
     public ResponseEntity<?> getApiCalendar(Integer year) {
         //init списка всех годов публикаций

@@ -2,7 +2,6 @@ package main.com.skillbox.ru.developerspublics.model.entity;
 
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
-
 import javax.persistence.*;
 import java.time.Instant;
 import java.util.Date;

@@ -35,10 +35,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.imageio.ImageIO;
 import javax.mail.internet.MimeMessage;
-import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
@@ -46,19 +44,14 @@ import java.util.*;
 
 @Service
 public class UserService implements UserDetailsService {
-
     @Autowired
     private UsersRepository userRepository;
-
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
-
     @Autowired
-    public JavaMailSender emailSender;
-
+    private JavaMailSender emailSender;
     @Autowired
     private AuthenticationProviderImpl authenticationProvider;
-
     @Autowired
     private CaptchaCodeService captchaCodeService;
 
@@ -67,6 +60,9 @@ public class UserService implements UserDetailsService {
 
     @Value("${uploads.path}")
     private String uploadsPath;
+
+    @Value("${uploads.home}")
+    private String uploadsHome;
 
 
     @Override
@@ -87,17 +83,21 @@ public class UserService implements UserDetailsService {
         );
     }
 
+
     public User findUserByLogin(String email) {
         return userRepository.findUserByEmail(email);
     }
+
 
     public User getUserById(int id) {
         return userRepository.findById(id).orElseGet(User::new);
     }
 
+
     public boolean isPasswordCorrect(User user, String password) {
         return bCryptPasswordEncoder.matches(password, user.getPassword());
     }
+
 
     public boolean saveUser(User user) {
         //ищем пользователя в БД
@@ -117,6 +117,7 @@ public class UserService implements UserDetailsService {
         return true;
     }
 
+
     public String encodePassword(String password) {
         return bCryptPasswordEncoder.encode(password);
     }
@@ -126,11 +127,12 @@ public class UserService implements UserDetailsService {
         return user.getIsModerator() == 1 ? userRepository.getModerationCount() : 0;
     }
 
+
     public boolean sendEmail(User user) {
         boolean result = true;
         try {
             String hash = bCryptPasswordEncoder.encode(Long.toString(System.currentTimeMillis()))
-                    .substring(10).toLowerCase();
+                    .substring(10).toLowerCase().replaceAll("\\W", "");
 
             user.setCode(hash);
             userRepository.save(user);
@@ -163,6 +165,7 @@ public class UserService implements UserDetailsService {
         return result;
     }
 
+
     public boolean changeUserName(User user, String newName) {
         boolean isCorrectName = isCorrectUserName(newName);
         if (isCorrectName) {
@@ -172,9 +175,11 @@ public class UserService implements UserDetailsService {
         return isCorrectName;
     }
 
+
     public boolean isCorrectUserName(String name) {
         return name.length() > 3 && name.length() < 30;
     }
+
 
     public void changeUserPassword(User user, String newPassword) {
         String password = bCryptPasswordEncoder.encode(newPassword);
@@ -185,6 +190,7 @@ public class UserService implements UserDetailsService {
         }
     }
 
+
     public boolean changeUserEmail(User user, String email) {
         boolean isEmailNotExist = findUserByLogin(email) == null;
         if (isEmailNotExist) {
@@ -194,7 +200,7 @@ public class UserService implements UserDetailsService {
         return isEmailNotExist;
     }
 
-    @SneakyThrows
+
     public void removePhoto(User user) {
         String path = user.getPhoto();
         user.setPhoto("");
@@ -202,6 +208,7 @@ public class UserService implements UserDetailsService {
         File avatar = new File(path);
         avatar.delete();
     }
+
 
     @SneakyThrows
     private void changeUserPhoto(String path, String name, InputStream inputStream) {
@@ -239,6 +246,7 @@ public class UserService implements UserDetailsService {
         inputStream.close();
     }
 
+
     public String saveAvatar(User user, InputStream inputStream) { //TODO защита от дубля хеша!!!!!
         //считаем хэш
         String hashString = Long.toString(user.userHashCode());
@@ -260,7 +268,7 @@ public class UserService implements UserDetailsService {
         return path;
     }
 
-    @SneakyThrows
+
     public ResponseEntity<?> getAvatar(String a, String b, String c, String name) {
         System.out.println(getAvatarPath(a, b, c) + name);
 
@@ -271,10 +279,12 @@ public class UserService implements UserDetailsService {
         return ResponseEntity.notFound().build();
     }
 
+
     public String getAvatarPath(String a, String b, String c) {
-        return File.separator + uploadsPath + File.separator + a +
+        return File.separator + uploadsHome + File.separator + uploadsPath + File.separator + a +
                 File.separator + b + File.separator + c + File.separator;
     }
+
 
     public ResultUserResponse getResultUserResponse(User user) {
         return new ResultUserResponse(
@@ -290,11 +300,13 @@ public class UserService implements UserDetailsService {
         );
     }
 
+
     public User getUserByCode(String code) {
         return userRepository.findByCode(code);
     }
 
-    public ResponseEntity<?> postApiAuthLogin(RequestApiAuthLogin requestApiAuthLogin, HttpSession httpSession) {
+
+    public ResponseEntity<?> postApiAuthLogin(RequestApiAuthLogin requestApiAuthLogin) {
         //пробуем найти пользователя в БД
         User authUser = findUserByLogin(requestApiAuthLogin.getEmail());
 
@@ -322,6 +334,7 @@ public class UserService implements UserDetailsService {
         return new ResponseEntity<>(getResultUserResponse(authUser), HttpStatus.OK);
     }
 
+
     public ResponseEntity<?> authCheck() {
         //проверяем сохранён ли идентификатор текущей сессии в списке авторизованных
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -343,6 +356,7 @@ public class UserService implements UserDetailsService {
         return new ResponseEntity<>(getResultUserResponse(user), HttpStatus.OK);
     }
 
+
     public ResponseEntity<?> postApiAuthRestore(RequestApiAuthRestore requestBody) {
         //ищем юзера по введенному е-мэйлу
         User user = findUserByLogin(requestBody.getEmail());
@@ -351,6 +365,7 @@ public class UserService implements UserDetailsService {
         //пробуем отправить письмо - результат учитываем в ответе
         return new ResponseEntity<>(new ResultResponse(sendEmail(user)), HttpStatus.OK);
     }
+
 
     public ResponseEntity<?> postApiAuthPassword(RequestApiAuthPassword requestBody) {
         String codeRestore = requestBody.getCode();
@@ -385,6 +400,7 @@ public class UserService implements UserDetailsService {
                         isCodeCorrect, isPasswordCorrect,isCaptchaCorrect, false, false))
                 );
     }
+
 
     public ResponseEntity<?> postApiAuthRegister(RequestApiAuthRegister requestBody) {
         boolean isPasswordCorrect = true;
@@ -427,6 +443,7 @@ public class UserService implements UserDetailsService {
                         false, isPasswordCorrect, isCaptchaCorrect, isEmailExist, isNameWrong))
                 );
     }
+
 
     public ResponseEntity<?> getApiAuthLogout() {
         SecurityContext securityContext = SecurityContextHolder.getContext();

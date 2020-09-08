@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -21,12 +20,11 @@ import java.util.*;
 
 @Service
 public class CaptchaCodeService {
-
     @Autowired
     private CaptchaCodesRepository captchaCodesRepository;
-
     @Autowired
     private UserService userService;
+
 
     public void saveCaptcha(String code, String secretCode) {
         CaptchaCode captchaCode = new CaptchaCode();
@@ -36,6 +34,7 @@ public class CaptchaCodeService {
         captchaCodesRepository.save(captchaCode);
     }
 
+
     public void deleteOldCaptcha(long captchaLifeTime) {
         captchaCodesRepository.deleteAll(
                 new ArrayList<>(
@@ -43,6 +42,7 @@ public class CaptchaCodeService {
                                 new Date(Instant.now().toEpochMilli() - captchaLifeTime)))
         );
     }
+
 
     @SneakyThrows
     public JSONObject createNewCaptcha() {
@@ -96,12 +96,13 @@ public class CaptchaCodeService {
         return result;
     }
 
+
     public CaptchaCode getCaptchaCodeByCodeAndSecret(String code, String secretCode) {
         return captchaCodesRepository.findByCodeAndSecretCode(code, secretCode);
     }
 
+
     public ResponseEntity<?> getApiAuthCaptcha() {
-        //TODO Время устаревания должно быть задано в конфигурации приложения (по умолчанию, 1 час)
         //создадим новую капчу
         JSONObject newCaptcha = createNewCaptcha();
 

@@ -1,7 +1,6 @@
 package main.com.skillbox.ru.developerspublics.controllers;
 
 
-import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiComment;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiModeration;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiSettings;
@@ -21,16 +20,12 @@ public class ApiGeneralController
 {
     @Autowired
     private GlobalSettingService globalSettingService;
-
     @Autowired
     private TagService tagService;
-
     @Autowired
     private PostService postService;
-
     @Autowired
     private UserService userService;
-
     @Autowired
     private PostCommentService postCommentService;
 
@@ -46,7 +41,6 @@ public class ApiGeneralController
 
 
     //POST /api/comment/
-    @SneakyThrows
     @Secured(USER)
     @PostMapping("/api/comment")
     public ResponseEntity<?> postApiComment(@RequestBody RequestApiComment requestBody) {
@@ -55,7 +49,6 @@ public class ApiGeneralController
 
 
     //GET /api/tag/
-    @SneakyThrows
     @GetMapping("/api/tag")
     public ResponseEntity<?> getApiTag(@RequestParam(name = "query", required = false) String query) {
         return tagService.getApiTag(query);
@@ -63,7 +56,6 @@ public class ApiGeneralController
 
 
     //POST /api/moderation
-    @SneakyThrows
     @Secured(MODERATOR)
     @PostMapping("/api/moderation")
     public ResponseEntity<?> postApiModeration(@RequestBody RequestApiModeration requestBody) {
@@ -72,7 +64,6 @@ public class ApiGeneralController
 
 
     //GET /api/calendar
-    @SneakyThrows
     @GetMapping("/api/calendar")
     public ResponseEntity<?> getApiCalendar(@RequestParam(name = "year", required = false) Integer year) {
         return postService.getApiCalendar(year);
@@ -80,7 +71,6 @@ public class ApiGeneralController
 
 
     //POST /api/profile/my
-    @SneakyThrows
     @Secured(USER)
     @PostMapping(value = "/api/profile/my", consumes = {"multipart/form-data", "application/json"})
     public ResponseEntity<?> postApiProfileMy(@RequestBody(required = false) String requestBody,
@@ -94,7 +84,6 @@ public class ApiGeneralController
 
 
     //POST /api/image
-    @SneakyThrows
     @Secured(USER)
     @PostMapping(value = "/api/image", consumes = {"multipart/form-data"})
     public @ResponseBody ResponseEntity<?> postApiImage(@RequestPart("image") MultipartFile avatar) {
@@ -111,7 +100,6 @@ public class ApiGeneralController
 
 
     //GET /api/statistics/all
-    @SneakyThrows
     @GetMapping("/api/statistics/all")
     public ResponseEntity<?> getApiStatisticsAll() {
         return postService.getApiStatisticsAll();
@@ -126,7 +114,6 @@ public class ApiGeneralController
 
 
     //PUT /api/settings
-    @SneakyThrows
     @Secured(MODERATOR)
     @PutMapping("/api/settings")
     public ResponseEntity<?> postApiSettings(@RequestBody RequestApiSettings requestBody) {
@@ -134,8 +121,7 @@ public class ApiGeneralController
     }
 
 
-    @SneakyThrows
-    @GetMapping("/upload/{A}/{B}/{C}/{FILENAME}")
+    @GetMapping("/${uploads.home}/${uploads.path}/{A}/{B}/{C}/{FILENAME}")
     @ResponseBody
     public ResponseEntity<?> getAvatar(@PathVariable("A") String a,
                                 @PathVariable("B") String b,

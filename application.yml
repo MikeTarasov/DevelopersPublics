@@ -21,9 +21,10 @@ moderator.email: developerspublics@gmail.com
 moderator.email.password: wzhaqlnptimbivpl
 
 #Replace with your captcha life-time here:
-captcha.life.time: 60*60*1000
+captcha.life.time: 3600000
 
 #path to avatars
+uploads.home: home
 uploads.path: upload
 
 #post announce size

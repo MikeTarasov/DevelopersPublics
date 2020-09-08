@@ -1,7 +1,6 @@
 package main.com.skillbox.ru.developerspublics.controllers;
 
 
-import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiPostLike;
 import main.com.skillbox.ru.developerspublics.api.request.RequestPostPutApiPost;
 import main.com.skillbox.ru.developerspublics.service.PostService;
@@ -20,20 +19,16 @@ public class ApiPostController
 {
     @Autowired
     private UserService userService;
-
     @Autowired
     private PostService postService;
-
     @Autowired
     private PostVoteService postVoteService;
-
 
     private final String USER = "ROLE_USER";
     private final String MODERATOR = "ROLE_MODERATOR";
 
 
     //GET /api/post/
-    @SneakyThrows
     @GetMapping("")
     public ResponseEntity<?> getApiPost(@RequestParam(name = "offset") int offset,
                            @RequestParam(name = "limit") int limit,
@@ -43,7 +38,6 @@ public class ApiPostController
 
 
     //GET /api/post/search/
-    @SneakyThrows
     @GetMapping("/search")
     public ResponseEntity<?> getApiPostSearch(@RequestParam(name = "offset") int offset,
                                     @RequestParam(name = "limit") int limit,
@@ -53,7 +47,6 @@ public class ApiPostController
 
 
     //GET /api/post/{ID}
-    @SneakyThrows
     @GetMapping("/{ID}")
     public ResponseEntity<?> getApiPostId(@PathVariable(name = "ID") int id) {
         return postService.getApiPostId(id);
@@ -61,7 +54,6 @@ public class ApiPostController
 
 
     //GET /api/post/byDate
-    @SneakyThrows
     @GetMapping("/byDate")
     public ResponseEntity<?> getApiPostByDate(@RequestParam(name = "offset") int offset,
                                        @RequestParam(name = "limit") int limit,
@@ -70,7 +62,6 @@ public class ApiPostController
     }
 
     //GET /api/post/byTag
-    @SneakyThrows
     @GetMapping("/byTag")
     public ResponseEntity<?> getApiPostByTag(@RequestParam(name = "offset") int offset,
                                       @RequestParam(name = "limit") int limit,

@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,16 +22,16 @@ import java.util.Optional;
 public class PostCommentService {
     @Autowired
     private PostCommentsRepository postCommentsRepository;
-
     @Autowired
     private PostService postService;
-
     @Autowired
     private UserService userService;
+
 
     public List<PostComment> getPostCommentsByPostId(int postId) {
         return postCommentsRepository.findByPostId(postId);
     }
+
 
     public PostComment getInitPostCommentById(int id) {
         Optional<PostComment> optionalPostComment = postCommentsRepository.findById(id);
@@ -44,10 +43,12 @@ public class PostCommentService {
         return null;
     }
 
+
     public PostComment getPostCommentById(int id) {
         if (postCommentsRepository.findById(id).isPresent()) return postCommentsRepository.findById(id).get();
         return null;
     }
+
 
     public List<PostCommentResponse> getPostCommentResponseList(List<PostComment> postComments) {
         List<PostCommentResponse> list = new ArrayList<>();
@@ -67,6 +68,7 @@ public class PostCommentService {
         return list;
     }
 
+
     public PostCommentResponse postCommentToJSON(PostComment postComment) {
         User commentUser = getCommentUser(postComment);
         return new PostCommentResponse(
@@ -81,18 +83,22 @@ public class PostCommentService {
         );
     }
 
+
     private void initPostComment(PostComment postComment) {
         postComment.setCommentPost(getCommentPost(postComment));
         postComment.setCommentUser(getCommentUser(postComment));
     }
 
+
     private Post getCommentPost(PostComment postComment) {
         return postService.getPostById(postComment.getPostId());
     }
 
+
     private User getCommentUser(PostComment postComment) {
         return userService.getUserById(postComment.getUserId());
     }
+
 
     public int saveComment(Integer parentId, int postId, int userId, String text) {
         PostComment postComment = new PostComment();
@@ -107,6 +113,7 @@ public class PostCommentService {
 
         return postComment.getId();
     }
+
 
     public ResponseEntity<?> postApiComment(RequestApiComment requestBody) {
         //получаем запрос
@@ -140,6 +147,4 @@ public class PostCommentService {
         //собираем ответ
         return ResponseEntity.status(HttpStatus.OK).body(new ApiCommentTrueResponse(commentId));
     }
-
-
 }

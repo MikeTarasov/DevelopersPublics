@@ -1,7 +1,6 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 
-import main.com.skillbox.ru.developerspublics.service.CaptchaCodeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -9,18 +8,21 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DeleteOldCaptcha {
+
+    private final CaptchaCodeService captchaCodeService;
+
+    @Value("${captcha.life.time}")
+    private long lifeTime;
+
     @Autowired
-    private CaptchaCodeService captchaCodeService;
+    public DeleteOldCaptcha(CaptchaCodeService captchaCodeService) {
+        this.captchaCodeService = captchaCodeService;
+    }
 
-    @Value("${captcha.life.time}") //TODO нужна КОНСТАНТА!!!!!
-    private String lifeTime;
-
-    private final long captchaLifeTime = 60 * 60 * 1000; //1 час -> milliseconds
-
-    @Scheduled(fixedRate = captchaLifeTime)
+    @Scheduled(fixedRateString = "${captcha.life.time}")
     public void autoDeleteOldCaptcha() {
         new Thread(() -> {
-            captchaCodeService.deleteOldCaptcha(captchaLifeTime);
+            captchaCodeService.deleteOldCaptcha(lifeTime);
         }).start();
     }
 }

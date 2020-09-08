@@ -1,7 +1,6 @@
 package main.com.skillbox.ru.developerspublics.config;
 
 
-import main.com.skillbox.ru.developerspublics.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,23 +13,25 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 
-
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    private final AuthenticationProviderImpl authenticationProvider;
+
 
     @Autowired
-    private UserService userService;
+    public WebSecurityConfig(AuthenticationProviderImpl authenticationProvider) {
+        this.authenticationProvider = authenticationProvider;
+    }
 
-    @Autowired
-    private AuthenticationProviderImpl authenticationProvider;
 
     //заставляем Spring использовать кодировщик BCrypt для хеширования и сравнения паролей
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 
     @Override
     public void configure(HttpSecurity httpSecurity) throws Exception {
@@ -52,11 +53,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/login/change-password/*").anonymous();
     }
 
+
     //мы хотим использовать AuthenticationProviderImpl для нашей аутентификации
     @Override
     public void configure(AuthenticationManagerBuilder builder) throws Exception {
         builder.authenticationProvider(authenticationProvider);
     }
+
 
     //скрываем содержимое view от пользователей
     @Override

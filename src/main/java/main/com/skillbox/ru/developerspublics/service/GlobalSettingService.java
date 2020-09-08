@@ -1,5 +1,6 @@
 package main.com.skillbox.ru.developerspublics.service;
 
+
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiSettings;
 import main.com.skillbox.ru.developerspublics.api.response.BlogInfo;
 import main.com.skillbox.ru.developerspublics.api.response.MessageResponse;
@@ -12,8 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -24,13 +23,16 @@ public class GlobalSettingService {
     @Autowired
     private GlobalSettingsRepository globalSettingsRepository;
 
+
     public List<GlobalSetting> getAllGlobalSettings() {
         return new ArrayList<>(globalSettingsRepository.findAll());
     }
 
+
     public GlobalSetting findGlobalSettingByCode(String code) {
         return globalSettingsRepository.findGlobalSettingByCode(code);
     }
+
 
     public void initGlobalSettings() {
         //проверяем, что все настройки есть
@@ -49,6 +51,7 @@ public class GlobalSettingService {
             }
         }
     }
+
 
     public boolean setGlobalSettings(Boolean multiUserMode, Boolean postPremoderation, Boolean statisticsIsPublic) {
         boolean hasErrors = false;

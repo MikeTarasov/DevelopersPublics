@@ -1,6 +1,5 @@
 package main.com.skillbox.ru.developerspublics.service;
 
-import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiPostLike;
 import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.PostVote;
@@ -19,21 +18,19 @@ import java.util.List;
 public class PostVoteService {
     @Autowired
     private PostVotesRepository postVotesRepository;
-
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private PostService postService;
 
 
     public PostVote getPostVoteById(int id) {
         return postVotesRepository.findById(id).orElseThrow();
     }
 
+
     public List<PostVote> getPostVotesByPostId(int postId) {
         return postVotesRepository.findByPostId(postId);
     }
+
 
     public boolean setLikeDislike(int postId, int userId, int value) {
         //ищем в БД
@@ -53,15 +50,17 @@ public class PostVoteService {
         return true;
     }
 
+
     public ResponseEntity<?> postApiPostLike(RequestApiPostLike requestBody) {
         return postApiPostLikeDislike(requestBody, 1);
     }
+
 
     public ResponseEntity<?> postApiPostDislike(RequestApiPostLike requestBody) {
         return postApiPostLikeDislike(requestBody, -1);
     }
 
-    @SneakyThrows
+
     private ResponseEntity<?> postApiPostLikeDislike(RequestApiPostLike requestBody, int value) {
         //из запроса достаем ИД поста
         int postId = requestBody.getPostId();

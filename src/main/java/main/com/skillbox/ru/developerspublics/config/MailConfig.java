@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-
 import java.util.Properties;
+
 
 @Configuration
 public class MailConfig {
@@ -16,6 +16,7 @@ public class MailConfig {
 
     @Value("${moderator.email.password}")
     private String myPassword;
+
 
     @Bean
     public JavaMailSender getJavaMailSender() {
@@ -36,8 +37,6 @@ public class MailConfig {
         props.put("mail.smtp.allow8bitmime", "true");
         props.put("mail.smtps.allow8bitmime", "true");
 
-
         return mailSender;
     }
-
 }

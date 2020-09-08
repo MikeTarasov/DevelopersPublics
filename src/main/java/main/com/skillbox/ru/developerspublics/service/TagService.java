@@ -1,38 +1,35 @@
 package main.com.skillbox.ru.developerspublics.service;
 
+
 import main.com.skillbox.ru.developerspublics.api.response.TagResponse;
 import main.com.skillbox.ru.developerspublics.api.response.TagsListResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
-
 import main.com.skillbox.ru.developerspublics.model.repository.TagsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
-
 import java.util.*;
 
 
 @Service
 public class TagService {
     private float maxWeight;
-
-    private HashMap<Integer, Float> weightMap;  //TODO загнать вес в сет!!!!!!!!!!!!!!!!!!!!!
+    private HashMap<Integer, Float> weightMap;
 
     @Autowired
     private TagsRepository tagsRepository;
-
     @Autowired
     private PostService postService;
-
     @Autowired
     private TagToPostService tagToPostService;
+
 
     public Tag getTagByName(String tagName) {
         return tagsRepository.findByName(tagName);
     }
+
 
     public Tag getInitTagById(int tagId) {
         Optional<Tag> optionalTag = tagsRepository.findById(tagId);
@@ -44,27 +41,37 @@ public class TagService {
         return null;
     }
 
+
     public Tag getTagById(int tagId) {
         return tagsRepository.findById(tagId).orElseThrow();
     }
 
+
     public List<Tag> getTags() {
         return new ArrayList<>(tagsRepository.findAll());
     }
+
+    public HashSet<String> getActiveTags() {
+        return new HashSet<>(tagsRepository.findActiveTags(new Date(System.currentTimeMillis())));
+    }
+
 
     private void initTag(Tag tag) {
         tag.setTagToPosts(getTagToPost(tag));
         tag.setTagWeight(getWeight(tag));
     }
 
+
     private List<TagToPost> getTagToPost(Tag tag) {
         return tagToPostService.getTagToPostsByTagName(tag.getName());
     }
+
 
     private float getWeight(Tag tag) {
         if (weightMap == null) setWeights();
         return weightMap.get(tag.getId());
     }
+
 
     private void setWeights() {
         //считаем кол-во активных постов
@@ -95,6 +102,7 @@ public class TagService {
         }
     }
 
+
     public void saveTag(String tagName, int postId) {
         tagName = tagName.toUpperCase();
         //пробуем найти тэг в БД
@@ -115,6 +123,7 @@ public class TagService {
         setWeights();
     }
 
+
     public TagResponse getTagResponse(Tag tag) {  //TODO 5 sec!!!!!!!
         return new TagResponse(tag.getName(), getWeight(tag));
     }
@@ -128,18 +137,21 @@ public class TagService {
         return list;
     }
 
+
     public ResponseEntity<?> getApiTag(String query) {
         List<String> tagNames = new ArrayList<>();
 
         //перебираем все тэги
-        for (Tag tag : getTags()) {
+        for (String tagName : getActiveTags()) {
+//        for (Tag tag : getTags()) {
+//            String tagName = tag.getName();
             if (query == null) {
                 //тэг не задан - выводим все
-                tagNames.add(tag.getName());
+                tagNames.add(tagName);
             }   //иначе ищем совпадения
-            else if (tag.getName().contains(query)) {
+            else if (tagName.contains(query)) {
                 //все совпадения заносим в список по шаблону
-                tagNames.add(tag.getName());
+                tagNames.add(tagName);
             }
         }
 
