@@ -1,6 +1,7 @@
 package main.com.skillbox.ru.developerspublics.api.response;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,6 +10,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 @Builder(toBuilder = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorsResponse {
     private String text;
     private String code;
@@ -19,10 +21,6 @@ public class ErrorsResponse {
     private String user;
     private String photo;
     private String title;
-
-    public ErrorsResponse(String text) {
-        this.text = "Текст комментария не задан или слишком короткий";
-    }
 
     public ErrorsResponse(boolean isCodeCorrect,
                          boolean isPasswordCorrect,
@@ -35,5 +33,9 @@ public class ErrorsResponse {
         if (!isCaptchaCorrect) captcha = "Код с картинки введён неверно";
         if (isEmailExist) email = "Этот e-mail уже зарегистрирован";
         if (isNameWrong) name = "Имя указано неверно";
+    }
+
+    public ErrorsResponse(String text) {
+        this.text = "Текст комментария не задан или слишком короткий";
     }
 }

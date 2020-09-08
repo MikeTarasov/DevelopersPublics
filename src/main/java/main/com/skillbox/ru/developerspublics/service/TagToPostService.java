@@ -4,12 +4,11 @@ package main.com.skillbox.ru.developerspublics.service;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
 import main.com.skillbox.ru.developerspublics.model.entity.Post;
-import main.com.skillbox.ru.developerspublics.repository.TagToPostsRepository;
+import main.com.skillbox.ru.developerspublics.model.repository.TagToPostsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 

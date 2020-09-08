@@ -1,11 +1,14 @@
 package main.com.skillbox.ru.developerspublics.api.response;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
 public class ResultUserResponse {
-    ResultResponse result;
+    boolean result;
     UserResponse user;
+
+    public ResultUserResponse(UserResponse userResponse) {
+        result = true;
+        user = userResponse;
+    }
 }

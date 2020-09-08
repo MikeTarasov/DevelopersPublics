@@ -1,4 +1,4 @@
-package main.com.skillbox.ru.developerspublics.repository;
+package main.com.skillbox.ru.developerspublics.model.repository;
 
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
 import org.springframework.data.jpa.repository.JpaRepository;

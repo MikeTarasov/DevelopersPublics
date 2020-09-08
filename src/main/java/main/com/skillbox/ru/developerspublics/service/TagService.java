@@ -5,9 +5,12 @@ import main.com.skillbox.ru.developerspublics.api.response.TagsListResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
 
-import main.com.skillbox.ru.developerspublics.repository.TagsRepository;
+import main.com.skillbox.ru.developerspublics.model.repository.TagsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.*;
 
@@ -123,5 +126,25 @@ public class TagService {
             list.add(new TagResponse(tagName, getWeight(getTagByName(tagName))));
         }
         return list;
+    }
+
+    public ResponseEntity<?> getApiTag(String query) {
+        List<String> tagNames = new ArrayList<>();
+
+        //перебираем все тэги
+        for (Tag tag : getTags()) {
+            if (query == null) {
+                //тэг не задан - выводим все
+                tagNames.add(tag.getName());
+            }   //иначе ищем совпадения
+            else if (tag.getName().contains(query)) {
+                //все совпадения заносим в список по шаблону
+                tagNames.add(tag.getName());
+            }
+        }
+
+        //собираем ответ
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new TagsListResponse(getTagResponseList(tagNames)));
     }
 }

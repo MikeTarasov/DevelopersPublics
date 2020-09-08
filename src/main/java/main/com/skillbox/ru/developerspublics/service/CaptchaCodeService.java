@@ -2,10 +2,13 @@ package main.com.skillbox.ru.developerspublics.service;
 
 
 import lombok.SneakyThrows;
+import main.com.skillbox.ru.developerspublics.api.response.ApiAuthCaptchaResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.CaptchaCode;
-import main.com.skillbox.ru.developerspublics.repository.CaptchaCodesRepository;
+import main.com.skillbox.ru.developerspublics.model.repository.CaptchaCodesRepository;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -80,6 +83,7 @@ public class CaptchaCodeService {
         //кодируем картинку в текст
         String base64 = Base64.getEncoder().encodeToString(stream.toByteArray());
         //убираем мусор
+        stream.close();
         g2dImage.dispose();
 
         //сохраняем капчу в репозиторий
@@ -94,5 +98,18 @@ public class CaptchaCodeService {
 
     public CaptchaCode getCaptchaCodeByCodeAndSecret(String code, String secretCode) {
         return captchaCodesRepository.findByCodeAndSecretCode(code, secretCode);
+    }
+
+    public ResponseEntity<?> getApiAuthCaptcha() {
+        //TODO Время устаревания должно быть задано в конфигурации приложения (по умолчанию, 1 час)
+        //создадим новую капчу
+        JSONObject newCaptcha = createNewCaptcha();
+
+        //собираем ответ
+        return new ResponseEntity<>(
+                new ApiAuthCaptchaResponse(
+                        newCaptcha.get("secretCode").toString(),
+                        "data:image/png;base64, " + newCaptcha.get("base64").toString()
+                ), HttpStatus.OK);
     }
 }

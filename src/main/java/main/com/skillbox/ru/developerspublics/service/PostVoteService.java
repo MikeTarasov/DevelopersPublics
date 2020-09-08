@@ -1,13 +1,17 @@
 package main.com.skillbox.ru.developerspublics.service;
 
+import lombok.SneakyThrows;
+import main.com.skillbox.ru.developerspublics.api.request.RequestApiPostLike;
+import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.PostVote;
-import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
-import main.com.skillbox.ru.developerspublics.repository.PostVotesRepository;
+import main.com.skillbox.ru.developerspublics.model.repository.PostVotesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -22,18 +26,6 @@ public class PostVoteService {
     @Autowired
     private PostService postService;
 
-//    public List<PostVote> getInitPostVotes() {
-//        List<PostVote> postVotes = new ArrayList<>();
-//        for (PostVote postVoteDB : postVotesRepository.findAll()) {
-//            initPostVote(postVoteDB);
-//            postVotes.add(postVoteDB);
-//        }
-//        return postVotes;
-//    }
-//
-//    public List<PostVote> getPostVotes() {
-//        return new ArrayList<>(postVotesRepository.findAll());
-//    }
 
     public PostVote getPostVoteById(int id) {
         return postVotesRepository.findById(id).orElseThrow();
@@ -42,23 +34,6 @@ public class PostVoteService {
     public List<PostVote> getPostVotesByPostId(int postId) {
         return postVotesRepository.findByPostId(postId);
     }
-
-//    private PostVote getPostVoteByPostUser(int postId, int userId) {
-//        return ;
-//    }
-
-//    private void initPostVote(PostVote postVote) {
-//        postVote.setUserVote(getUserVote(postVote));
-//        postVote.setPostVote(getPostVote(postVote));
-//    }
-
-//    private User getUserVote(PostVote postVote) {
-//        return userService.getUserById(postVote.getUserId());
-//    }
-//
-//    private Post getPostVote(PostVote postVote) {
-//        return postService.getPostById(postVote.getPostId());
-//    }
 
     public boolean setLikeDislike(int postId, int userId, int value) {
         //ищем в БД
@@ -76,5 +51,29 @@ public class PostVoteService {
         postVote.setValue(value);
         postVotesRepository.save(postVote);
         return true;
+    }
+
+    public ResponseEntity<?> postApiPostLike(RequestApiPostLike requestBody) {
+        return postApiPostLikeDislike(requestBody, 1);
+    }
+
+    public ResponseEntity<?> postApiPostDislike(RequestApiPostLike requestBody) {
+        return postApiPostLikeDislike(requestBody, -1);
+    }
+
+    @SneakyThrows
+    private ResponseEntity<?> postApiPostLikeDislike(RequestApiPostLike requestBody, int value) {
+        //из запроса достаем ИД поста
+        int postId = requestBody.getPostId();
+
+        //из контекста достаем пользователя
+        User user = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
+
+        // === @Secured(USER) ===
+        if (user == null) return ResponseEntity.status(401).body(null);
+
+        //пробуем поставить оценку - результат помещаем в ответ
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResultResponse(setLikeDislike(postId, user.getId(), value)));
     }
 }

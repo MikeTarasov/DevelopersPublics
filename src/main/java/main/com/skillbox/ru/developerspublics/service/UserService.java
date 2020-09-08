@@ -2,27 +2,46 @@ package main.com.skillbox.ru.developerspublics.service;
 
 
 import lombok.SneakyThrows;
-import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
-import main.com.skillbox.ru.developerspublics.api.response.ResultUserResponse;
-import main.com.skillbox.ru.developerspublics.api.response.UserResponse;
+import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthLogin;
+import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthPassword;
+import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRegister;
+import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRestore;
+import main.com.skillbox.ru.developerspublics.api.response.*;
+import main.com.skillbox.ru.developerspublics.config.AuthenticationProviderImpl;
 import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
-import main.com.skillbox.ru.developerspublics.repository.UsersRepository;
+import main.com.skillbox.ru.developerspublics.model.repository.UsersRepository;
 import org.imgscalr.Scalr;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.imageio.ImageIO;
 import javax.mail.internet.MimeMessage;
+import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
@@ -40,9 +59,19 @@ public class UserService implements UserDetailsService {
     @Autowired
     public JavaMailSender emailSender;
 
+    @Autowired
+    private AuthenticationProviderImpl authenticationProvider;
+
+    @Autowired
+    private CaptchaCodeService captchaCodeService;
+
     private final HashMap<String, Integer> httpSession = new HashMap<>(); //<sessionId, userId>
 
-    private final String rootPage = "localhost:8080";
+    @Value("${blog.host}")
+    private String rootPage;
+
+    @Value("${uploads.path}")
+    private String uploadsPath;
 
 
     @Override
@@ -70,10 +99,6 @@ public class UserService implements UserDetailsService {
     public User getUserById(int id) {
         return userRepository.findById(id).orElseGet(User::new);
     }
-
-//    public List<User> allUsers() {
-//        return new ArrayList<>(userRepository.findAll());
-//    }
 
     public boolean isPasswordCorrect(User user, String password) {
         return bCryptPasswordEncoder.matches(password, user.getPassword());
@@ -176,6 +201,7 @@ public class UserService implements UserDetailsService {
         String password = bCryptPasswordEncoder.encode(newPassword);
         if (!user.getPassword().equals(password)) {
             user.setPassword(password);
+            user.setCode(null);
             userRepository.save(user);
         }
     }
@@ -195,7 +221,7 @@ public class UserService implements UserDetailsService {
         user.setPhoto("");
         userRepository.save(user);
         File avatar = new File(path);
-        if (avatar.delete()) System.out.println("avatar deleted");
+        avatar.delete();
     }
 
     @SneakyThrows
@@ -256,18 +282,21 @@ public class UserService implements UserDetailsService {
     }
 
     @SneakyThrows
-    public Resource getAvatar(String a, String b, String c, String name) {
-        return new FileSystemResource(getAvatarPath(a, b, c) + name);
+    public ResponseEntity<?> getAvatar(String a, String b, String c, String name) {
+        Resource file = new FileSystemResource(getAvatarPath(a, b, c) + name);
+
+        if (file.exists()) return ResponseEntity.ok().body(file);
+
+        return ResponseEntity.notFound().build();
     }
 
     public String getAvatarPath(String a, String b, String c) {
-        return File.separator + "upload" + File.separator + a +
+        return File.separator + uploadsPath + File.separator + a +
                 File.separator + b + File.separator + c + File.separator;
     }
 
     public ResultUserResponse getResultUserResponse(User user) {
         return new ResultUserResponse(
-                new ResultResponse(true),
                 new UserResponse(
                         user.getId(),
                         user.getName(),
@@ -282,5 +311,278 @@ public class UserService implements UserDetailsService {
 
     public User getUserByCode(String code) {
         return userRepository.findByCode(code);
+    }
+
+    public ResponseEntity<?> postApiAuthLogin(RequestApiAuthLogin requestApiAuthLogin, HttpSession httpSession) {
+        //пробуем найти пользователя в БД
+        User authUser = findUserByLogin(requestApiAuthLogin.getEmail());
+
+        //если не нашли
+        if (authUser == null) {
+            return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
+        }
+
+        //если нашли - проверяем пароль и заносим user'а в контекст
+        if (isPasswordCorrect(authUser, requestApiAuthLogin.getPassword())) {
+            SecurityContextHolder.getContext()
+                    .setAuthentication(
+                            authenticationProvider.authenticate(
+                                    new UsernamePasswordAuthenticationToken(
+                                            loadUserByUsername(authUser.getEmail()),
+                                            requestApiAuthLogin.getPassword())
+                            )
+                    );
+        }
+        else {
+            return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
+        }
+
+        //TODO запоминаем сессию
+        addHttpSession(httpSession.getId(), authUser.getId());
+
+        //и заполняем ответ
+        return new ResponseEntity<>(getResultUserResponse(authUser), HttpStatus.OK);
+    }
+
+    public ResponseEntity<?> authCheck(HttpSession httpSession) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        //если не авторизован
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
+            return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
+        }
+
+        //вытаскиваем пользователя
+        User user = findUserByLogin(authentication.getName());
+
+        //если не нашли
+        if (user == null) {
+            return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
+        }
+
+        //проверяем сохранён ли идентификатор текущей сессии в списке авторизованных TODO убрать мэп!!!
+        if (!isHttpSessionSaved(user.getId())) {
+            addHttpSession(httpSession.toString(), user.getId());
+        }
+
+        //собираем ответ
+        return new ResponseEntity<>(getResultUserResponse(user), HttpStatus.OK);
+    }
+
+    public ResponseEntity<?> postApiAuthRestore(RequestApiAuthRestore requestBody) {
+        //ищем юзера по введенному е-мэйлу
+        User user = findUserByLogin(requestBody.getEmail());
+        //если не нашли - выдаем ошибку
+        if (user == null) return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
+        //пробуем отправить письмо - результат учитываем в ответе
+        return new ResponseEntity<>(new ResultResponse(sendEmail(user)), HttpStatus.OK);
+    }
+
+    public ResponseEntity<?> postApiAuthPassword(RequestApiAuthPassword requestBody) {
+        String codeRestore = requestBody.getCode();
+        String password = requestBody.getPassword();
+        String codeCaptcha = requestBody.getCaptcha();
+        String captchaSecret = requestBody.getCaptchaSecret();
+
+        boolean isCodeCorrect = false;
+        boolean isPasswordCorrect = true;
+        boolean isCaptchaCorrect = false;
+
+        //test code
+        User user = getUserByCode(codeRestore);
+        if (user != null) isCodeCorrect = true;
+
+        //test password
+        if (password.length() < 6) isPasswordCorrect = false;
+
+        //test captcha
+        if (captchaCodeService.getCaptchaCodeByCodeAndSecret(codeCaptcha, captchaSecret) != null) {
+            isCaptchaCorrect = true;
+        }
+
+        if (isCodeCorrect && isPasswordCorrect && isCaptchaCorrect) {
+            changeUserPassword(user, password);
+            return new ResponseEntity<>(new ResultResponse(true), HttpStatus.OK);
+        }
+
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResultFalseErrorsResponse(new ErrorsResponse(
+                        isCodeCorrect, isPasswordCorrect,isCaptchaCorrect, false, false))
+                );
+    }
+
+    public ResponseEntity<?> postApiAuthRegister(RequestApiAuthRegister requestBody) {
+        boolean isPasswordCorrect = true;
+        boolean isCaptchaCorrect = false;
+
+        String email = requestBody.getEmail();
+        String name = requestBody.getName();
+        String password = requestBody.getPassword();
+        String captchaCode = requestBody.getCaptcha();
+        String captchaSecret = requestBody.getCaptchaSecret();
+
+        //проверяем email
+        boolean isEmailExist = findUserByLogin(email) != null;
+
+        //проверяем name
+        boolean isNameWrong = !isCorrectUserName(name);
+
+        //проверяем password
+        if (password.length() < 6) {
+            isPasswordCorrect = false;
+        }
+
+        //проверяем captcha
+        if (captchaCodeService.getCaptchaCodeByCodeAndSecret(captchaCode, captchaSecret) != null) {
+            isCaptchaCorrect = true;
+        }
+
+        //собираем ответ
+        if (!isEmailExist && !isNameWrong && isPasswordCorrect && isCaptchaCorrect) {
+            //создаем new User и отправляем true
+            User user = new User(email, name, password);
+            boolean isUserSaved = saveUser(user);
+            //собираем ответ
+            return new ResponseEntity<>(new ResultResponse(isUserSaved), HttpStatus.OK);
+        }
+
+        //есть ошибки - собираем сообщение об ошибках
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResultFalseErrorsResponse(new ErrorsResponse(
+                        false, isPasswordCorrect, isCaptchaCorrect, isEmailExist, isNameWrong))
+                );
+    }
+
+    public ResponseEntity<?> getApiAuthLogout() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        boolean result = false;
+
+        User user = findUserByLogin(securityContext.getAuthentication().getName());
+
+        if (user != null) {
+            Set<GrantedAuthority> grantedAuthority = new HashSet<>();
+            grantedAuthority.add(new SimpleGrantedAuthority("ROLE_ANONYMOUS"));
+
+            securityContext.setAuthentication(
+                    new AnonymousAuthenticationToken(
+                            String.valueOf(System.currentTimeMillis()),
+                            new org.springframework.security.core.userdetails.User(
+                                    "anonymous",
+                                    "anonymous",
+                                    grantedAuthority
+                            ),
+                            grantedAuthority
+                    ));
+
+            deleteHttpSession(user.getId());
+            result = true;
+        }
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ResultResponse(result));
+    }
+
+
+    @SneakyThrows
+    public ResponseEntity<?> postApiProfileMy(String requestBody,
+                                              MultipartFile avatar,
+                                              String emailMP,
+                                              String nameMP,
+                                              String passwordMP,
+                                              String removePhotoMP) {
+        //if consumes = "multipart/form-data"
+        String email = emailMP;
+        String name = nameMP;
+        String password = passwordMP;
+        String removePhoto = removePhotoMP;
+
+
+        //else consumes = "application/json"
+        if (requestBody != null) {
+            JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
+            if (request.get("email") != null) email = request.get("email").toString();
+            if (request.get("name") != null) name = request.get("name").toString();
+            if (request.get("password") != null) password = request.get("password").toString();
+            if (request.get("removePhoto") != null) removePhoto = request.get("removePhoto").toString();
+        }
+
+        //получаем user
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = findUserByLogin(authentication.getName());
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ResultFalseErrorsResponse(
+                            ErrorsResponse.builder().user("Пользователь не найден!").build()));
+        }
+
+        //проверяем изменение имени
+        if (!user.getName().equals(name)) {
+            if (!changeUserName(user, name))
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(new ResultFalseErrorsResponse(
+                                ErrorsResponse.builder().name("Имя указано неверно").build()));
+        }
+
+        //проверяем изменение e-mail
+        if (!user.getEmail().equals(email)) {
+            if (!changeUserEmail(user, email))
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(new ResultFalseErrorsResponse(
+                                ErrorsResponse.builder().email("Этот e-mail уже зарегистрирован").build()));
+        }
+
+        //проверяем изменение пароля
+        if (password != null) {
+            if (password.length() >= 6) {
+                changeUserPassword(user, password);
+            }
+            else
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(new ResultFalseErrorsResponse(
+                                ErrorsResponse.builder().password("Пароль короче 6-ти символов").build()));
+        }
+
+        if (removePhoto != null) {
+            //удаление фото
+            if (removePhoto.equals("1")) {
+                removePhoto(user);
+            }
+
+            //изменение фото
+            if (removePhoto.equals("0")) {
+                if (avatar.getSize() <= 5*1024*1024) {
+                    InputStream inputStream = avatar.getInputStream();
+                    saveAvatar(user, inputStream);
+                }
+                else
+                    return ResponseEntity.status(HttpStatus.OK)
+                            .body(new ResultFalseErrorsResponse(
+                                    ErrorsResponse
+                                            .builder()
+                                            .photo("Фото слишком большое, нужно не более 5 Мб")
+                                            .build()));
+            }
+        }
+
+        return new ResponseEntity<>(new ResultResponse(true), HttpStatus.OK);
+    }
+
+
+    @SneakyThrows
+    public ResponseEntity<?> postApiImage(MultipartFile avatar) {
+        //получаем пользователя
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = findUserByLogin(authentication.getName());
+
+        String path = "";
+
+        if (avatar != null) {
+            InputStream inputStream = avatar.getInputStream();
+            path = saveAvatar(user, inputStream);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(path);
     }
 }
