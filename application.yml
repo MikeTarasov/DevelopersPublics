@@ -24,7 +24,7 @@ moderator.email.password: wzhaqlnptimbivpl
 captcha.life.time: 60*60*1000
 
 #path to avatars
-uploads.path: uploads
+uploads.path: upload
 
 #post announce size
 announce.size: 1000

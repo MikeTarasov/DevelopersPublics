@@ -34,9 +34,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -64,8 +61,6 @@ public class UserService implements UserDetailsService {
 
     @Autowired
     private CaptchaCodeService captchaCodeService;
-
-    private final HashMap<String, Integer> httpSession = new HashMap<>(); //<sessionId, userId>
 
     @Value("${blog.host}")
     private String rootPage;
@@ -126,22 +121,6 @@ public class UserService implements UserDetailsService {
         return bCryptPasswordEncoder.encode(password);
     }
 
-    public void addHttpSession(String sessionId, Integer userId) {
-        httpSession.put(sessionId, userId);
-    }
-
-    public boolean isHttpSessionSaved(int userId) {
-        return httpSession.containsValue(userId);
-    }
-
-    public void deleteHttpSession(int userId) {
-        for (String key : httpSession.keySet()) {
-            if (httpSession.get(key) == userId) {
-                httpSession.remove(key);
-                break;
-            }
-        }
-    }
 
     public int getModerationCount(User user) {
         return user.getIsModerator() == 1 ? userRepository.getModerationCount() : 0;
@@ -283,6 +262,8 @@ public class UserService implements UserDetailsService {
 
     @SneakyThrows
     public ResponseEntity<?> getAvatar(String a, String b, String c, String name) {
+        System.out.println(getAvatarPath(a, b, c) + name);
+
         Resource file = new FileSystemResource(getAvatarPath(a, b, c) + name);
 
         if (file.exists()) return ResponseEntity.ok().body(file);
@@ -337,14 +318,12 @@ public class UserService implements UserDetailsService {
             return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
         }
 
-        //TODO запоминаем сессию
-        addHttpSession(httpSession.getId(), authUser.getId());
-
         //и заполняем ответ
         return new ResponseEntity<>(getResultUserResponse(authUser), HttpStatus.OK);
     }
 
-    public ResponseEntity<?> authCheck(HttpSession httpSession) {
+    public ResponseEntity<?> authCheck() {
+        //проверяем сохранён ли идентификатор текущей сессии в списке авторизованных
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         //если не авторизован
@@ -358,11 +337,6 @@ public class UserService implements UserDetailsService {
         //если не нашли
         if (user == null) {
             return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
-        }
-
-        //проверяем сохранён ли идентификатор текущей сессии в списке авторизованных TODO убрать мэп!!!
-        if (!isHttpSessionSaved(user.getId())) {
-            addHttpSession(httpSession.toString(), user.getId());
         }
 
         //собираем ответ
@@ -475,7 +449,6 @@ public class UserService implements UserDetailsService {
                             grantedAuthority
                     ));
 
-            deleteHttpSession(user.getId());
             result = true;
         }
 

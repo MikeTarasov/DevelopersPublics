@@ -39,8 +39,8 @@ public class ApiAuthController
 
     //GET /api/auth/check
     @GetMapping("/check")
-    public ResponseEntity<?> authCheck(HttpSession httpSession) {
-        return userService.authCheck(httpSession);
+    public ResponseEntity<?> authCheck() {
+        return userService.authCheck();
     }
 
 
