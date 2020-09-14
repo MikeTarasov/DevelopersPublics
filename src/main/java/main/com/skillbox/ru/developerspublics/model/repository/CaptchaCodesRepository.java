@@ -12,4 +12,6 @@ public interface CaptchaCodesRepository extends JpaRepository<CaptchaCode, Integ
     List<CaptchaCode> findByTimeLessThan(Date time);
 
     CaptchaCode findByCodeAndSecretCode(String code, String secretCode);
+
+    CaptchaCode findBySecretCode(String secretCode);
 }

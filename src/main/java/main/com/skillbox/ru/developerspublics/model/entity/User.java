@@ -92,6 +92,7 @@ public class User implements UserDetails
         this.email = email;
         this.name = name;
         this.password = password;
+        this.isModerator = 0;
         setRegTime(Instant.now().toEpochMilli());
         setRoles();
     }
@@ -143,13 +144,13 @@ public class User implements UserDetails
     }
 
     public long userHashCode() {
-        long result = id;
-        result = id * result + (isModerator == 1 ? id : 0);
+        long result = id + 37;
+        result = result * (isModerator == 1 ? id : 0) + 37;
         DateFormat dateFormat = new SimpleDateFormat("HHmmddMMyy");
-        result = id * result + Long.parseLong(dateFormat.format(regTime));
-        result = id * result + name.length();
-        result = id * result + email.length();
-        result = id * result + password.length();
+        result = result * Long.parseLong(dateFormat.format(regTime));
+        result = result * name.length();
+        result = result * email.length();
+        result = result * password.length();
         return result;
     }
 }

@@ -1,6 +1,7 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 
+import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiSettings;
 import main.com.skillbox.ru.developerspublics.api.response.BlogInfo;
 import main.com.skillbox.ru.developerspublics.api.response.MessageResponse;
@@ -96,23 +97,32 @@ public class GlobalSettingService {
     }
 
 
+    @SneakyThrows
     public ResponseEntity<?> postApiSettings(RequestApiSettings requestBody) {
-        boolean multiUserMode;
-        boolean postPremoderation;
-        boolean statisticsIsPublic;
-        try {
-            multiUserMode = Boolean.parseBoolean(requestBody.getMultiUserMode());
-            postPremoderation = Boolean.parseBoolean(requestBody.getPostPremoderation());
-            statisticsIsPublic = Boolean.parseBoolean(requestBody.getStatisticsIsPublic());
-        }
-        catch (Exception e) {  //Если при запросе данные не найдены - код 404
-            e.printStackTrace();
+        String multiUserModeString = requestBody.getMultiUserMode();
+        String postPremoderationString = requestBody.getPostPremoderation();
+        String statisticsIsPublicString = requestBody.getStatisticsIsPublic();
+
+        //Если при запросе данные не найдены - код 404
+        if (multiUserModeString == null || postPremoderationString == null || statisticsIsPublicString == null) {
             return ResponseEntity.status(404).body(new ResultResponse(false));
+        }
+
+        //Неверный параметр на входе - ответ с кодом 400 (Bad request)
+        String yes = GlobalSettingsValues.YES.toString();
+        String no = GlobalSettingsValues.NO.toString();
+        if (!((multiUserModeString.equals(yes) || multiUserModeString.equals(no)) &&
+                (postPremoderationString.equals(yes) || postPremoderationString.equals(no)) &&
+                (statisticsIsPublicString.equals(yes) || statisticsIsPublicString.equals(no)))) {
+            return ResponseEntity.status(400).body(new MessageResponse("Глобальная настройка не найдена!"));
         }
 
 
         //Неверный параметр на входе - ответ с кодом 400 (Bad request)
-        if (!setGlobalSettings(multiUserMode, postPremoderation, statisticsIsPublic)) {
+        if (!setGlobalSettings(
+                Boolean.parseBoolean(multiUserModeString),
+                Boolean.parseBoolean(postPremoderationString),
+                Boolean.parseBoolean(statisticsIsPublicString))) {
             return ResponseEntity.status(400).body(new MessageResponse("Глобальная настройка не найдена!"));
         }
 

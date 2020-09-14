@@ -97,6 +97,11 @@ public class CaptchaCodeService {
     }
 
 
+    public CaptchaCode getCaptchaCodeBySecretCode(String secretCode) {
+        return captchaCodesRepository.findBySecretCode(secretCode);
+    }
+
+
     public CaptchaCode getCaptchaCodeByCodeAndSecret(String code, String secretCode) {
         return captchaCodesRepository.findByCodeAndSecretCode(code, secretCode);
     }

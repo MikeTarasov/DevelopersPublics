@@ -66,10 +66,12 @@ public class UserService implements UserDetailsService {
 
 
     @Override
+    @SneakyThrows
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = findUserByLogin(email);
 
-        if (user == null) throw new UsernameNotFoundException("User not found");
+        if (user == null) return null;
+//            throw new UsernameNotFoundException("User not found");
 
         Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
         for (Role role : user.getRoles()){
@@ -102,8 +104,9 @@ public class UserService implements UserDetailsService {
     public boolean saveUser(User user) {
         //ищем пользователя в БД
         User userFromDB = null;
-        if (userRepository.findById(user.getId()).isPresent()) {
-            userFromDB = userRepository.findById(user.getId()).get();
+        if (userRepository.findUserByEmail(user.getEmail()) != null) {
+            System.out.println(user.getId());
+            userFromDB = userRepository.findUserByEmail(user.getEmail());
         }
 
         //если уже есть - сохранять нечего
@@ -115,6 +118,10 @@ public class UserService implements UserDetailsService {
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         return true;
+    }
+
+    public void deleteUser(User user) {
+        userRepository.delete(user);
     }
 
 
@@ -317,14 +324,7 @@ public class UserService implements UserDetailsService {
 
         //если нашли - проверяем пароль и заносим user'а в контекст
         if (isPasswordCorrect(authUser, requestApiAuthLogin.getPassword())) {
-            SecurityContextHolder.getContext()
-                    .setAuthentication(
-                            authenticationProvider.authenticate(
-                                    new UsernamePasswordAuthenticationToken(
-                                            loadUserByUsername(authUser.getEmail()),
-                                            requestApiAuthLogin.getPassword())
-                            )
-                    );
+            authUser(authUser.getEmail(), requestApiAuthLogin.getPassword());
         }
         else {
             return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
@@ -332,6 +332,16 @@ public class UserService implements UserDetailsService {
 
         //и заполняем ответ
         return new ResponseEntity<>(getResultUserResponse(authUser), HttpStatus.OK);
+    }
+
+
+    public void authUser(String email, String password) {
+        SecurityContextHolder
+                .getContext()
+                .setAuthentication(
+                        authenticationProvider
+                                .authenticate(
+                                        new UsernamePasswordAuthenticationToken(loadUserByUsername(email), password)));
     }
 
 
@@ -531,7 +541,7 @@ public class UserService implements UserDetailsService {
             else
                 return ResponseEntity.status(HttpStatus.OK)
                         .body(new ResultFalseErrorsResponse(
-                                ErrorsResponse.builder().password("Пароль короче 6-ти символов").build()));
+                                ErrorsResponse.builder().password("Пароль короче 6-ти символов").build())); //TODO спросить зачем эта проверка?
         }
 
         if (removePhoto != null) {
