@@ -24,8 +24,10 @@ moderator.email.password: wzhaqlnptimbivpl
 captcha.life.time: 3600000
 
 #path to avatars
-uploads.home: home
+uploads.home: C:/home
 uploads.path: upload
+
+#spring.resources.static-locations: file:///upload
 
 #post announce size
 announce.size: 1000

@@ -56,14 +56,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     //мы хотим использовать AuthenticationProviderImpl для нашей аутентификации
     @Override
-    public void configure(AuthenticationManagerBuilder builder) throws Exception {
+    public void configure(AuthenticationManagerBuilder builder) {
         builder.authenticationProvider(authenticationProvider);
     }
 
 
     //скрываем содержимое view от пользователей
     @Override
-    public void configure(WebSecurity web) throws Exception {
+    public void configure(WebSecurity web) {
         web
                 .ignoring()
                 .antMatchers("/resources/**", "/static/**", "/css/**", "/js/**", "/images/**");

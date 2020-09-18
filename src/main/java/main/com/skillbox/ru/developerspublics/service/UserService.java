@@ -273,21 +273,21 @@ public class UserService implements UserDetailsService {
         hash[2] = hashString.substring(4, 6);
         hash[3] = hashString.substring(6);
 
-        String path = getAvatarPath(hash[0], hash[1], hash[2]);
+        String path = File.separator + getAvatarPath(hash[0], hash[1], hash[2]);
         String name = hash[3] + ".jpg";
 
         user.setPhoto(path + name);
         userRepository.save(user);
-        changeUserPhoto(path, name, inputStream);
+        changeUserPhoto(uploadsHome + path, name, inputStream);
 
         return path;
     }
 
 
     public ResponseEntity<?> getAvatar(String a, String b, String c, String name) {
-        System.out.println(getAvatarPath(a, b, c) + name);
+        System.out.println(uploadsHome + getAvatarPath(a, b, c) + name);
 
-        Resource file = new FileSystemResource(getAvatarPath(a, b, c) + name);
+        Resource file = new FileSystemResource(uploadsHome + getAvatarPath(a, b, c) + name);
 
         if (file.exists()) return ResponseEntity.ok().body(file);
 
@@ -296,8 +296,7 @@ public class UserService implements UserDetailsService {
 
 
     public String getAvatarPath(String a, String b, String c) {
-        return File.separator + uploadsHome + File.separator + uploadsPath + File.separator + a +
-                File.separator + b + File.separator + c + File.separator;
+        return String.join(File.separator, uploadsPath, a, b, c) + File.separator;
     }
 
 
