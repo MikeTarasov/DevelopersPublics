@@ -44,16 +44,11 @@ import java.util.*;
 
 @Service
 public class UserService implements UserDetailsService {
-    @Autowired
-    private UsersRepository userRepository;
-    @Autowired
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
-    @Autowired
-    private JavaMailSender emailSender;
-    @Autowired
-    private AuthenticationProviderImpl authenticationProvider;
-    @Autowired
-    private CaptchaCodeService captchaCodeService;
+    private final UsersRepository userRepository;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JavaMailSender emailSender;
+    private final AuthenticationProviderImpl authenticationProvider;
+    private final CaptchaCodeService captchaCodeService;
 
     @Value("${blog.host}")
     private String rootPage;
@@ -63,6 +58,19 @@ public class UserService implements UserDetailsService {
 
     @Value("${uploads.home}")
     private String uploadsHome;
+
+    @Autowired
+    public UserService (UsersRepository userRepository,
+                        BCryptPasswordEncoder bCryptPasswordEncoder,
+                        JavaMailSender emailSender,
+                        AuthenticationProviderImpl authenticationProvider,
+                        CaptchaCodeService captchaCodeService) {
+        this.userRepository = userRepository;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.emailSender = emailSender;
+        this.authenticationProvider = authenticationProvider;
+        this.captchaCodeService = captchaCodeService;
+    }
 
 
     @Override
@@ -309,7 +317,7 @@ public class UserService implements UserDetailsService {
 
 
     public User getUserByCode(String code) {
-        return userRepository.findByCode(code);
+        return userRepository.findUserByCode(code);
     }
 
 

@@ -18,19 +18,27 @@ import org.springframework.web.servlet.ModelAndView;
 @RestController
 public class ApiGeneralController
 {
-    @Autowired
-    private GlobalSettingService globalSettingService;
-    @Autowired
-    private TagService tagService;
-    @Autowired
-    private PostService postService;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private PostCommentService postCommentService;
+    private final GlobalSettingService globalSettingService;
+    private final TagService tagService;
+    private final PostService postService;
+    private final UserService userService;
+    private final PostCommentService postCommentService;
 
     private final String USER = "ROLE_USER";
     private final String MODERATOR = "ROLE_MODERATOR";
+
+    @Autowired
+    public ApiGeneralController(GlobalSettingService globalSettingService,
+                                TagService tagService,
+                                PostService postService,
+                                UserService userService,
+                                PostCommentService postCommentService) {
+        this.globalSettingService = globalSettingService;
+        this.tagService = tagService;
+        this.postService = postService;
+        this.userService = userService;
+        this.postCommentService = postCommentService;
+    }
 
 
     //GET /api/init/

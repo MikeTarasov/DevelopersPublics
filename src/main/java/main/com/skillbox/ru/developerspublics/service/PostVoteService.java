@@ -16,10 +16,16 @@ import java.util.List;
 
 @Service
 public class PostVoteService {
+    private final PostVotesRepository postVotesRepository;
+    private final UserService userService;
+
+
     @Autowired
-    private PostVotesRepository postVotesRepository;
-    @Autowired
-    private UserService userService;
+    public PostVoteService(PostVotesRepository postVotesRepository,
+                           UserService userService) {
+        this.postVotesRepository = postVotesRepository;
+        this.userService = userService;
+    }
 
 
     public PostVote getPostVoteById(int id) {

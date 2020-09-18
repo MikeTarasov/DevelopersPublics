@@ -9,6 +9,7 @@ import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -20,10 +21,15 @@ import java.util.*;
 
 @Service
 public class CaptchaCodeService {
+    private final CaptchaCodesRepository captchaCodesRepository;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
     @Autowired
-    private CaptchaCodesRepository captchaCodesRepository;
-    @Autowired
-    private UserService userService;
+    public CaptchaCodeService(CaptchaCodesRepository captchaCodesRepository,
+                              BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.captchaCodesRepository = captchaCodesRepository;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    }
 
 
     public void saveCaptcha(String code, String secretCode) {
@@ -87,7 +93,7 @@ public class CaptchaCodeService {
         g2dImage.dispose();
 
         //сохраняем капчу в репозиторий
-        String secretCode = userService.encodePassword(code);
+        String secretCode = bCryptPasswordEncoder.encode(code);
         saveCaptcha(code, secretCode);
 
         result.put("secretCode", secretCode);

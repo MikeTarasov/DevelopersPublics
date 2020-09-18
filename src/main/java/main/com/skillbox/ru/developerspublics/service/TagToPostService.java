@@ -4,7 +4,9 @@ package main.com.skillbox.ru.developerspublics.service;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
 import main.com.skillbox.ru.developerspublics.model.entity.Post;
+import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.TagToPostsRepository;
+import main.com.skillbox.ru.developerspublics.model.repository.TagsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -14,16 +16,18 @@ import java.util.Optional;
 
 @Service
 public class TagToPostService {
-    @Autowired
-    private TagToPostsRepository tagToPostsRepository;
-    @Autowired
-    private PostService postService;
-    @Autowired
-    private TagService tagService;
+    private final PostsRepository postsRepository;
+    private final TagsRepository tagsRepository;
+    private final TagToPostsRepository tagToPostsRepository;
 
 
-    public List<TagToPost> getTagToPostsByTagName(String tagName) {
-        return tagToPostsRepository.findByTagId(tagService.getTagByName(tagName).getId());
+    @Autowired
+    public TagToPostService(PostsRepository postsRepository,
+                            TagsRepository tagsRepository,
+                            TagToPostsRepository tagToPostsRepository) {
+        this.postsRepository = postsRepository;
+        this.tagsRepository = tagsRepository;
+        this.tagToPostsRepository = tagToPostsRepository;
     }
 
 
@@ -50,12 +54,12 @@ public class TagToPostService {
 
 
     private Post getPostTag(int postId) {
-        return postService.getPostById(postId);
+        return postsRepository.findById(postId).orElse(null);
     }
 
 
     private Tag getTagPost(int tagId) {
-        return tagService.getTagById(tagId);
+        return tagsRepository.findById(tagId).orElse(null);
     }
 
 

@@ -12,5 +12,5 @@ public interface UsersRepository extends JpaRepository<User, Integer> {
     @Query(value = "SELECT COUNT(*) FROM posts WHERE moderation_status='NEW'", nativeQuery = true)
     int getModerationCount();
 
-    User findByCode(String code);
+    User findUserByCode(String code);
 }

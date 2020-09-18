@@ -21,8 +21,13 @@ import java.util.TreeMap;
 
 @Service
 public class GlobalSettingService {
+    private final GlobalSettingsRepository globalSettingsRepository;
+
+
     @Autowired
-    private GlobalSettingsRepository globalSettingsRepository;
+    public GlobalSettingService(GlobalSettingsRepository globalSettingsRepository) {
+        this.globalSettingsRepository = globalSettingsRepository;
+    }
 
 
     public List<GlobalSetting> getAllGlobalSettings() {
@@ -99,32 +104,12 @@ public class GlobalSettingService {
 
     @SneakyThrows
     public ResponseEntity<?> postApiSettings(RequestApiSettings requestBody) {
-        String multiUserModeString = requestBody.getMultiUserMode();
-        String postPremoderationString = requestBody.getPostPremoderation();
-        String statisticsIsPublicString = requestBody.getStatisticsIsPublic();
-
-        //Если при запросе данные не найдены - код 404
-        if (multiUserModeString == null || postPremoderationString == null || statisticsIsPublicString == null) {
-            return ResponseEntity.status(404).body(new ResultResponse(false));
-        }
-
-        //Неверный параметр на входе - ответ с кодом 400 (Bad request)
-        String yes = GlobalSettingsValues.YES.toString();
-        String no = GlobalSettingsValues.NO.toString();
-        if (!((multiUserModeString.equals(yes) || multiUserModeString.equals(no)) &&
-                (postPremoderationString.equals(yes) || postPremoderationString.equals(no)) &&
-                (statisticsIsPublicString.equals(yes) || statisticsIsPublicString.equals(no)))) {
-            return ResponseEntity.status(400).body(new MessageResponse("Глобальная настройка не найдена!"));
-        }
-
-
         //Неверный параметр на входе - ответ с кодом 400 (Bad request)
         if (!setGlobalSettings(
-                Boolean.parseBoolean(multiUserModeString),
-                Boolean.parseBoolean(postPremoderationString),
-                Boolean.parseBoolean(statisticsIsPublicString))) {
+                requestBody.isMultiUserMode(),
+                requestBody.isPostPremoderation(),
+                requestBody.isStatisticsIsPublic()))
             return ResponseEntity.status(400).body(new MessageResponse("Глобальная настройка не найдена!"));
-        }
 
         return ResponseEntity.status(200).body(new ResultResponse(true));
     }

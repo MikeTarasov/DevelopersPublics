@@ -5,6 +5,8 @@ import main.com.skillbox.ru.developerspublics.api.response.TagResponse;
 import main.com.skillbox.ru.developerspublics.api.response.TagsListResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
+import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
+import main.com.skillbox.ru.developerspublics.model.repository.TagToPostsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.TagsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,12 +20,22 @@ public class TagService {
     private float maxWeight;
     private HashMap<Integer, Float> weightMap;
 
+    private final PostsRepository postsRepository;
+    private final TagsRepository tagsRepository;
+    private final TagToPostsRepository tagToPostsRepository;
+    private final TagToPostService tagToPostService;
+
+
     @Autowired
-    private TagsRepository tagsRepository;
-    @Autowired
-    private PostService postService;
-    @Autowired
-    private TagToPostService tagToPostService;
+    public TagService(PostsRepository postsRepository,
+                      TagsRepository tagsRepository,
+                      TagToPostsRepository tagToPostsRepository,
+                      TagToPostService tagToPostService) {
+        this.postsRepository = postsRepository;
+        this.tagsRepository = tagsRepository;
+        this.tagToPostsRepository = tagToPostsRepository;
+        this.tagToPostService = tagToPostService;
+    }
 
 
     public Tag getTagByName(String tagName) {
@@ -57,13 +69,13 @@ public class TagService {
 
 
     private void initTag(Tag tag) {
-        tag.setTagToPosts(getTagToPost(tag));
+        tag.setTagToPosts(tagToPostsRepository.findByTagId(tag.getId()));
         tag.setTagWeight(getWeight(tag));
     }
 
 
-    private List<TagToPost> getTagToPost(Tag tag) {
-        return tagToPostService.getTagToPostsByTagName(tag.getName());
+    public List<TagToPost> getTagToPost(String tagName) {
+        return tagToPostsRepository.getTagToPostsByTagName(tagName);
     }
 
 
@@ -75,7 +87,7 @@ public class TagService {
 
     private void setWeights() {
         //считаем кол-во активных постов
-        int count = postService.getActivePosts().size();
+        int count = postsRepository.countActivePosts(new Date(System.currentTimeMillis()));
         weightMap = new HashMap<>();
 
         //считаем вес тэгов  и ищем мах
@@ -88,7 +100,7 @@ public class TagService {
                 weightMap.put(tag.getId(), 0F);
             } //иначе заполняем абс. значениями и запоминаем мах
             else {
-                float tagWeight = (float) getTagToPost(tag).size() / count;
+                float tagWeight = (float) tagToPostsRepository.countTagsToPost(tag.getId()) / count;
                 weightMap.put(tag.getId(), tagWeight);
                 if (tagWeight > maxWeight) {
                     maxWeight = tagWeight;
@@ -143,8 +155,6 @@ public class TagService {
 
         //перебираем все тэги
         for (String tagName : getActiveTags()) {
-//        for (Tag tag : getTags()) {
-//            String tagName = tag.getName();
             if (query == null) {
                 //тэг не задан - выводим все
                 tagNames.add(tagName);

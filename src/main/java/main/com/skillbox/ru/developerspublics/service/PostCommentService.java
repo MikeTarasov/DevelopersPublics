@@ -20,12 +20,16 @@ import java.util.Optional;
 
 @Service
 public class PostCommentService {
+    private final PostCommentsRepository postCommentsRepository;
+    private final UserService userService;
+
+
     @Autowired
-    private PostCommentsRepository postCommentsRepository;
-    @Autowired
-    private PostService postService;
-    @Autowired
-    private UserService userService;
+    public PostCommentService(PostCommentsRepository postCommentsRepository,
+                              UserService userService) {
+        this.postCommentsRepository = postCommentsRepository;
+        this.userService = userService;
+    }
 
 
     public List<PostComment> getPostCommentsByPostId(int postId) {
@@ -91,7 +95,7 @@ public class PostCommentService {
 
 
     private Post getCommentPost(PostComment postComment) {
-        return postService.getPostById(postComment.getPostId());
+        return postCommentsRepository.getPostByPostId(postComment.getPostId());
     }
 
 
@@ -133,7 +137,7 @@ public class PostCommentService {
         }
 
         //test postId
-        if (postService.getPostById(postId) == null)
+        if (postCommentsRepository.getPostByPostId(postId) == null)
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 
         //test text

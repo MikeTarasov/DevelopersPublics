@@ -25,24 +25,35 @@ import java.util.stream.Stream;
 
 @Service
 public class PostService {
-    @Autowired
-    private PostsRepository postsRepository;
-    @Autowired
-    private GlobalSettingService globalSettingService;
-    @Autowired
-    private PostCommentService postCommentService;
-    @Autowired
-    private PostVoteService postVoteService;
-    @Autowired
-    private TagService tagService;
-    @Autowired
-    private TagToPostService tagToPostService;
-    @Autowired
-    private UserService userService;
+    private final PostsRepository postsRepository;
+    private final GlobalSettingService globalSettingService;
+    private final PostCommentService postCommentService;
+    private final PostVoteService postVoteService;
+    private final TagService tagService;
+    private final TagToPostService tagToPostService;
+    private final UserService userService;
 
     //размер анонса
     @Value("${announce.size}")
     private int announceSize;
+
+
+    @Autowired
+    public PostService (PostsRepository postsRepository,
+                        GlobalSettingService globalSettingService,
+                        PostCommentService postCommentService,
+                        PostVoteService postVoteService,
+                        TagService tagService,
+                        TagToPostService tagToPostService,
+                        UserService userService) {
+        this.postsRepository = postsRepository;
+        this.globalSettingService = globalSettingService;
+        this.postCommentService = postCommentService;
+        this.postVoteService = postVoteService;
+        this.tagService = tagService;
+        this.tagToPostService = tagToPostService;
+        this.userService = userService;
+    }
 
 
     public Post getInitPostById(int id) {
@@ -451,7 +462,7 @@ public class PostService {
         ArrayList<Post> posts = new ArrayList<>();
 
         //получаем список тэг-пост для тега по имени тэга
-        for (TagToPost tagToPost : tagToPostService.getTagToPostsByTagName(tagName)) {
+        for (TagToPost tagToPost : tagService.getTagToPost(tagName)) {
             //находим пост по id
             Post post = getInitPostById(tagToPost.getPostId());
             //проверяем на активность

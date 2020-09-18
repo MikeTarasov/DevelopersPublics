@@ -6,9 +6,9 @@ import lombok.Data;
 @Data
 public class RequestApiSettings {
     @JsonProperty("MULTIUSER_MODE")
-    String multiUserMode;
+    boolean multiUserMode;
     @JsonProperty("POST_PREMODERATION")
-    String postPremoderation;
+    boolean postPremoderation;
     @JsonProperty("STATISTICS_IS_PUBLIC")
-    String statisticsIsPublic;
+    boolean statisticsIsPublic;
 }
