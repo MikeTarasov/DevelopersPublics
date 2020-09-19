@@ -2,14 +2,12 @@ package main.com.skillbox.ru.developerspublics.service;
 
 
 import lombok.SneakyThrows;
-import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthLogin;
-import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthPassword;
-import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRegister;
-import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRestore;
+import main.com.skillbox.ru.developerspublics.api.request.*;
 import main.com.skillbox.ru.developerspublics.api.response.*;
 import main.com.skillbox.ru.developerspublics.config.AuthenticationProviderImpl;
 import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
+import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.UsersRepository;
 import org.imgscalr.Scalr;
 import org.json.simple.JSONObject;
@@ -34,10 +32,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import javax.mail.internet.MimeMessage;
 import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
 import java.io.*;
 import java.util.*;
 
@@ -45,6 +45,7 @@ import java.util.*;
 @Service
 public class UserService implements UserDetailsService {
     private final UsersRepository userRepository;
+    private final PostsRepository postsRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JavaMailSender emailSender;
     private final AuthenticationProviderImpl authenticationProvider;
@@ -61,11 +62,13 @@ public class UserService implements UserDetailsService {
 
     @Autowired
     public UserService (UsersRepository userRepository,
+                        PostsRepository postsRepository,
                         BCryptPasswordEncoder bCryptPasswordEncoder,
                         JavaMailSender emailSender,
                         AuthenticationProviderImpl authenticationProvider,
                         CaptchaCodeService captchaCodeService) {
         this.userRepository = userRepository;
+        this.postsRepository = postsRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.emailSender = emailSender;
         this.authenticationProvider = authenticationProvider;
@@ -109,24 +112,21 @@ public class UserService implements UserDetailsService {
     }
 
 
+    @Transactional
     public boolean saveUser(User user) {
         //ищем пользователя в БД
-        User userFromDB = null;
-        if (userRepository.findUserByEmail(user.getEmail()) != null) {
-            System.out.println(user.getId());
-            userFromDB = userRepository.findUserByEmail(user.getEmail());
-        }
-
         //если уже есть - сохранять нечего
-        if (userFromDB != null) {
+        if (userRepository.findUserByEmail(user.getEmail()) != null) {
             return false;
         }
+
         //если нет - задаем роль, кодируем пароль и сохраняем в репозиторий
         user.setRoles();
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         return true;
     }
+
 
     public void deleteUser(User user) {
         userRepository.delete(user);
@@ -138,12 +138,13 @@ public class UserService implements UserDetailsService {
     }
 
 
-    public int getModerationCount(User user) {
-        return user.getIsModerator() == 1 ? userRepository.getModerationCount() : 0;
+    private int getModerationCount(User user) {
+        return user.getIsModerator() == 1 ? postsRepository.getModerationCount() : 0;
     }
 
 
-    public boolean sendEmail(User user) {
+    @Transactional
+    private boolean sendEmail(User user) {
         boolean result = true;
         try {
             String hash = bCryptPasswordEncoder.encode(Long.toString(System.currentTimeMillis()))
@@ -181,7 +182,7 @@ public class UserService implements UserDetailsService {
     }
 
 
-    public boolean changeUserName(User user, String newName) {
+    private boolean changeUserName(User user, String newName) {
         boolean isCorrectName = isCorrectUserName(newName);
         if (isCorrectName) {
             user.setName(newName);
@@ -191,12 +192,12 @@ public class UserService implements UserDetailsService {
     }
 
 
-    public boolean isCorrectUserName(String name) {
+    private boolean isCorrectUserName(String name) {
         return name.length() > 3 && name.length() < 30;
     }
 
 
-    public void changeUserPassword(User user, String newPassword) {
+    private void changeUserPassword(User user, String newPassword) {
         String password = bCryptPasswordEncoder.encode(newPassword);
         if (!user.getPassword().equals(password)) {
             user.setPassword(password);
@@ -206,7 +207,7 @@ public class UserService implements UserDetailsService {
     }
 
 
-    public boolean changeUserEmail(User user, String email) {
+    private boolean changeUserEmail(User user, String email) {
         boolean isEmailNotExist = findUserByLogin(email) == null;
         if (isEmailNotExist) {
             user.setEmail(email);
@@ -216,15 +217,17 @@ public class UserService implements UserDetailsService {
     }
 
 
-    public void removePhoto(User user) {
+    @Transactional
+    private void removePhoto(User user) {
         String path = user.getPhoto();
         user.setPhoto("");
         userRepository.save(user);
-        File avatar = new File(path);
+        File avatar = new File(uploadsHome + path);
         avatar.delete();
     }
 
 
+    @Transactional
     @SneakyThrows
     private void changeUserPhoto(String path, String name, InputStream inputStream) {
         //сжимаем до 36*36 пикс
@@ -242,12 +245,12 @@ public class UserService implements UserDetailsService {
 
         //Получаем промежуточное изображение
         BufferedImage imageXStep = Scalr.resize(image, Scalr.Method.SPEED, Scalr.Mode.FIT_EXACT,
-                width, height, null);
+                width, height, (BufferedImageOp) null);
         imageXStep.flush();
 
         //Задаем окончательные размеры и плавно сжимаем
         BufferedImage newImage = Scalr.resize(imageXStep, Scalr.Method.ULTRA_QUALITY,
-                newWidth, newHeight, null);
+                newWidth, newHeight, (BufferedImageOp) null);
         newImage.flush();
 
         //скидываем на сервер
@@ -262,6 +265,7 @@ public class UserService implements UserDetailsService {
     }
 
 
+    @Transactional
     public String saveAvatar(User user, InputStream inputStream) { //TODO защита от дубля хеша!!!!!
         //считаем хэш
         String hashString = Long.toString(user.userHashCode());
@@ -273,21 +277,21 @@ public class UserService implements UserDetailsService {
         hash[2] = hashString.substring(4, 6);
         hash[3] = hashString.substring(6);
 
-        String path = File.separator + getAvatarPath(hash[0], hash[1], hash[2]);
+        String path = String.join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], "");
         String name = hash[3] + ".jpg";
 
         user.setPhoto(path + name);
         userRepository.save(user);
-        changeUserPhoto(uploadsHome + path, name, inputStream);
+        changeUserPhoto(uploadsHome +  path, name, inputStream);
 
-        return path;
+        return path + name;
     }
 
 
     public ResponseEntity<?> getAvatar(String a, String b, String c, String name) {
-        System.out.println(uploadsHome + getAvatarPath(a, b, c) + name);
+        System.out.println(String.join(File.separator, uploadsHome, uploadsPath, a, b, c, name)); //TODO
 
-        Resource file = new FileSystemResource(uploadsHome + getAvatarPath(a, b, c) + name);
+        Resource file = new FileSystemResource(String.join(File.separator, uploadsHome, uploadsPath, a, b, c, name));
 
         if (file.exists()) return ResponseEntity.ok().body(file);
 
@@ -295,12 +299,7 @@ public class UserService implements UserDetailsService {
     }
 
 
-    public String getAvatarPath(String a, String b, String c) {
-        return String.join(File.separator, uploadsPath, a, b, c) + File.separator;
-    }
-
-
-    public ResultUserResponse getResultUserResponse(User user) {
+    private ResultUserResponse getResultUserResponse(User user) {
         return new ResultUserResponse(
                 new UserResponse(
                         user.getId(),
@@ -315,7 +314,7 @@ public class UserService implements UserDetailsService {
     }
 
 
-    public User getUserByCode(String code) {
+    private User getUserByCode(String code) {
         return userRepository.findUserByCode(code);
     }
 
@@ -420,28 +419,25 @@ public class UserService implements UserDetailsService {
 
 
     public ResponseEntity<?> postApiAuthRegister(RequestApiAuthRegister requestBody) {
-        boolean isPasswordCorrect = true;
-        boolean isCaptchaCorrect = false;
-
-        String email = requestBody.getEmail();
-        String name = requestBody.getName();
-        String password = requestBody.getPassword();
-        String captchaCode = requestBody.getCaptcha();
-        String captchaSecret = requestBody.getCaptchaSecret();
-
         //проверяем email
+        String email = requestBody.getEmail();
         boolean isEmailExist = findUserByLogin(email) != null;
 
         //проверяем name
+        String name = requestBody.getName();
         boolean isNameWrong = !isCorrectUserName(name);
 
         //проверяем password
+        String password = requestBody.getPassword();
+        boolean isPasswordCorrect = true;
         if (password.length() < 6) {
             isPasswordCorrect = false;
         }
 
         //проверяем captcha
-        if (captchaCodeService.getCaptchaCodeByCodeAndSecret(captchaCode, captchaSecret) != null) {
+        boolean isCaptchaCorrect = false;
+        if (captchaCodeService
+                .getCaptchaCodeByCodeAndSecret(requestBody.getCaptcha(), requestBody.getCaptchaSecret()) != null) {
             isCaptchaCorrect = true;
         }
 
@@ -464,10 +460,10 @@ public class UserService implements UserDetailsService {
 
     public ResponseEntity<?> getApiAuthLogout() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
-        boolean result = false;
 
         User user = findUserByLogin(securityContext.getAuthentication().getName());
 
+        boolean result = false;
         if (user != null) {
             Set<GrantedAuthority> grantedAuthority = new HashSet<>();
             grantedAuthority.add(new SimpleGrantedAuthority("ROLE_ANONYMOUS"));
@@ -491,6 +487,7 @@ public class UserService implements UserDetailsService {
     }
 
 
+    @Transactional
     @SneakyThrows
     public ResponseEntity<?> postApiProfileMy(String requestBody,
                                               MultipartFile avatar,
@@ -515,8 +512,7 @@ public class UserService implements UserDetailsService {
         }
 
         //получаем user
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = findUserByLogin(authentication.getName());
+        User user = findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
 
         if (user == null) {
             return ResponseEntity.status(HttpStatus.OK)
@@ -556,9 +552,8 @@ public class UserService implements UserDetailsService {
             if (removePhoto.equals("1")) {
                 removePhoto(user);
             }
-
             //изменение фото
-            if (removePhoto.equals("0")) {
+            else if (removePhoto.equals("0")) {
                 if (avatar.getSize() <= 5*1024*1024) {
                     InputStream inputStream = avatar.getInputStream();
                     saveAvatar(user, inputStream);
@@ -577,17 +572,16 @@ public class UserService implements UserDetailsService {
     }
 
 
+    @Transactional
     @SneakyThrows
     public ResponseEntity<?> postApiImage(MultipartFile avatar) {
-        //получаем пользователя
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = findUserByLogin(authentication.getName());
-
         String path = "";
 
         if (avatar != null) {
-            InputStream inputStream = avatar.getInputStream();
-            path = saveAvatar(user, inputStream);
+            path = saveAvatar(
+                    findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName()),
+                    avatar.getInputStream()
+            );
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(path);

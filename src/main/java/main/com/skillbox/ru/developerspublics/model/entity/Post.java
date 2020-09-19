@@ -46,7 +46,7 @@ public class Post
     private String title;
 
     //содержание поста
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String text;
 
     //кол-во просмотров

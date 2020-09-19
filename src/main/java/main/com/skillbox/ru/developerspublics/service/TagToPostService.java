@@ -10,6 +10,8 @@ import main.com.skillbox.ru.developerspublics.model.repository.TagsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -63,6 +65,7 @@ public class TagToPostService {
     }
 
 
+    @Transactional
     public void saveTagToPost(int postId, int tagId) {
         //проверим на уникальность
         TagToPost tagToPost = tagToPostsRepository.findByPostIdAndTagId(postId, tagId);

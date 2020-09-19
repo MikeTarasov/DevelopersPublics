@@ -52,7 +52,6 @@ public class CaptchaCodeService {
 
     @SneakyThrows
     public JSONObject createNewCaptcha() {
-        JSONObject result = new JSONObject();
         //кол-во символов
         int iTotalChars = 6;
         //высота капчи
@@ -96,6 +95,7 @@ public class CaptchaCodeService {
         String secretCode = bCryptPasswordEncoder.encode(code);
         saveCaptcha(code, secretCode);
 
+        JSONObject result = new JSONObject();
         result.put("secretCode", secretCode);
         result.put("base64", base64);
 

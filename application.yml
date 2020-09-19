@@ -1,3 +1,5 @@
+#Replace 'localhost' to ip if DB on other server
+#Replace 'devpostsdb' with your DB name
 spring.dataSource.url: jdbc:mysql://localhost:3306/devpostsdb?verifyServerCertificate=false&useSSL=false&requireSSL=false
   &serverTimezone=UTC
 
@@ -5,8 +7,12 @@ spring.dataSource.url: jdbc:mysql://localhost:3306/devpostsdb?verifyServerCertif
 spring.dataSource.username: root
 #Replace with your DB password here:
 spring.dataSource.password: test123341
+
 spring.jpa.hibernate.ddl-auto: update
 
+#spring.jpa.show-sql: true
+
+#Max size for uploads media
 spring.servlet.multipart.max-file-size: 10MB
 spring.servlet.multipart.max-request-size: 10MB
 
@@ -23,11 +29,10 @@ moderator.email.password: wzhaqlnptimbivpl
 #Replace with your captcha life-time here:
 captcha.life.time: 3600000
 
-#path to avatars
-uploads.home: C:/home
+#path to avatars on server
+uploads.home: C:\home
+#path to avatars on browser
 uploads.path: upload
-
-#spring.resources.static-locations: file:///upload
 
 #post announce size
 announce.size: 1000

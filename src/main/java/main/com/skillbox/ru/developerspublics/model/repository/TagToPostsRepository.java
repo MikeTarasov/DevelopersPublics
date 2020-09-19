@@ -11,6 +11,7 @@ import java.util.List;
 
 @Repository
 public interface TagToPostsRepository extends JpaRepository<TagToPost, Integer> {
+
     TagToPost findByPostIdAndTagId(int postId, int tagId);
 
     List<TagToPost> findByTagId(int tagId);

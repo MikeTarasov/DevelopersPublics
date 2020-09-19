@@ -15,8 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.TreeMap;
 
 
 @Service
@@ -40,7 +40,7 @@ public class GlobalSettingService {
     }
 
 
-    public void initGlobalSettings() {
+    private void initGlobalSettings() {
         //проверяем, что все настройки есть
         if (globalSettingsRepository.count() != GlobalSettingsCodes.values().length) {
             //если нет - перезаполняем таблицу БД настройками по умолчанию
@@ -51,7 +51,7 @@ public class GlobalSettingService {
                         id,
                         code.name(),
                         code.getDesc(),
-                        GlobalSettingsValues.NO.toString())
+                        GlobalSettingsValues.YES.toString())
                 );
                 id++;
             }
@@ -59,7 +59,7 @@ public class GlobalSettingService {
     }
 
 
-    public boolean setGlobalSettings(Boolean multiUserMode, Boolean postPremoderation, Boolean statisticsIsPublic) {
+    private boolean setGlobalSettings(Boolean multiUserMode, Boolean postPremoderation, Boolean statisticsIsPublic) {
         boolean hasErrors = false;
         for (GlobalSetting gs : getAllGlobalSettings()) {
             if (gs.getCode().equals(GlobalSettingsCodes.MULTIUSER_MODE.toString()) && multiUserMode != null) {
@@ -90,7 +90,7 @@ public class GlobalSettingService {
 
     public ResponseEntity<?> getApiSettings() {
         //init response
-        TreeMap<String, Boolean> response = new TreeMap<>();
+        HashMap<String, Boolean> response = new HashMap<>();
         //перебираем все настройки
         for (GlobalSetting globalSetting : getAllGlobalSettings()) {
             //и запоминаем их в ответе -> сразу переводим value String в boolean

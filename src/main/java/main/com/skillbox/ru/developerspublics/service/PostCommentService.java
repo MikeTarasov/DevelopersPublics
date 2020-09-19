@@ -3,31 +3,33 @@ package main.com.skillbox.ru.developerspublics.service;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiComment;
 import main.com.skillbox.ru.developerspublics.api.response.*;
 import main.com.skillbox.ru.developerspublics.model.entity.PostComment;
-import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.repository.PostCommentsRepository;
+import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 
 @Service
 public class PostCommentService {
     private final PostCommentsRepository postCommentsRepository;
+    private final PostsRepository postsRepository;
     private final UserService userService;
 
 
     @Autowired
     public PostCommentService(PostCommentsRepository postCommentsRepository,
+                              PostsRepository postsRepository,
                               UserService userService) {
         this.postCommentsRepository = postCommentsRepository;
+        this.postsRepository = postsRepository;
         this.userService = userService;
     }
 
@@ -37,18 +39,7 @@ public class PostCommentService {
     }
 
 
-    public PostComment getInitPostCommentById(int id) {
-        Optional<PostComment> optionalPostComment = postCommentsRepository.findById(id);
-        if (optionalPostComment.isPresent()) {
-            PostComment postComment = optionalPostComment.get();
-            initPostComment(postComment);
-            return postComment;
-        }
-        return null;
-    }
-
-
-    public PostComment getPostCommentById(int id) {
+    private PostComment getPostCommentById(int id) {
         if (postCommentsRepository.findById(id).isPresent()) return postCommentsRepository.findById(id).get();
         return null;
     }
@@ -73,38 +64,13 @@ public class PostCommentService {
     }
 
 
-    public PostCommentResponse postCommentToJSON(PostComment postComment) {
-        User commentUser = getCommentUser(postComment);
-        return new PostCommentResponse(
-                postComment.getId(),
-                postComment.getTimestamp(),
-                postComment.getText(),
-                new UserIdNamePhotoResponse(
-                        commentUser.getId(),
-                        commentUser.getName(),
-                        commentUser.getPhoto()
-                )
-        );
-    }
-
-
-    private void initPostComment(PostComment postComment) {
-        postComment.setCommentPost(getCommentPost(postComment));
-        postComment.setCommentUser(getCommentUser(postComment));
-    }
-
-
-    private Post getCommentPost(PostComment postComment) {
-        return postCommentsRepository.getPostByPostId(postComment.getPostId());
-    }
-
-
     private User getCommentUser(PostComment postComment) {
         return userService.getUserById(postComment.getUserId());
     }
 
 
-    public int saveComment(Integer parentId, int postId, int userId, String text) {
+    @Transactional
+    private int saveComment(Integer parentId, int postId, int userId, String text) {
         PostComment postComment = new PostComment();
 
         if (parentId != null) postComment.setParentId(parentId);
@@ -119,17 +85,10 @@ public class PostCommentService {
     }
 
 
+    @Transactional
     public ResponseEntity<?> postApiComment(RequestApiComment requestBody) {
-        //получаем запрос
-        Integer parentId = requestBody.getParentId();
-        int postId = requestBody.getPostId();
-        String text = requestBody.getText();
-
-        //выдергиваем из контекста пользователя
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = userService.findUserByLogin(authentication.getName());
-
         //test parenId
+        Integer parentId = requestBody.getParentId();
         if (parentId != null) {
             //try to find parent comment
             if (getPostCommentById(parentId) == null)
@@ -137,18 +96,28 @@ public class PostCommentService {
         }
 
         //test postId
-        if (postCommentsRepository.getPostByPostId(postId) == null)
+        int postId = requestBody.getPostId();
+        if (postsRepository.findById(postId).isEmpty())
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 
         //test text
+        String text = requestBody.getText();
         if (text.length() < 3)
             return ResponseEntity.status(HttpStatus.OK)
                     .body(new ResultFalseErrorsResponse(new ErrorsResponse("text")));
 
-        //ошибок нет - сохраняем
-        int commentId = saveComment(parentId, postId, user.getId(), text);
-
-        //собираем ответ
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiCommentTrueResponse(commentId));
+        //ошибок нет -> сохраняем -> собираем ответ
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new ApiCommentTrueResponse(
+                        saveComment(
+                                parentId,
+                                postId,
+                                userService
+                                        .findUserByLogin(
+                                                SecurityContextHolder.getContext().getAuthentication().getName())
+                                        .getId(),
+                                text
+        )));
     }
 }

@@ -9,6 +9,7 @@ import java.util.List;
 
 @Repository
 public interface CaptchaCodesRepository extends JpaRepository<CaptchaCode, Integer> {
+
     List<CaptchaCode> findByTimeLessThan(Date time);
 
     CaptchaCode findByCodeAndSecretCode(String code, String secretCode);

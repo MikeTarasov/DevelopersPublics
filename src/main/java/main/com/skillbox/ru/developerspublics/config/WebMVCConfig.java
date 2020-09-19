@@ -14,7 +14,7 @@ public class WebMVCConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/css/**", "/js/**", "/fonts/**", "/img/**", "/resources/**", "/html/**")
                 .addResourceLocations("classpath:src/main/resources/");
-        registry.addResourceHandler("/upload/**").addResourceLocations("C:/home/upload/"); //TODO
+//        registry.addResourceHandler("/upload/**").addResourceLocations("file:///C:/home/upload/"); //TODO
     }
 
 

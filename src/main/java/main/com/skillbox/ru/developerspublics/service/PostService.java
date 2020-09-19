@@ -1,6 +1,7 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 
+import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiModeration;
 import main.com.skillbox.ru.developerspublics.api.request.RequestPostPutApiPost;
 import main.com.skillbox.ru.developerspublics.api.response.*;
@@ -12,15 +13,17 @@ import main.com.skillbox.ru.developerspublics.model.repository.*;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -56,7 +59,7 @@ public class PostService {
     }
 
 
-    public Post getInitPostById(int id) {
+    private Post getInitPostById(int id) {
         Optional<Post> optionalPost = postsRepository.findById(id);
         if (optionalPost.isPresent()) {
             Post post = optionalPost.get();
@@ -67,40 +70,150 @@ public class PostService {
     }
 
 
-    public Post getPostById(int id) {
+    private Post getPostById(int id) {
         if (postsRepository.findById(id).isPresent()) return postsRepository.findById(id).get();
         return null;
     }
 
 
-    public Post getPostByTitle(String title) {
-        return postsRepository.findByTitle(title);
-    }
-
-
-    public List<Post> getActivePosts() {
+    private List<Post> getInitActivePosts() {
         List<Post> activePosts = new ArrayList<>();
-        for (Post post : postsRepository.findByIsActiveAndModerationStatus(1, ModerationStatuses.ACCEPTED.toString())) {
-            if (post.getTimestamp() <= (System.currentTimeMillis() / 1000)) {
+        for (Post post : postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
+                1, ModerationStatuses.ACCEPTED.toString(), new Date(System.currentTimeMillis()), null)) {
                 initPost(post);
                 activePosts.add(post);
-            }
         }
         return activePosts;
     }
 
 
-    public List<Post> getPostsByUserId(int userId) {
+    private List<Post> getActivePosts() {
+        return postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
+                1, ModerationStatuses.ACCEPTED.toString(), new Date(System.currentTimeMillis()), null);
+    }
+
+
+    private List<Post> getActivePosts(int offset, int limit, String mode) {
+        if (mode.equals("")) {
+            mode = "recent";
+        }
+        List<Post> posts;
+        switch (mode){
+            case "recent": posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
+                                            1,
+                                            ModerationStatuses.ACCEPTED.toString(),
+                                            new Date(System.currentTimeMillis()),
+                                            PageRequest.of(offset, offset + limit, Sort.by("time").descending()));
+                            initPosts(posts);
+                            return posts;
+
+            case "popular": posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
+                                             1,
+                                             ModerationStatuses.ACCEPTED.toString(),
+                                             new Date(System.currentTimeMillis()),
+                                             null);
+                            initPosts(posts);
+                            return posts
+                                    .stream()
+                                    .sorted(Comparator.comparing(e -> getCommentsCount((Post) e)).reversed())
+                                    .skip(offset)
+                                    .limit(limit)
+                                    .collect(Collectors.toList());
+
+            case "best": posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
+                                             1,
+                                             ModerationStatuses.ACCEPTED.toString(),
+                                             new Date(System.currentTimeMillis()),
+                                             null);
+                            initPosts(posts);
+                            return posts
+                                    .stream()
+                                    .sorted(Comparator.comparing(e -> getLikesDislikesCount((Post) e,1)).reversed())
+                                    .skip(offset)
+                                    .limit(limit)
+                                    .collect(Collectors.toList());
+
+            case "early": posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
+                                             1,
+                                             ModerationStatuses.ACCEPTED.toString(),
+                                             new Date(System.currentTimeMillis()),
+                                             PageRequest.of(offset, offset + limit, Sort.by("time")));
+                            initPosts(posts);
+                            return posts;
+        }
+        return new ArrayList<>();
+    }
+
+
+    private int countActivePosts() {
+        return postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
+                1,
+                ModerationStatuses.ACCEPTED.toString(),
+                new Date(System.currentTimeMillis()),
+                null).size();
+    }
+
+
+    private List<Post> getActivePostsByQuery(String query, int offset, int limit) {
+        List<Post> posts = postsRepository
+                .findActivePostsByQuery(
+                        1,
+                        ModerationStatuses.ACCEPTED.toString(),
+                        new Date(System.currentTimeMillis()),
+                        "%" + query + "%",
+                        PageRequest.of(offset, offset+limit, Sort.by("time"))
+                );
+        initPosts(posts);
+        return posts;
+    }
+
+
+    private int countActivePostsByQuery(String query) {
+        return postsRepository
+                .findActivePostsByQuery(
+                        1,
+                        ModerationStatuses.ACCEPTED.toString(),
+                        new Date(System.currentTimeMillis()),
+                        "%" + query + "%",
+                        null).size();
+    }
+
+
+    @SneakyThrows
+    private List<Post> getActivePostByDate(String date) {
+        //парсим текущую дату из строки
+        Calendar thisDay = Calendar.getInstance();
+        thisDay.setTime(new SimpleDateFormat("yyyy-MM-dd").parse(date));
+        //для sql-запроса получаем 2 даты:
+        // - 00:00:00 следующего дня
+        thisDay.roll(Calendar.DATE, 1);
+        Date dayAfter = thisDay.getTime();
+        // - 23:59:59 предыдущего дня
+        thisDay.roll(Calendar.DATE, -2);
+        thisDay.set(Calendar.HOUR, 23);
+        thisDay.set(Calendar.MINUTE, 59);
+        thisDay.set(Calendar.SECOND, 59);
+        Date dayBefore = thisDay.getTime();
+
+        List<Post> posts = postsRepository.findByIsActiveAndModerationStatusAndTimeAfterAndTimeBefore(
+                1,
+                ModerationStatuses.ACCEPTED.toString(),
+                dayBefore,
+                dayAfter);
+
+        for (Post post : posts) {
+            initPost(post);
+        }
+        return posts;
+    }
+
+
+    private List<Post> getPostsByUserId(int userId) {
         return postsRepository.findByUserId(userId);
     }
 
 
-    public List<Post> getPostsByModerationStatus(String moderationStatus) {
-        return postsRepository.findByModerationStatus(moderationStatus);
-    }
-
-
-    public boolean isPostActive(Post post) {
+    private boolean isPostActive(Post post) {
         //проверяем выполнение сразу 3х условий
         //1 - стоит галочка "пост активен"
         //2 - проверяем статус -> д.б. ACCEPTED
@@ -111,12 +224,7 @@ public class PostService {
     }
 
 
-    public List<Post> getPosts() {
-        return new ArrayList<>(postsRepository.findAll());
-    }
-
-
-    public void initPost(Post post) {
+    private void initPost(Post post) {
         if (post.getModeratorId() != null) {
             post.setModeratorPost(userService.getUserById(post.getModeratorId()));
         }
@@ -131,38 +239,42 @@ public class PostService {
     }
 
 
-    public List<PostResponse> responsePosts(List<Post> posts, int offset, int limit, String mode) {
-        List<Post> responsePosts = new ArrayList<>();
-        //сортируем -> обрезаем -> переносим в список ответа
-        sortedByMode(posts.stream(), mode)
-                .skip(offset).limit(limit)
-                .forEach(responsePosts::add);
+    private void initPosts(List<Post> posts) {
+        for (Post post : posts) {
+            initPost(post);
+        }
+    }
 
+
+    private List<Post> sortPostList(List<Post> posts, int offset, int limit) {
+        return posts.stream()
+                .sorted(Comparator.comparing(Post::getTime).reversed())
+                .skip(offset)
+                .limit(limit).collect(Collectors.toList());
+    }
+
+
+    private List<PostResponse> responsePosts(List<Post> posts) {
         List<PostResponse> list = new ArrayList<>();
         //приводим к нужному виду
-        for (Post post : responsePosts) {
-            list.add(postToJSON(post));
+        for (Post post : posts) {
+            list.add(new PostResponse(
+                    post.getId(),
+                    post.getTimestamp(),
+                    new UserIdNameResponse(post.getUserPost().getId(), post.getUserPost().getName()),
+                    post.getTitle(),
+                    getAnnounce(post),
+                    getLikesDislikesCount(post,1),
+                    getLikesDislikesCount(post,-1),
+                    getCommentsCount(post),
+                    post.getViewCount()
+            ));
         }
         return list;
     }
 
 
-    public PostResponse postToJSON(Post post) {
-        return new PostResponse(
-                post.getId(),
-                post.getTimestamp(),
-                new UserIdNameResponse(post.getUserPost().getId(), post.getUserPost().getName()),
-                post.getTitle(),
-                getAnnounce(post),
-                getLikesDislikesCount(post,1),
-                getLikesDislikesCount(post,-1),
-                getCommentsCount(post),
-                post.getViewCount()
-        );
-    }
-
-
-    public PostByIdResponse postByIdToJSON(Post post) {
+    private PostByIdResponse postByIdToJSON(Post post) {
         return new PostByIdResponse(
                 post.getId(),
                 post.getTimestamp(),
@@ -180,20 +292,13 @@ public class PostService {
     }
 
 
-    public boolean isPostReadyToEditByModerator(Post post) {
-        //не проверяем статус модерации
-        return post.getIsActive() == 1 &&
-                post.getTimestamp() <= (System.currentTimeMillis() / 1000);
-    }
-
-
-    public String getAnnounce(Post post) {
+    private String getAnnounce(Post post) {
         String text = Jsoup.parse(post.getText()).text();
         return ((text.length() > announceSize) ? text.substring(0, announceSize) : text);
     }
 
 
-    public int getLikesDislikesCount(Post post, int value) {
+    private int getLikesDislikesCount(Post post, int value) {
         //value = +1 -> like
         //value = -1 -> dislike
         int count = 0;
@@ -206,7 +311,7 @@ public class PostService {
     }
 
 
-    public int getCommentsCount(Post post) {
+    private int getCommentsCount(Post post) {
         return post.getPostComments() == null ? 0 : post.getPostComments().size();
     }
 
@@ -220,24 +325,8 @@ public class PostService {
     }
 
 
-    private Stream<Post> sortedByMode(Stream<Post> stream, String mode) {
-        if (mode.equals("")) {
-            mode = "recent";
-        }
-        switch (mode){
-            case "recent": return stream.sorted(Comparator.comparing(Post::getTime).reversed());
-
-            case "popular": return stream.sorted(Comparator.comparing(e -> getCommentsCount((Post) e)).reversed());
-
-            case "best": return stream.sorted(Comparator.comparing(e -> getLikesDislikesCount((Post) e,1)).reversed());
-
-            case "early": return stream.sorted(Comparator.comparing(Post::getTime));
-        }
-        return stream;
-    }
-
-
-    public void savePost(long timestamp, int isActive, String title, String text, int userId, List<String> tagsNames) {
+    @Transactional
+    private boolean savePost(long timestamp, int isActive, String title, String text, int userId, List<String> tagsNames) {
         //создаем новый
         Post post = new Post();
         //заполняем обязательные поля
@@ -263,13 +352,16 @@ public class PostService {
         for (String tagName : tagsNames) {
             tagService.saveTag(tagName, post.getId());
         }
+        return true;
     }
 
 
-    public void editPost(int id, long timestamp, int isActive, String title, String text, int userId,
+    @Transactional
+    private boolean editPost(int id, long timestamp, int isActive, String title, String text, int userId,
                          List<String> tagsNames) {
         //находим в базе
         Post post = getPostById(id);
+        if (post == null) return false;
         //заполняем обязательные поля
         post.setTime(timestamp);
         post.setIsActive(isActive);
@@ -283,22 +375,17 @@ public class PostService {
         }
 
         //отправляем в репозиторий
-        postsRepository.save(post); //TODO ограничить размер текста!!!
+        postsRepository.save(post);
 
         //сохраним тэги и привяжем их к посту
         for (String tagName : tagsNames) {
             tagService.saveTag(tagName, post.getId());
         }
+        return true;
     }
 
 
-    public void incrementViewCount(Post post) {
-        post.setViewCount(post.getViewCount() + 1);
-        postsRepository.save(post);
-    }
-
-
-    public boolean setModerationStatus(int postId, String status, int moderatorId) {
+    private boolean setModerationStatus(int postId, String status, int moderatorId) {
         Post post = getPostById(postId);
         if (post == null) return false;
         post.setModerationStatus(status);
@@ -318,6 +405,7 @@ public class PostService {
     }
 
 
+    @Transactional
     private ResponseEntity<?> postPutApiPost(RequestPostPutApiPost requestBody, Integer postId) {
         //актуализируем время
         long timestamp = requestBody.getTimestamp();
@@ -340,7 +428,11 @@ public class PostService {
                     .body(new ResultFalseErrorsResponse(
                             ErrorsResponse.builder().text("Текст публикации слишком короткий").build()
                     ));
-
+        if (text.length() > 16777215)
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ResultFalseErrorsResponse(
+                            ErrorsResponse.builder().text("Текст публикации слишком длинный").build()
+                    ));
 
         //ошибок нет - добавляем пост
         int userId = userService
@@ -351,69 +443,60 @@ public class PostService {
 
         //POST /api/post  -> postId = null -> создаем новый
         //PUT /api/post/{ID}  -> postId != null -> изменяем
+        boolean result = true;
         if (postId == null) {
-            savePost(timestamp, isActive, title, text, userId, tagsNames);
+            result = savePost(timestamp, isActive, title, text, userId, tagsNames);
         }
-        else editPost(postId, timestamp, isActive, title, text, userId, tagsNames);
+        else result = editPost(postId, timestamp, isActive, title, text, userId, tagsNames);
+
+        if (!result) ResponseEntity.status(200)
+                .body(new ResultFalseErrorsResponse(
+                        ErrorsResponse.builder().text("Не удалось сохранить пост").build()
+                ));
 
         //возвращаем ответ
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new ResultResponse(true));
+        return ResponseEntity.status(HttpStatus.OK).body(new ResultResponse(true));
     }
 
 
     public ResponseEntity<?> getApiPost(int offset, int limit, String mode) {
-        //запоминаем активные посты
-        List<Post> posts = getActivePosts();
-
-        //собираем ответ
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
-                posts.size(),
-                responsePosts(posts, offset, limit, mode)
-        ));
+        return ResponseEntity
+                .status(200)
+                .body(new ApiPostResponse(
+                        countActivePosts(),
+                        responsePosts(getActivePosts(offset, limit, mode))));
     }
 
 
     public ResponseEntity<?> getApiPostSearch(int offset, int limit, String query) {
-        //создадим список активных постов posts
-        List<Post> posts = getActivePosts();
-
         //создадим список для найденных постов findPosts
-        List<Post> findPosts = new ArrayList<>();
+        List<Post> findPosts;
 
         //если запрос пустой, метод должен выводить все посты
         if (query.length() == 0) {
-            findPosts = posts;
+            findPosts = getActivePosts(offset, limit, "");
         }
         else { //иначе ищем query в текстовых полях
-            for (Post post : posts) {
-                if (post.getTitle().contains(query) || post.getText().contains(query)) {
-                    findPosts.add(post);
-                }
-            }
+            findPosts = getActivePostsByQuery(query, offset, limit);
         }
 
         //собираем ответ
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
-                findPosts.size(),
-                responsePosts(findPosts, offset, limit, "")
-        ));
+        return ResponseEntity
+                .status(200)
+                .body(new ApiPostResponse(countActivePostsByQuery(query), responsePosts(findPosts)));
     }
 
 
     public ResponseEntity<?> getApiPostId(int id) {
         //ищем нужный пост по id
         Post post = getInitPostById(id);
+        //если пост не найден - возвращаем 404
+        if (post == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
 
         //При успешном запросе увеличиваем количество просмотров поста на 1, кроме случаев:
         // - Если модератор авторизован, то не считаем его просмотры вообще
         // - Если автор авторизован, то не считаем просмотры своих же публикаций
         User user = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
-
-        //если пост не найден - возвращаем 404
-        if (post == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-
-        initPost(post);
 
         //смотрит не аноним
         if (user != null) {
@@ -422,13 +505,16 @@ public class PostService {
                 return ResponseEntity.status(HttpStatus.OK).body(postByIdToJSON(post));
 
             //если модератор - проверяем дату и isActive
-            if (user.getIsModerator() == 1 && isPostReadyToEditByModerator(post))
+            if (user.getIsModerator() == 1 &&
+                    post.getIsActive() == 1 &&
+                    post.getTimestamp() <= (System.currentTimeMillis() / 1000))
                 return ResponseEntity.status(HttpStatus.OK).body(postByIdToJSON(post));
         }
 
         //если не автор и не модератор - проверяем активность и плюсуем просмотры
         if (isPostActive(post)) {
-            incrementViewCount(post);
+            post.setViewCount(post.getViewCount() + 1);
+            postsRepository.save(post);
             return ResponseEntity.status(HttpStatus.OK).body(postByIdToJSON(post));
         }
 
@@ -437,46 +523,41 @@ public class PostService {
     }
 
 
+    @SneakyThrows
     public ResponseEntity<?> getApiPostByDate(int offset, int limit, String date) {
-        ArrayList<Post> posts = new ArrayList<>();
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
-        //перебираем активные посты
-        for (Post post : getActivePosts()) {
-            //ищем посты с заданной датой
-            if (dateFormat.format(post.getTime()).equals(date)) {
-                //результат запоминаем в posts
-                posts.add(post);
-            }
-        }
-
+        //получаем список постов за дату
+        List<Post> posts = getActivePostByDate(date);
+        //запоминаем размер
+        int postsSize = posts.size();
+        //сортируем и обрезаем
+        posts = sortPostList(posts, offset, limit);
         //собираем ответ
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
-                posts.size(),
-                responsePosts(posts, offset, limit, "")
-        ));
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(postsSize, responsePosts(posts)));
     }
 
 
     public ResponseEntity<?> getApiPostByTag(int offset, int limit, String tagName) {
-        ArrayList<Post> posts = new ArrayList<>();
+        List<Post> posts = new ArrayList<>();
 
         //получаем список тэг-пост для тега по имени тэга
         for (TagToPost tagToPost : tagService.getTagToPost(tagName)) {
             //находим пост по id
             Post post = getInitPostById(tagToPost.getPostId());
-            //проверяем на активность
-            if (isPostActive(post)) {
-                //и запоминаем
-                posts.add(post);
+            if (post != null) {
+                //проверяем на активность
+                if (isPostActive(post)) {
+                    //и запоминаем
+                    posts.add(post);
+                }
             }
         }
 
+        //запоминаем размер
+        int postsSize = posts.size();
+        //сортируем и обрезаем
+        posts = sortPostList(posts, offset, limit);
         //собираем ответ
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
-                posts.size(),
-                responsePosts(posts, offset, limit, "")
-        ));
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(postsSize, responsePosts(posts)));
     }
 
 
@@ -484,11 +565,12 @@ public class PostService {
         //выдергиваем из контекста пользователя
         User user = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
 
+        //переходим на верхний регистр
         status = status.toUpperCase();
 
         //получим список постов
         List<Post> posts = new ArrayList<>();
-        for (Post post : getPostsByModerationStatus(status)) {
+        for (Post post : postsRepository.findByModerationStatus(status)) {
             //отбираем активные посты с нужным статусом:
             //NEW - выводим все
             //ACCEPTED-DECLINED -> выводим только для текущего пользователя
@@ -505,27 +587,26 @@ public class PostService {
             }
         }
 
+        //запоминаем размер -> сортируем и обрезаем
+        int postsSize = posts.size();
+        posts = sortPostList(posts, offset, limit);
         //собираем ответ
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
-                posts.size(),
-                responsePosts(posts, offset, limit, "")
-        ));
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(postsSize, responsePosts(posts)));
     }
 
 
     public ResponseEntity<?> getApiPostMy(int offset, int limit, String status) {
-        //выдергиваем из контекста пользователя
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = userService.findUserByLogin(authentication.getName());
-
-        //получим список постов
+        //получим список постов пользователя
         List<Post> posts = new ArrayList<>();
-        for (Post post : getPostsByUserId(user.getId())) {
+        for (Post post : getPostsByUserId(userService
+                             .findUserByLogin(
+                                    SecurityContextHolder.getContext().getAuthentication().getName()).getId())) {
             initPost(post);
             //в зависимости от статуса добавляем нужные
             switch (status) {
                 case "inactive" : if (post.getIsActive() == 0)
                     posts.add(post); break;
+
                 case "pending" : if (post.getIsActive() == 1 &&
                         post.getModerationStatus().equals(ModerationStatuses.NEW.toString()))
                     posts.add(post); break;
@@ -538,35 +619,29 @@ public class PostService {
                         post.getModerationStatus().equals(ModerationStatuses.ACCEPTED.toString()))
                     posts.add(post); break;
             }
-
         }
 
+        //запоминаем размер -> сортируем и обрезаем
+        int postsSize = posts.size();
+        posts = sortPostList(posts, offset, limit);
         //собираем ответ
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(
-                posts.size(),
-                responsePosts(posts, offset, limit, "")
-        ));
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(postsSize, responsePosts(posts)));
     }
 
 
     public ResponseEntity<?> postApiModeration(RequestApiModeration requestBody) {
-        boolean hasErrors = false;
-        String status = "";
-
-        //получаем входные параметры
-        int postId = requestBody.getPostId();
-        String decision = requestBody.getDecision();
-        //получаем пользователя
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User moderator = userService.findUserByLogin(authentication.getName());
-
         //переводим decision -> status
+        String status = "";
+        String decision = requestBody.getDecision();
         if (decision.equals("accept")) status = ModerationStatuses.ACCEPTED.toString();
         else if (decision.equals("decline")) status = ModerationStatuses.DECLINED.toString();
 
         //проверяем на ошибки: не найден модератор, не правильный статус, не найден пост
+        boolean hasErrors = false;
+        User moderator = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
+
         if (moderator == null || status.equals("")) hasErrors = true;
-        else if (!setModerationStatus(postId, status, moderator.getId())) hasErrors = true;
+        else if (!setModerationStatus(requestBody.getPostId(), status, moderator.getId())) hasErrors = true;
 
         //собираем ответ
         return ResponseEntity.status(HttpStatus.OK).body(new ResultResponse(!hasErrors));
@@ -616,6 +691,7 @@ public class PostService {
 
     public ResponseEntity<?> getApiStatisticsMy() {
         User user = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 
         int postsCount = 0;
         int likesCount = 0;
@@ -623,22 +699,22 @@ public class PostService {
         int viewsCount = 0;
         long firstPublication = System.currentTimeMillis() / 1000;
 
-        if (user != null) {
-            for (Post post : getPostsByUserId(user.getId())) {
-                if (isPostActive(post)) {
+        for (Post post : getPostsByUserId(user.getId())) {
+            //учитываем только активные посты
+            if (isPostActive(post)) {
 
-                    postsCount++;
-                    viewsCount += post.getViewCount();
+                postsCount++;
+                viewsCount += post.getViewCount();
 
-                    for (PostVote postVote : postVoteService.getPostVotesByPostId(post.getId())) {
-                        if (postVote.getValue() == 1) likesCount++;
-                        else dislikesCount++;
-                    }
-
-                    if (post.getTimestamp() < firstPublication) firstPublication = post.getTimestamp();
+                for (PostVote postVote : postVoteService.getPostVotesByPostId(post.getId())) {
+                    if (postVote.getValue() == 1) likesCount++;
+                    else dislikesCount++;
                 }
+
+                if (post.getTimestamp() < firstPublication) firstPublication = post.getTimestamp();
             }
         }
+
 
         if (postsCount == 0) firstPublication = 0;
 
@@ -648,14 +724,12 @@ public class PostService {
 
 
     public ResponseEntity<?> getApiStatisticsAll() {
-        //получим пользователя
-        User user = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
-        //получим настройку
-        GlobalSetting globalSetting = globalSettingService.findGlobalSettingByCode(
-                GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString());
-
         //if STATISTICS_IS_PUBLIC = NO & Auth=false -> HTTP.401
-        if (globalSetting.getValue().equals(GlobalSettingsValues.NO.toString()) && user == null)
+        if (globalSettingService
+                .findGlobalSettingByCode(
+                        GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString()).getValue()
+                            .equals(GlobalSettingsValues.NO.toString()) &&
+                userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName()) == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 
         //init parameters
@@ -664,9 +738,10 @@ public class PostService {
         int viewsCount = 0;
         //timestamp of first publication
         long firstPublication = System.currentTimeMillis() / 1000;
+        List<Post> activePosts = getInitActivePosts();
 
         //перебираем все активные посты
-        for (Post post : getActivePosts()) {
+        for (Post post : activePosts) {
             //считаем общ. кол-во лайков
             likesCount += getLikesDislikesCount(post,1);
             //считаем общее кол-во дислайков
@@ -676,7 +751,8 @@ public class PostService {
             //ищем дату самого первого поста
             if (firstPublication > post.getTimestamp()) firstPublication = post.getTimestamp();
         }
-        int postsCount = getPosts().size();
+        //считаем кол-во активных постов
+        int postsCount = activePosts.size();
 
         //собираем ответ и возвращаем его
         return ResponseEntity.status(HttpStatus.OK)

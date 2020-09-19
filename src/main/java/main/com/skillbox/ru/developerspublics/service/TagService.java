@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.*;
 
 
@@ -43,34 +45,13 @@ public class TagService {
     }
 
 
-    public Tag getInitTagById(int tagId) {
-        Optional<Tag> optionalTag = tagsRepository.findById(tagId);
-        if (optionalTag.isPresent()) {
-            Tag tag = optionalTag.get();
-            initTag(tag);
-            return tag;
-        }
-        return null;
-    }
-
-
     public Tag getTagById(int tagId) {
         return tagsRepository.findById(tagId).orElseThrow();
     }
 
 
-    public List<Tag> getTags() {
-        return new ArrayList<>(tagsRepository.findAll());
-    }
-
-    public HashSet<String> getActiveTags() {
+    private HashSet<String> getActiveTags() {
         return new HashSet<>(tagsRepository.findActiveTags(new Date(System.currentTimeMillis())));
-    }
-
-
-    private void initTag(Tag tag) {
-        tag.setTagToPosts(tagToPostsRepository.findByTagId(tag.getId()));
-        tag.setTagWeight(getWeight(tag));
     }
 
 
@@ -115,6 +96,7 @@ public class TagService {
     }
 
 
+    @Transactional
     public void saveTag(String tagName, int postId) {
         tagName = tagName.toUpperCase();
         //пробуем найти тэг в БД
@@ -136,12 +118,7 @@ public class TagService {
     }
 
 
-    public TagResponse getTagResponse(Tag tag) {  //TODO 5 sec!!!!!!!
-        return new TagResponse(tag.getName(), getWeight(tag));
-    }
-
-
-    public List<TagResponse> getTagResponseList(List<String> tagNameList) {
+    private List<TagResponse> getTagResponseList(List<String> tagNameList) {
         List<TagResponse> list = new ArrayList<>();
         for (String tagName : tagNameList) {
             list.add(new TagResponse(tagName, getWeight(getTagByName(tagName))));
@@ -153,15 +130,15 @@ public class TagService {
     public ResponseEntity<?> getApiTag(String query) {
         List<String> tagNames = new ArrayList<>();
 
-        //перебираем все тэги
-        for (String tagName : getActiveTags()) {
-            if (query == null) {
-                //тэг не задан - выводим все
-                tagNames.add(tagName);
-            }   //иначе ищем совпадения
-            else if (tagName.contains(query)) {
-                //все совпадения заносим в список по шаблону
-                tagNames.add(tagName);
+        //тэг не задан - выводим все
+        if (query == null) tagNames.addAll(getActiveTags());
+        else {
+            //перебираем все активные тэги и ищем совпадения
+            for (String tagName : getActiveTags()) {
+                if (tagName.contains(query)) {
+                    //все совпадения заносим в список по шаблону
+                    tagNames.add(tagName);
+                }
             }
         }
 
