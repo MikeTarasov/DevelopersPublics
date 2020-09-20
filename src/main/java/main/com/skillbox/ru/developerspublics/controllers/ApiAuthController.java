@@ -40,7 +40,7 @@ public class ApiAuthController
     //GET /api/auth/check
     @GetMapping("/check")
     public ResponseEntity<?> authCheck() {
-        return userService.authCheck();
+        return userService.getApiAuthCheck();
     }
 
 

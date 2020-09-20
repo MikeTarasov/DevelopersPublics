@@ -145,6 +145,24 @@ public class PostService {
     }
 
 
+    @Transactional
+    public void deletePost(Post post) {
+        initPost(post);
+        Post postDB = postsRepository.findByTitle(post.getTitle());
+        if (postDB != null) postsRepository.delete(postDB);
+        for (TagToPost tagToPost: post.getTagToPosts()) {
+            Tag tag = tagService.getTagById(tagToPost.getTagId());
+            tagToPostService.deleteTagToPost(tagToPost);
+            if (tagToPostService.getTagToPostByTagId(tag.getId()).size() == 0) tagService.deleteTag(tag);
+        }
+    }
+
+
+    public Post getPostByTitle(String title) {
+        return postsRepository.findByTitle(title);
+    }
+
+
     private int countActivePosts() {
         return postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
                 1,
@@ -326,7 +344,7 @@ public class PostService {
 
 
     @Transactional
-    private boolean savePost(long timestamp, int isActive, String title, String text, int userId, List<String> tagsNames) {
+    public boolean savePost(long timestamp, int isActive, String title, String text, int userId, List<String> tagsNames) {
         //создаем новый
         Post post = new Post();
         //заполняем обязательные поля

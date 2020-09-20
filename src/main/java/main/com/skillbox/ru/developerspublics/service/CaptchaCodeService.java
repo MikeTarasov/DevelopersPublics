@@ -32,6 +32,16 @@ public class CaptchaCodeService {
     }
 
 
+    public CaptchaCode getCaptchaCodeBySecretCode(String secretCode) {
+        return captchaCodesRepository.findBySecretCode(secretCode);
+    }
+
+
+    public CaptchaCode getCaptchaCodeByCodeAndSecret(String code, String secretCode) {
+        return captchaCodesRepository.findByCodeAndSecretCode(code, secretCode);
+    }
+
+
     public void saveCaptcha(String code, String secretCode) {
         CaptchaCode captchaCode = new CaptchaCode();
         captchaCode.setCode(code);
@@ -100,16 +110,6 @@ public class CaptchaCodeService {
         result.put("base64", base64);
 
         return result;
-    }
-
-
-    public CaptchaCode getCaptchaCodeBySecretCode(String secretCode) {
-        return captchaCodesRepository.findBySecretCode(secretCode);
-    }
-
-
-    public CaptchaCode getCaptchaCodeByCodeAndSecret(String code, String secretCode) {
-        return captchaCodesRepository.findByCodeAndSecretCode(code, secretCode);
     }
 
 

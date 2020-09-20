@@ -124,8 +124,8 @@ public class ApiGeneralController
     //PUT /api/settings
     @Secured(MODERATOR)
     @PutMapping("/api/settings")
-    public ResponseEntity<?> postApiSettings(@RequestBody RequestApiSettings requestBody) {
-        return globalSettingService.postApiSettings(requestBody);
+    public ResponseEntity<?> putApiSettings(@RequestBody RequestApiSettings requestBody) {
+        return globalSettingService.putApiSettings(requestBody);
     }
 
 

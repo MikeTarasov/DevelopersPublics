@@ -75,6 +75,7 @@ public class UserService implements UserDetailsService {
         this.captchaCodeService = captchaCodeService;
     }
 
+//    ============================ GETTERS ==========================================
 
     @Override
     @SneakyThrows
@@ -82,7 +83,6 @@ public class UserService implements UserDetailsService {
         User user = findUserByLogin(email);
 
         if (user == null) return null;
-//            throw new UsernameNotFoundException("User not found");
 
         Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
         for (Role role : user.getRoles()){
@@ -107,8 +107,46 @@ public class UserService implements UserDetailsService {
     }
 
 
+    private User getUserByCode(String code) {
+        return userRepository.findUserByCode(code);
+    }
+
+
+    public int getModerationCount(User user) {
+        return user.getIsModerator() == 1 ? postsRepository.getModerationCount() : 0;
+    }
+
+
+    private ResultUserResponse getResultUserResponse(User user) {
+        return new ResultUserResponse(
+                new UserResponse(
+                        user.getId(),
+                        user.getName(),
+                        user.getPhoto(),
+                        user.getEmail(),
+                        user.getIsModerator() == 1,
+                        getModerationCount(user),
+                        user.getIsModerator() == 1
+                )
+        );
+    }
+//    ============================ /GETTERS ==========================================
+
+//    ============================ CRUD ==============================================
+
+
+    private boolean isCorrectUserName(String name) {
+        return name.length() > 3 && name.length() < 30;
+    }
+
+
     public boolean isPasswordCorrect(User user, String password) {
         return bCryptPasswordEncoder.matches(password, user.getPassword());
+    }
+
+
+    public String encodePassword(String password) {
+        return bCryptPasswordEncoder.encode(password);
     }
 
 
@@ -129,56 +167,8 @@ public class UserService implements UserDetailsService {
 
 
     public void deleteUser(User user) {
-        userRepository.delete(user);
-    }
-
-
-    public String encodePassword(String password) {
-        return bCryptPasswordEncoder.encode(password);
-    }
-
-
-    private int getModerationCount(User user) {
-        return user.getIsModerator() == 1 ? postsRepository.getModerationCount() : 0;
-    }
-
-
-    @Transactional
-    private boolean sendEmail(User user) {
-        boolean result = true;
-        try {
-            String hash = bCryptPasswordEncoder.encode(Long.toString(System.currentTimeMillis()))
-                    .substring(10).toLowerCase().replaceAll("\\W", "");
-
-            user.setCode(hash);
-            userRepository.save(user);
-
-            MimeMessage message = emailSender.createMimeMessage();
-
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            String htmlMsg = "<h3>Здравствуйте, " + user.getName() + "!</h3>" +
-                    "<p><br>&nbsp;&nbsp;&nbsp;&nbsp;От Вашего имени подана заявка на смену пароля на сайте developerspublics.ru.<br>" +
-                    "Для подтверждения смены пароля перейдите по ссылке " +
-                    "<a href=\"http://" + rootPage + "/login/change-password/"+hash+"\">СМЕНИТЬ ПАРОЛЬ</a>" +
-                    "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;Если вы не инициировали это действие, возможно, ваша учетная запись была взломана.<br>" +
-                    "Пожалуйста, свяжитесь с администрацией сайта developerspublics.ru<br><br>" +
-                    "С уважением,<br>" +
-                    "администрация сайта developerspublics.ru</p>";
-
-            message.setContent(htmlMsg, "text/html; charset=utf-8");
-
-            helper.setTo(user.getEmail());
-
-            helper.setSubject("Восстановление пароля на сайте developerspublics.ru");
-
-            emailSender.send(message);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            result = false;
-        }
-        return result;
+        User dbUser = userRepository.findUserByEmail(user.getEmail());
+        if (dbUser != null) userRepository.delete(dbUser);
     }
 
 
@@ -189,11 +179,6 @@ public class UserService implements UserDetailsService {
             userRepository.save(user);
         }
         return isCorrectName;
-    }
-
-
-    private boolean isCorrectUserName(String name) {
-        return name.length() > 3 && name.length() < 30;
     }
 
 
@@ -288,6 +273,61 @@ public class UserService implements UserDetailsService {
     }
 
 
+//    ============================ /CRUD ==============================================
+
+
+    @Transactional
+    private boolean sendEmail(User user) {
+        boolean result = true;
+        try {
+            String hash = bCryptPasswordEncoder.encode(Long.toString(System.currentTimeMillis()))
+                    .substring(10).toLowerCase().replaceAll("\\W", "");
+
+            user.setCode(hash);
+            userRepository.save(user);
+
+            MimeMessage message = emailSender.createMimeMessage();
+
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            String htmlMsg = "<h3>Здравствуйте, " + user.getName() + "!</h3>" +
+                    "<p><br>&nbsp;&nbsp;&nbsp;&nbsp;От Вашего имени подана заявка на смену пароля на сайте developerspublics.ru.<br>" +
+                    "Для подтверждения смены пароля перейдите по ссылке " +
+                    "<a href=\"http://" + rootPage + "/login/change-password/"+hash+"\">СМЕНИТЬ ПАРОЛЬ</a>" +
+                    "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;Если вы не инициировали это действие, возможно, ваша учетная запись была взломана.<br>" +
+                    "Пожалуйста, свяжитесь с администрацией сайта developerspublics.ru<br><br>" +
+                    "С уважением,<br>" +
+                    "администрация сайта developerspublics.ru</p>";
+
+            message.setContent(htmlMsg, "text/html; charset=utf-8");
+
+            helper.setTo(user.getEmail());
+
+            helper.setSubject("Восстановление пароля на сайте developerspublics.ru");
+
+            emailSender.send(message);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            result = false;
+        }
+        return result;
+    }
+
+
+    public void authUser(String email, String password) {
+        SecurityContextHolder
+                .getContext()
+                .setAuthentication(
+                        authenticationProvider
+                                .authenticate(
+                                        new UsernamePasswordAuthenticationToken(loadUserByUsername(email), password)));
+    }
+
+
+//            ============================ ResponseEntity<?> ==========================================
+
+
     public ResponseEntity<?> getAvatar(String a, String b, String c, String name) {
         System.out.println(String.join(File.separator, uploadsHome, uploadsPath, a, b, c, name)); //TODO
 
@@ -296,26 +336,6 @@ public class UserService implements UserDetailsService {
         if (file.exists()) return ResponseEntity.ok().body(file);
 
         return ResponseEntity.notFound().build();
-    }
-
-
-    private ResultUserResponse getResultUserResponse(User user) {
-        return new ResultUserResponse(
-                new UserResponse(
-                        user.getId(),
-                        user.getName(),
-                        user.getPhoto(),
-                        user.getEmail(),
-                        user.getIsModerator() == 1,
-                        getModerationCount(user),
-                        user.getIsModerator() == 1
-                )
-        );
-    }
-
-
-    private User getUserByCode(String code) {
-        return userRepository.findUserByCode(code);
     }
 
 
@@ -341,20 +361,12 @@ public class UserService implements UserDetailsService {
     }
 
 
-    public void authUser(String email, String password) {
-        SecurityContextHolder
-                .getContext()
-                .setAuthentication(
-                        authenticationProvider
-                                .authenticate(
-                                        new UsernamePasswordAuthenticationToken(loadUserByUsername(email), password)));
-    }
-
-
-    public ResponseEntity<?> authCheck() {
+    public ResponseEntity<?> getApiAuthCheck() {
         //проверяем сохранён ли идентификатор текущей сессии в списке авторизованных
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+        //если не аутентифицирован
+        if (authentication == null) return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
         //если не авторизован
         if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
             return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
@@ -453,7 +465,7 @@ public class UserService implements UserDetailsService {
         //есть ошибки - собираем сообщение об ошибках
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ResultFalseErrorsResponse(new ErrorsResponse(
-                        false, isPasswordCorrect, isCaptchaCorrect, isEmailExist, isNameWrong))
+                        true, isPasswordCorrect, isCaptchaCorrect, isEmailExist, isNameWrong))
                 );
     }
 
@@ -544,7 +556,7 @@ public class UserService implements UserDetailsService {
             else
                 return ResponseEntity.status(HttpStatus.OK)
                         .body(new ResultFalseErrorsResponse(
-                                ErrorsResponse.builder().password("Пароль короче 6-ти символов").build())); //TODO спросить зачем эта проверка?
+                                ErrorsResponse.builder().password("Пароль короче 6-ти символов").build()));
         }
 
         if (removePhoto != null) {
@@ -586,4 +598,5 @@ public class UserService implements UserDetailsService {
 
         return ResponseEntity.status(HttpStatus.OK).body(path);
     }
+//        ============================ /ResponseEntity<?> ==========================================
 }

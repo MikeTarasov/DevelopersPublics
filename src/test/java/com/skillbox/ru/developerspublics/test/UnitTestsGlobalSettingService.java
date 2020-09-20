@@ -2,6 +2,7 @@ package com.skillbox.ru.developerspublics.test;
 
 import main.com.skillbox.ru.developerspublics.DevelopersPublicationsApplication;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiSettings;
+import main.com.skillbox.ru.developerspublics.api.response.MessageResponse;
 import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.GlobalSetting;
 import main.com.skillbox.ru.developerspublics.service.GlobalSettingService;
@@ -38,7 +39,7 @@ public class UnitTestsGlobalSettingService {
     }
 
     @Test
-    public void testPostApiSettings200() {
+    public void testPutApiSettings200() {
         RequestApiSettings goodRequest = new RequestApiSettings();
         for (GlobalSetting gs : service.getAllGlobalSettings()) {
             switch (gs.getCode()) {
@@ -47,27 +48,16 @@ public class UnitTestsGlobalSettingService {
                 case "STATISTICS_IS_PUBLIC" : goodRequest.setStatisticsIsPublic(Boolean.parseBoolean(gs.getValue())); break;
             }
         }
-        ResponseEntity<?> goodResponse = service.postApiSettings(goodRequest);
+        ResponseEntity<?> goodResponse = service.putApiSettings(goodRequest);
         Assert.assertEquals(goodResponse.getStatusCode(), HttpStatus.OK);
         Assert.assertEquals(goodResponse.getBody(), new ResultResponse(true));
     }
 
     @Test
-    public void testPostApiSettings404() {
+    public void testPutApiSettings400() {
         RequestApiSettings nullRequest = new RequestApiSettings();
-        ResponseEntity<?> nullResponse = service.postApiSettings(nullRequest);
-        Assert.assertEquals(nullResponse.getStatusCode(), HttpStatus.NOT_FOUND);
-        Assert.assertEquals(nullResponse.getBody(), new ResultResponse(false));
+        ResponseEntity<?> nullResponse = service.putApiSettings(nullRequest);
+        Assert.assertEquals(nullResponse.getStatusCode(), HttpStatus.BAD_REQUEST);
+        Assert.assertEquals(nullResponse.getBody(), new MessageResponse("Глобальная настройка не найдена!"));
     }
-
-//    @Test
-//    public void testPostApiSettings400() {
-//        RequestApiSettings badRequest = new RequestApiSettings();
-//        badRequest.setStatisticsIsPublic("null");
-//        badRequest.setPostPremoderation("null");
-//        badRequest.setMultiUserMode("null");
-//        ResponseEntity<?> badResponse = service.postApiSettings(badRequest);
-//        Assert.assertEquals(badResponse.getStatusCode(), HttpStatus.BAD_REQUEST);
-//        Assert.assertEquals(badResponse.getBody(), new MessageResponse("Глобальная настройка не найдена!"));
-//    }
 }

@@ -38,6 +38,11 @@ public class TagToPostService {
     }
 
 
+    public List<TagToPost> getTagToPostByTagId(int tagId) {
+        return tagToPostsRepository.findByTagId(tagId);
+    }
+
+
     public TagToPost getInitTagToPostById(int id) {
         Optional<TagToPost> optionalTagToPost = tagToPostsRepository.findById(id);
         if (optionalTagToPost.isPresent()) {
@@ -49,12 +54,6 @@ public class TagToPostService {
     }
 
 
-    private void initTagToPost(@NonNull TagToPost tagToPost) {
-        tagToPost.setPostTag(getPostTag(tagToPost.getPostId()));
-        tagToPost.setTagPost(getTagPost(tagToPost.getTagId()));
-    }
-
-
     private Post getPostTag(int postId) {
         return postsRepository.findById(postId).orElse(null);
     }
@@ -62,6 +61,12 @@ public class TagToPostService {
 
     private Tag getTagPost(int tagId) {
         return tagsRepository.findById(tagId).orElse(null);
+    }
+
+
+    private void initTagToPost(@NonNull TagToPost tagToPost) {
+        tagToPost.setPostTag(getPostTag(tagToPost.getPostId()));
+        tagToPost.setTagPost(getTagPost(tagToPost.getTagId()));
     }
 
 
@@ -76,5 +81,11 @@ public class TagToPostService {
             tagToPost.setTagId(tagId);
             tagToPostsRepository.save(tagToPost);
         }
+    }
+
+
+    public void deleteTagToPost(TagToPost tagToPost) {
+        Optional<TagToPost> tagToPostDB = tagToPostsRepository.findById(tagToPost.getId());
+        tagToPostDB.ifPresent(tagToPostsRepository::delete);
     }
 }

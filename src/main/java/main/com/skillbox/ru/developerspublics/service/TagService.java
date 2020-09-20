@@ -66,7 +66,22 @@ public class TagService {
     }
 
 
-    private void setWeights() {
+    private List<TagResponse> getTagResponseList(List<String> tagNameList) {
+        List<TagResponse> list = new ArrayList<>();
+        for (String tagName : tagNameList) {
+            list.add(new TagResponse(tagName, getWeight(getTagByName(tagName))));
+        }
+        return list;
+    }
+
+
+    public void deleteTag(Tag tag) {
+        Tag tagDB = tagsRepository.findByName(tag.getName());
+        if (tagDB != null) tagsRepository.delete(tagDB);
+    }
+
+
+    public void setWeights() {
         //считаем кол-во активных постов
         int count = postsRepository.countActivePosts(new Date(System.currentTimeMillis()));
         weightMap = new HashMap<>();
@@ -115,15 +130,6 @@ public class TagService {
 
         //пересчитаем удельный вес
         setWeights();
-    }
-
-
-    private List<TagResponse> getTagResponseList(List<String> tagNameList) {
-        List<TagResponse> list = new ArrayList<>();
-        for (String tagName : tagNameList) {
-            list.add(new TagResponse(tagName, getWeight(getTagByName(tagName))));
-        }
-        return list;
     }
 
 

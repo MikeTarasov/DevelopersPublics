@@ -103,12 +103,12 @@ public class GlobalSettingService {
 
 
     @SneakyThrows
-    public ResponseEntity<?> postApiSettings(RequestApiSettings requestBody) {
+    public ResponseEntity<?> putApiSettings(RequestApiSettings requestBody) {
         //Неверный параметр на входе - ответ с кодом 400 (Bad request)
         if (!setGlobalSettings(
-                requestBody.isMultiUserMode(),
-                requestBody.isPostPremoderation(),
-                requestBody.isStatisticsIsPublic()))
+                requestBody.getMultiUserMode(),
+                requestBody.getPostPremoderation(),
+                requestBody.getStatisticsIsPublic()))
             return ResponseEntity.status(400).body(new MessageResponse("Глобальная настройка не найдена!"));
 
         return ResponseEntity.status(200).body(new ResultResponse(true));
