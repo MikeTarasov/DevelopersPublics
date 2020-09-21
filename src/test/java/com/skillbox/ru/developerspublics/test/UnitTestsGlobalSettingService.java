@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @ExtendWith(SpringExtension.class)
@@ -23,6 +24,7 @@ public class UnitTestsGlobalSettingService {
     private GlobalSettingService service;
 
     @Test
+    @Transactional
     public void testGetApiInitNotNull() {
         ResponseEntity<?> responseEntity = service.getApiInit();
         Assert.assertNotNull(responseEntity);
@@ -31,6 +33,7 @@ public class UnitTestsGlobalSettingService {
     }
 
     @Test
+    @Transactional
     public void testGetApiSettingsNotNull() {
         ResponseEntity<?> responseEntity = service.getApiSettings();
         Assert.assertNotNull(responseEntity);
@@ -39,6 +42,7 @@ public class UnitTestsGlobalSettingService {
     }
 
     @Test
+    @Transactional
     public void testPutApiSettings200() {
         RequestApiSettings goodRequest = new RequestApiSettings();
         for (GlobalSetting gs : service.getAllGlobalSettings()) {
@@ -54,6 +58,7 @@ public class UnitTestsGlobalSettingService {
     }
 
     @Test
+    @Transactional
     public void testPutApiSettings400() {
         RequestApiSettings nullRequest = new RequestApiSettings();
         ResponseEntity<?> nullResponse = service.putApiSettings(nullRequest);

@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @ExtendWith(SpringExtension.class)
@@ -30,6 +31,7 @@ public class UnitTestsCaptchaCodeService {
 
 
     @Test
+    @Transactional
     public void testSaveCaptchaNotNull() {
         service.saveCaptcha(code, secretCode);
         CaptchaCode test = repository.findByCodeAndSecretCode(code, secretCode);
@@ -38,6 +40,7 @@ public class UnitTestsCaptchaCodeService {
     }
 
     @Test
+    @Transactional
     public void testCreateNewCaptchaNotNull() {
         JSONObject test = service.createNewCaptcha();
         Assert.assertNotNull(test.get("secretCode"));
@@ -45,6 +48,7 @@ public class UnitTestsCaptchaCodeService {
     }
 
     @Test
+    @Transactional
     public void testGetApiAuthCaptchaNotNull() {
         ResponseEntity<?> response = service.getApiAuthCaptcha();
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);

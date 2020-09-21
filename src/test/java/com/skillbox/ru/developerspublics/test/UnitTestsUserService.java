@@ -27,6 +27,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileInputStream;
@@ -56,17 +57,20 @@ public class UnitTestsUserService {
     private String realEmail;
 
 
+    @Transactional
     private void authUser() {
         saveUser();
         service.authUser(testUser.getEmail(), userPassword);
     }
 
+    @Transactional
     private void saveUser() {
         deleteUser();
         service.saveUser(testUser);
     }
 
 
+    @Transactional
     private void saveModerator() {
         service.deleteUser(testModerator);
         testModerator.setIsModerator(1);
@@ -91,6 +95,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthLoginWrongPassword() {
         saveUser();
         RequestApiAuthLogin request = new RequestApiAuthLogin();
@@ -107,6 +112,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthLoginUserNotFound() {
         saveUser();
         RequestApiAuthLogin request = new RequestApiAuthLogin();
@@ -123,6 +129,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthLogin200() {
         saveUser();
         RequestApiAuthLogin request = new RequestApiAuthLogin();
@@ -150,6 +157,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testGetApiAuthCheckUserNotFound() {
         authUser();
         testUser.setEmail("bcjddhvsidos");
@@ -162,6 +170,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testGetApiAuthCheckAnonymous() {
         SecurityContextHolder.getContext().setAuthentication(new AnonymousAuthenticationToken(
                 "anonymous",
@@ -176,6 +185,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testGetApiAuthCheckAuthNull() {
         ResponseEntity<?> response = service.getApiAuthCheck();
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
@@ -185,6 +195,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testGetApiAuthCheckTrue() {
         authUser();
         ResponseEntity<?> response = service.getApiAuthCheck();
@@ -208,6 +219,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthRestoreWrongEmail() {
         testUser.setCode(null);
         saveUser();
@@ -224,6 +236,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthRestore200() {
         testUser.setCode(null);
         testUser.setEmail(realEmail);
@@ -241,6 +254,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthPasswordWrongCaptcha() {
         testUser.setCode("testCode");
         saveUser();
@@ -268,6 +282,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthPasswordWrongPassword() {
         testUser.setCode("testCode");
         saveUser();
@@ -295,6 +310,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthPasswordWrongCode() {
         testUser.setCode("testCode");
         saveUser();
@@ -322,6 +338,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthPassword200() {
         testUser.setCode("testCode");
         saveUser();
@@ -342,6 +359,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthRegister200() {
         CaptchaCode captchaCode = getCaptchaCode();
 
@@ -362,6 +380,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthRegisterEmailExist() {
         authUser();
         CaptchaCode captchaCode = getCaptchaCode();
@@ -388,6 +407,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthRegisterWrongName() {
         CaptchaCode captchaCode = getCaptchaCode();
         RequestApiAuthRegister requestBody = new RequestApiAuthRegister(
@@ -412,6 +432,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthRegisterWrongPassword() {
         CaptchaCode captchaCode = getCaptchaCode();
         RequestApiAuthRegister requestBody = new RequestApiAuthRegister(
@@ -436,6 +457,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiAuthRegisterWrongCaptcha() {
         RequestApiAuthRegister requestBody = new RequestApiAuthRegister(
                 testUser.getEmail(),
@@ -459,6 +481,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testGetApiAuthLogout() {
         authUser();
         ResponseEntity<?> response = service.getApiAuthLogout();
@@ -473,6 +496,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiProfileMyNoChanePhotoAndPassword() {
         authUser();
         JSONObject requestBody = new JSONObject();
@@ -494,6 +518,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiProfileMyWithChangePasswordWithoutChangePhoto() {
         authUser();
         JSONObject requestBody = new JSONObject();
@@ -519,6 +544,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiProfileMyWithChangePasswordAndPhoto() {
         authUser();
         MultipartFile avatar = getAvatar(testFilePath);
@@ -540,6 +566,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     @SneakyThrows
     public void testPostApiProfileMyDeletePhotoWithoutChangePassword() {
         authUser();
@@ -566,6 +593,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     @SneakyThrows
     public void testPostApiProfileMyUserNotFound() {
         authUser();
@@ -591,6 +619,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiProfileMyWrongName() {
         authUser();
         JSONObject requestBody = new JSONObject();
@@ -614,6 +643,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiProfileMyWrongEmail() {
         authUser();
         saveModerator();
@@ -640,6 +670,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiProfileMyWrongPassword() {
         authUser();
         JSONObject requestBody = new JSONObject();
@@ -666,6 +697,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiProfileMyLagePhoto() {
         authUser();
         MultipartFile avatar = getAvatar(bigFilePath);
@@ -689,6 +721,7 @@ public class UnitTestsUserService {
 
 
     @Test
+    @Transactional
     public void testPostApiImage200() {
         authUser();
         MultipartFile avatar = getAvatar(testFilePath);

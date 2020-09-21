@@ -10,6 +10,7 @@ import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
@@ -74,9 +75,12 @@ public class PostVoteService {
 
 
     private ResponseEntity<?> postApiPostLikeDislike(RequestApiPostLike requestBody, int value) {
-        //из контекста достаем пользователя
-        User user = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
+        //проверяем аутентификацию
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return ResponseEntity.status(401).body(null);
 
+        //из контекста достаем пользователя
+        User user = userService.findUserByLogin(authentication.getName());
         // === @Secured(USER) ===
         if (user == null) return ResponseEntity.status(401).body(null);
 

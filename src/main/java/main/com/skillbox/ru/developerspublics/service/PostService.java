@@ -403,7 +403,7 @@ public class PostService {
     }
 
 
-    private boolean setModerationStatus(int postId, String status, int moderatorId) {
+    public boolean setModerationStatus(int postId, String status, int moderatorId) {
         Post post = getPostById(postId);
         if (post == null) return false;
         post.setModerationStatus(status);
