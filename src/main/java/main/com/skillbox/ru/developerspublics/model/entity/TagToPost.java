@@ -1,6 +1,9 @@
 package main.com.skillbox.ru.developerspublics.model.entity;
 
 import lombok.*;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
+
 import javax.persistence.*;
 
 @Data
@@ -22,11 +25,13 @@ public class TagToPost
 
     @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)
     private Post postTag;
 
     @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     @JoinColumn(name = "tag_id", insertable = false, updatable = false)
     private Tag tagPost;
 }

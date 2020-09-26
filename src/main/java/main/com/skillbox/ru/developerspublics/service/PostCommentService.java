@@ -9,6 +9,7 @@ import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,6 +88,10 @@ public class PostCommentService {
 
     @Transactional
     public ResponseEntity<?> postApiComment(RequestApiComment requestBody) {
+        //test auth
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+
         //test parenId
         Integer parentId = requestBody.getParentId();
         if (parentId != null) {
@@ -104,7 +109,7 @@ public class PostCommentService {
         String text = requestBody.getText();
         if (text.length() < 3)
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ResultFalseErrorsResponse(new ErrorsResponse("text")));
+                    .body(new ResultFalseErrorsResponse(new ErrorsResponse("error")));
 
         //ошибок нет -> сохраняем -> собираем ответ
         return ResponseEntity
@@ -113,10 +118,7 @@ public class PostCommentService {
                         saveComment(
                                 parentId,
                                 postId,
-                                userService
-                                        .findUserByLogin(
-                                                SecurityContextHolder.getContext().getAuthentication().getName())
-                                        .getId(),
+                                userService.findUserByLogin(authentication.getName()).getId(),
                                 text
         )));
     }

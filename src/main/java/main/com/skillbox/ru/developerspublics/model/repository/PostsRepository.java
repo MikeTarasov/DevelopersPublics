@@ -40,4 +40,22 @@ public interface PostsRepository extends PagingAndSortingRepository<Post, Intege
 
     @Query(value = "SELECT COUNT(*) FROM posts WHERE moderation_status='NEW'", nativeQuery = true)
     int getModerationCount();
+
+    @Query(value = "SELECT * FROM posts p WHERE is_active= :isActive AND moderation_status= :modStatus AND " +
+            "time<= :date ORDER BY (SELECT COUNT(*) FROM post_votes pv WHERE pv.post_id=p.id AND pv.value=1)" +
+            " DESC, (SELECT COUNT(*) FROM post_votes pv WHERE pv.post_id=p.id AND pv.value=-1), p.time DESC",
+            nativeQuery = true)
+    List<Post> getBestPosts(@Param("isActive") int isActive,
+                            @Param("modStatus") String moderationStatus,
+                            @Param("date") Date time,
+                            Pageable pageable);
+
+    @Query(value = "SELECT * FROM posts p WHERE is_active= :isActive AND moderation_status= :modStatus AND " +
+            "time<= :date ORDER BY (SELECT COUNT(*) FROM post_comments pc WHERE pc.post_id=p.id)" +
+            " DESC, p.view_count DESC, p.time DESC",
+            nativeQuery = true)
+    List<Post> getPopularPosts(@Param("isActive") int isActive,
+                            @Param("modStatus") String moderationStatus,
+                            @Param("date") Date time,
+                            Pageable pageable);
 }

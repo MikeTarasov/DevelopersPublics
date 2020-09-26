@@ -1,6 +1,9 @@
 package main.com.skillbox.ru.developerspublics.model.entity;
 
 import lombok.*;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
+
 import javax.persistence.*;
 import java.util.List;
 
@@ -20,6 +23,7 @@ public class Tag
 
     @Transient
     @OneToMany(mappedBy = "tagPost", fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     private List<TagToPost> tagToPosts;
 
     @Transient

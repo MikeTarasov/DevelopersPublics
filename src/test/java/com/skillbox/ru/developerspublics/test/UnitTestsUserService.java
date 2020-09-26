@@ -522,9 +522,12 @@ public class UnitTestsUserService {
     public void testPostApiProfileMyWithChangePasswordWithoutChangePhoto() {
         authUser();
         JSONObject requestBody = new JSONObject();
-        requestBody.put("email",testUser.getEmail() + "1");
-        requestBody.put("name",testUser.getName() + "1");
-        requestBody.put("password",userPassword + "1");
+        String email = testUser.getEmail();
+        String name = testUser.getName();
+        String password = testUser.getPassword();
+        requestBody.put("email",email + "1");
+        requestBody.put("name",name + "1");
+        requestBody.put("password",password + "1");
         ResponseEntity<?> response = service.postApiProfileMy(
                 requestBody.toString(),
                 null,
@@ -535,9 +538,9 @@ public class UnitTestsUserService {
 
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
         Assert.assertEquals(response.getBody(), new ResultResponse(true));
-        Assert.assertNotEquals(testUser.getPassword(), service.encodePassword(userPassword));
-        Assert.assertNotEquals(testUser.getEmail(), repository.findById(testUser.getId()).get().getEmail());
-        Assert.assertNotEquals(testUser.getName(), repository.findById(testUser.getId()).get().getName());
+        Assert.assertNotEquals(testUser.getPassword(), password);
+        Assert.assertNotEquals(testUser.getEmail(), email);
+        Assert.assertNotEquals(testUser.getName(), name);
 
         deleteUser();
     }

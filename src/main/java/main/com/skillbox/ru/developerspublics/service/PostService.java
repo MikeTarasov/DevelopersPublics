@@ -94,54 +94,41 @@ public class PostService {
 
 
     private List<Post> getActivePosts(int offset, int limit, String mode) {
-        if (mode.equals("")) {
-            mode = "recent";
-        }
-        List<Post> posts;
+        if (mode.equals("")) mode = "recent";
+
+        List<Post> posts = new ArrayList<>();
         switch (mode){
             case "recent": posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
                                             1,
                                             ModerationStatuses.ACCEPTED.toString(),
                                             new Date(System.currentTimeMillis()),
-                                            PageRequest.of(offset, offset + limit, Sort.by("time").descending()));
-                            initPosts(posts);
-                            return posts;
+                                            PageRequest.of(offset/limit, limit, Sort.by("time").descending()));
+                            break;
 
-            case "popular": posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
-                                             1,
-                                             ModerationStatuses.ACCEPTED.toString(),
-                                             new Date(System.currentTimeMillis()),
-                                             null);
-                            initPosts(posts);
-                            return posts
-                                    .stream()
-                                    .sorted(Comparator.comparing(e -> getCommentsCount((Post) e)).reversed())
-                                    .skip(offset)
-                                    .limit(limit)
-                                    .collect(Collectors.toList());
+            case "popular": posts = postsRepository.getPopularPosts(
+                                            1,
+                                            ModerationStatuses.ACCEPTED.toString(),
+                                            new Date(System.currentTimeMillis()),
+                                            PageRequest.of(offset/limit, limit));
+                            break;
 
-            case "best": posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
-                                             1,
-                                             ModerationStatuses.ACCEPTED.toString(),
-                                             new Date(System.currentTimeMillis()),
-                                             null);
-                            initPosts(posts);
-                            return posts
-                                    .stream()
-                                    .sorted(Comparator.comparing(e -> getLikesDislikesCount((Post) e,1)).reversed())
-                                    .skip(offset)
-                                    .limit(limit)
-                                    .collect(Collectors.toList());
+            case "best": posts = postsRepository.getBestPosts(
+                                            1,
+                                            ModerationStatuses.ACCEPTED.toString(),
+                                            new Date(System.currentTimeMillis()),
+                                            PageRequest.of(offset/limit, limit));
+                            break;
 
             case "early": posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
                                              1,
                                              ModerationStatuses.ACCEPTED.toString(),
                                              new Date(System.currentTimeMillis()),
-                                             PageRequest.of(offset, offset + limit, Sort.by("time")));
-                            initPosts(posts);
-                            return posts;
+                                             PageRequest.of(offset/limit, limit, Sort.by("time")));
+                            break;
         }
-        return new ArrayList<>();
+
+        if (posts.size() != 0) initPosts(posts);
+        return posts;
     }
 
 
@@ -179,7 +166,7 @@ public class PostService {
                         ModerationStatuses.ACCEPTED.toString(),
                         new Date(System.currentTimeMillis()),
                         "%" + query + "%",
-                        PageRequest.of(offset, offset+limit, Sort.by("time"))
+                        PageRequest.of(offset/limit, offset+limit, Sort.by("time"))
                 );
         initPosts(posts);
         return posts;

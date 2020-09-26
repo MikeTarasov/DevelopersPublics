@@ -39,6 +39,8 @@ import javax.mail.internet.MimeMessage;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 
@@ -57,8 +59,18 @@ public class UserService implements UserDetailsService {
     @Value("${uploads.path}")
     private String uploadsPath;
 
+    @Value("${avatar.path}")
+    private String avatarPath;
+
     @Value("${uploads.home}")
     private String uploadsHome;
+
+    @Value("${avatar.width}")
+    private int avatarWidth;
+
+    @Value("${avatar.height}")
+    private int avatarHeight;
+
 
     @Autowired
     public UserService (UsersRepository userRepository,
@@ -215,18 +227,15 @@ public class UserService implements UserDetailsService {
     @Transactional
     @SneakyThrows
     private void changeUserPhoto(String path, String name, InputStream inputStream) {
-        //сжимаем до 36*36 пикс
-        int newWidth = 36;
-        int newHeight = 36;
         //получаем исходное изображение
         BufferedImage image = ImageIO.read(inputStream);
 
-        //Сначала грубо уменьшаем до smartStep (width = newWidth * smartStep),потом плавно уменьшаем до нужного р-ра
+        //Сначала грубо уменьшаем до smartStep (width = avatarWidth * smartStep),потом плавно уменьшаем до нужного р-ра
         int smartStep = 4;  //оптимальное значение скорость/качество = 4
 
         //Вычисляем промежуточные размеры
-        int width = newWidth * smartStep;
-        int height = newHeight * smartStep;
+        int width = avatarWidth * smartStep;
+        int height = avatarHeight * smartStep;
 
         //Получаем промежуточное изображение
         BufferedImage imageXStep = Scalr.resize(image, Scalr.Method.SPEED, Scalr.Mode.FIT_EXACT,
@@ -235,7 +244,7 @@ public class UserService implements UserDetailsService {
 
         //Задаем окончательные размеры и плавно сжимаем
         BufferedImage newImage = Scalr.resize(imageXStep, Scalr.Method.ULTRA_QUALITY,
-                newWidth, newHeight, (BufferedImageOp) null);
+                avatarWidth, avatarHeight, (BufferedImageOp) null);
         newImage.flush();
 
         //скидываем на сервер
@@ -256,13 +265,9 @@ public class UserService implements UserDetailsService {
         String hashString = Long.toString(user.userHashCode());
 
         //разбиваем хэш на 4 части
-        String[] hash = new String[4];
-        hash[0] = hashString.substring(0, 2);
-        hash[1] = hashString.substring(2, 4);
-        hash[2] = hashString.substring(4, 6);
-        hash[3] = hashString.substring(6);
+        String[] hash = substringHash(hashString);
 
-        String path = String.join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], "");
+        String path = String.join(File.separator, "", avatarPath, hash[0], hash[1], hash[2], "");
         String name = hash[3] + ".jpg";
 
         user.setPhoto(path + name);
@@ -270,6 +275,37 @@ public class UserService implements UserDetailsService {
         changeUserPhoto(uploadsHome +  path, name, inputStream);
 
         return path + name;
+    }
+
+
+    @Transactional
+    @SneakyThrows
+    private String saveImage(MultipartFile image) {
+        StringBuilder name = new StringBuilder(Objects.requireNonNull(image.getOriginalFilename()));
+        String[] hash = substringHash(Integer.toString(image.hashCode()));
+        String path = String.join(File.separator, uploadsHome, uploadsPath, hash[0], hash[1], hash[2], "");
+
+        //создаем директрорию, если её нет
+        File folder = new File(path);
+        if (!folder.exists()) folder.mkdirs();
+        //защитимся от перезаписи файлов
+        while (true) {
+            if (!new File(path + name).exists()) break;
+            else name.insert(0, "1");
+        }
+
+        Files.copy(image.getInputStream(), Path.of(path + name));
+        return String.join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], name);
+    }
+
+
+    private String[] substringHash(String hashString) {
+        String[] hash = new String[4];
+        hash[0] = hashString.substring(0, 2);
+        hash[1] = hashString.substring(2, 4);
+        hash[2] = hashString.substring(4, 6);
+        hash[3] = hashString.substring(6);
+        return hash;
     }
 
 
@@ -328,10 +364,8 @@ public class UserService implements UserDetailsService {
 //            ============================ ResponseEntity<?> ==========================================
 
 
-    public ResponseEntity<?> getAvatar(String a, String b, String c, String name) {
-        System.out.println(String.join(File.separator, uploadsHome, uploadsPath, a, b, c, name)); //TODO
-
-        Resource file = new FileSystemResource(String.join(File.separator, uploadsHome, uploadsPath, a, b, c, name));
+    public ResponseEntity<?> getAvatar(String path, String a, String b, String c, String name) {
+        Resource file = new FileSystemResource(String.join(File.separator, uploadsHome, path, a, b, c, name));
 
         if (file.exists()) return ResponseEntity.ok().body(file);
 
@@ -513,7 +547,6 @@ public class UserService implements UserDetailsService {
         String password = passwordMP;
         String removePhoto = removePhotoMP;
 
-
         //else consumes = "application/json"
         if (requestBody != null) {
             JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
@@ -525,78 +558,42 @@ public class UserService implements UserDetailsService {
 
         //получаем user
         User user = findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
+        ErrorsResponse.ErrorsResponseBuilder errorsBuilder = ErrorsResponse.builder();
 
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(new ResultFalseErrorsResponse(
-                            ErrorsResponse.builder().user("Пользователь не найден!").build()));
-        }
+        if (user == null) return ResponseEntity.status(HttpStatus.OK)
+                    .body(new ResultFalseErrorsResponse(errorsBuilder.user("Пользователь не найден!").build()));
 
         //проверяем изменение имени
-        if (!user.getName().equals(name)) {
-            if (!changeUserName(user, name))
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new ResultFalseErrorsResponse(
-                                ErrorsResponse.builder().name("Имя указано неверно").build()));
-        }
+        if (!user.getName().equals(name)) if (!changeUserName(user, name)) errorsBuilder.name("Имя указано неверно");
 
         //проверяем изменение e-mail
-        if (!user.getEmail().equals(email)) {
-            if (!changeUserEmail(user, email))
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new ResultFalseErrorsResponse(
-                                ErrorsResponse.builder().email("Этот e-mail уже зарегистрирован").build()));
-        }
+        if (!user.getEmail().equals(email)) if (!changeUserEmail(user, email))
+            errorsBuilder.email("Этот e-mail уже зарегистрирован");
 
         //проверяем изменение пароля
-        if (password != null) {
-            if (password.length() >= 6) {
-                changeUserPassword(user, password);
-            }
-            else
-                return ResponseEntity.status(HttpStatus.OK)
-                        .body(new ResultFalseErrorsResponse(
-                                ErrorsResponse.builder().password("Пароль короче 6-ти символов").build()));
-        }
+        if (password != null)
+            if (password.length() >= 6) changeUserPassword(user, password);
+            else errorsBuilder.password("Пароль короче 6-ти символов");
 
-        if (removePhoto != null) {
+        if (removePhoto != null)
             //удаление фото
-            if (removePhoto.equals("1")) {
-                removePhoto(user);
-            }
+            if (removePhoto.equals("1")) removePhoto(user);
             //изменение фото
             else if (removePhoto.equals("0")) {
-                if (avatar.getSize() <= 5*1024*1024) {
-                    InputStream inputStream = avatar.getInputStream();
-                    saveAvatar(user, inputStream);
-                }
-                else
-                    return ResponseEntity.status(HttpStatus.OK)
-                            .body(new ResultFalseErrorsResponse(
-                                    ErrorsResponse
-                                            .builder()
-                                            .photo("Фото слишком большое, нужно не более 5 Мб")
-                                            .build()));
+                if (avatar.getSize() <= 5*1024*1024) saveAvatar(user, avatar.getInputStream());
+                else errorsBuilder.photo("Фото слишком большое, нужно не более 5 Мб");
             }
-        }
 
-        return new ResponseEntity<>(new ResultResponse(true), HttpStatus.OK);
+        if (!errorsBuilder.build().equals(new ErrorsResponse()))
+            return ResponseEntity.status(HttpStatus.OK).body(new ResultFalseErrorsResponse(errorsBuilder.build()));
+        return ResponseEntity.status(HttpStatus.OK).body(new ResultResponse(true));
     }
 
 
     @Transactional
     @SneakyThrows
-    public ResponseEntity<?> postApiImage(MultipartFile avatar) {
-        String path = "";
-
-        if (avatar != null) {
-            path = saveAvatar(
-                    findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName()),
-                    avatar.getInputStream()
-            );
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(path);
+    public ResponseEntity<?> postApiImage(MultipartFile image) {
+        return ResponseEntity.status(HttpStatus.OK).body(saveImage(image));
     }
 //        ============================ /ResponseEntity<?> ==========================================
 }

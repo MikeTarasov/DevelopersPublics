@@ -7,6 +7,7 @@ import main.com.skillbox.ru.developerspublics.model.entity.CaptchaCode;
 import main.com.skillbox.ru.developerspublics.model.repository.CaptchaCodesRepository;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -23,6 +24,15 @@ import java.util.*;
 public class CaptchaCodeService {
     private final CaptchaCodesRepository captchaCodesRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Value("${captcha.chars}")
+    private int iTotalChars;
+
+    @Value("${captcha.height}")
+    private int iHeight;
+
+    @Value("${captcha.width}")
+    private int iWidth;
 
     @Autowired
     public CaptchaCodeService(CaptchaCodesRepository captchaCodesRepository,
@@ -62,12 +72,6 @@ public class CaptchaCodeService {
 
     @SneakyThrows
     public JSONObject createNewCaptcha() {
-        //кол-во символов
-        int iTotalChars = 6;
-        //высота капчи
-        int iHeight = 35;
-        //ширина капчи
-        int iWidth = 100;
         //шрифт
         int fontSize = (int) (1.67 * iWidth / iTotalChars);
         //фон
@@ -89,7 +93,7 @@ public class CaptchaCodeService {
             if (i % 2 == 0) {
                 g2dImage.drawString(code.substring(i, i + 1), (int)(fontSize * i *0.6), (int)(fontSize/1.25));
             } else {
-                g2dImage.drawString(code.substring(i, i + 1), (int)(fontSize * i * 0.6), (int)(iHeight-fontSize/4));
+                g2dImage.drawString(code.substring(i, i + 1), (int)(fontSize * i * 0.6), iHeight-fontSize/4);
             }
         }
         //создаем stream в нужном формате

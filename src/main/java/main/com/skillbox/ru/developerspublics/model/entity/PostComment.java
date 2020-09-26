@@ -3,6 +3,9 @@ package main.com.skillbox.ru.developerspublics.model.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
+
 import javax.persistence.*;
 import java.time.Instant;
 import java.util.Date;
@@ -37,11 +40,13 @@ public class PostComment
 
     @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)
     private Post commentPost;
 
     @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User commentUser;
 

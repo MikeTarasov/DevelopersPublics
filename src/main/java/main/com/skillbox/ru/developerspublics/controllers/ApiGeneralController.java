@@ -129,13 +129,14 @@ public class ApiGeneralController
     }
 
 
-    @GetMapping("/${uploads.path}/{A}/{B}/{C}/{FILENAME}") //TODO
+    @GetMapping("/{PATH}/{A}/{B}/{C}/{FILENAME}") //TODO
     @ResponseBody
-    public ResponseEntity<?> getAvatar(@PathVariable("A") String a,
+    public ResponseEntity<?> getAvatar(@PathVariable("PATH") String path,
+                                @PathVariable("A") String a,
                                 @PathVariable("B") String b,
                                 @PathVariable("C") String c,
                                 @PathVariable("FILENAME") String name) {
-        return userService.getAvatar(a, b, c, name);
+        return userService.getAvatar(path, a, b, c, name);
     }
 
 

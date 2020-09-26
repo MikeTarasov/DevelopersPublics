@@ -1,6 +1,9 @@
 package main.com.skillbox.ru.developerspublics.model.entity;
 
 import lombok.*;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
+
 import javax.persistence.*;
 import java.time.Instant;
 import java.util.Date;
@@ -31,11 +34,13 @@ public class PostVote
 
     @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User userVote;
 
     @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)
     private Post postVote;
 

@@ -10,8 +10,6 @@ spring.dataSource.password: test123341
 
 spring.jpa.hibernate.ddl-auto: update
 
-#spring.jpa.show-sql: true
-
 #Max size for uploads media
 spring.servlet.multipart.max-file-size: 10MB
 spring.servlet.multipart.max-request-size: 10MB
@@ -26,13 +24,26 @@ moderator.email: developerspublics@gmail.com
 #Replace with your application password here:
 moderator.email.password: wzhaqlnptimbivpl
 
-#Replace with your captcha life-time here:
-captcha.life.time: 3600000
-
 #path to avatars on server
 uploads.home: C:\home
 #path to avatars on browser
+avatar.path: avatar
+#path to uploads img on posts
 uploads.path: upload
 
 #post announce size
 announce.size: 1000
+
+#avatar width
+avatar.width: 36
+#avatar height
+avatar.height: 36
+
+#captcha total chars
+captcha.chars: 6
+#captcha height
+captcha.height: 35
+#captcha width
+captcha.width: 100
+#Replace with your captcha life-time in milliseconds here:
+captcha.life.time: 3600000

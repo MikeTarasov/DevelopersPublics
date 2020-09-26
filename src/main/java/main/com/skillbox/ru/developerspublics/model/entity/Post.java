@@ -2,6 +2,9 @@ package main.com.skillbox.ru.developerspublics.model.entity;
 
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
+
 import javax.persistence.*;
 import java.time.Instant;
 import java.util.Date;
@@ -56,28 +59,33 @@ public class Post
     //привязанный модератор поста
     @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     @JoinColumn(name = "moderator_id")
     private User moderatorPost;
 
     //привязанный автор поста
     @Transient
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     @JoinColumn(name = "user_id")
     private User userPost;
 
     //привязанный список лайков/дислайков
     @Transient
     @OneToMany(mappedBy = "postVote", fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     private List<PostVote> postVotes;
 
     //привязанный список комментариев к посту
     @Transient
     @OneToMany(mappedBy = "commentPost", fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     private List<PostComment> postComments;
 
     //привязанный список тэг-пост
     @Transient
     @OneToMany(mappedBy = "postTag", fetch = FetchType.LAZY)
+    @LazyCollection(LazyCollectionOption.EXTRA)
     private List<TagToPost> tagToPosts;
 
     //get timestamp in seconds
