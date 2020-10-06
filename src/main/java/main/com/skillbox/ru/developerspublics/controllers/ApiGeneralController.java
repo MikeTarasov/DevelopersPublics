@@ -94,8 +94,8 @@ public class ApiGeneralController
     //POST /api/image
     @Secured(USER)
     @PostMapping(value = "/api/image", consumes = {"multipart/form-data"})
-    public @ResponseBody ResponseEntity<?> postApiImage(@RequestPart("image") MultipartFile avatar) {
-        return userService.postApiImage(avatar);
+    public @ResponseBody ResponseEntity<?> postApiImage(@RequestPart("image") MultipartFile image) {
+        return userService.postApiImage(image);
     }
 
 
@@ -129,7 +129,7 @@ public class ApiGeneralController
     }
 
 
-    @GetMapping("/{PATH}/{A}/{B}/{C}/{FILENAME}") //TODO
+    @GetMapping("/{PATH}/{A}/{B}/{C}/{FILENAME}")
     @ResponseBody
     public ResponseEntity<?> getAvatar(@PathVariable("PATH") String path,
                                 @PathVariable("A") String a,

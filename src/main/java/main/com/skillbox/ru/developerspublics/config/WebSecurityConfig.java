@@ -46,7 +46,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .logout()
                 .deleteCookies("JSESSIONID")
                 .invalidateHttpSession(true)
-                .logoutSuccessUrl("/")  //TODO don't work!!!!
+                .logoutSuccessUrl("/")
                 .and()
                 .authorizeRequests()
                 .antMatchers("/v2/api-docs", "/swagger-ui.html").hasRole("MODERATOR")

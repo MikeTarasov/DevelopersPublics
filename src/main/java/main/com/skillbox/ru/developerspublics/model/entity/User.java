@@ -82,7 +82,7 @@ public class User implements UserDetails
     @Transient
     private Set<Role> roles = new HashSet<>();
 
-    //get timestamp in seconds TODO
+    //get timestamp in seconds
     public long getTimestamp() {
         return regTime.getTime() / 1000;
     }

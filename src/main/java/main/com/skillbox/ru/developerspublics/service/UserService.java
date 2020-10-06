@@ -71,6 +71,9 @@ public class UserService implements UserDetailsService {
     @Value("${avatar.height}")
     private int avatarHeight;
 
+    @Value(("${uploads.width}"))
+    private float uploadsMaxWidth;
+
 
     @Autowired
     public UserService (UsersRepository userRepository,
@@ -231,7 +234,7 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     @SneakyThrows
-    private void changeUserPhoto(String path, String name, InputStream inputStream) {
+    private void resizeAndSaveImage(String path, String name, InputStream inputStream, int imageHeight, int imageWidth) {
         //получаем исходное изображение
         BufferedImage image = ImageIO.read(inputStream);
 
@@ -239,8 +242,8 @@ public class UserService implements UserDetailsService {
         int smartStep = 4;  //оптимальное значение скорость/качество = 4
 
         //Вычисляем промежуточные размеры
-        int width = avatarWidth * smartStep;
-        int height = avatarHeight * smartStep;
+        int width = imageWidth * smartStep;
+        int height = imageHeight * smartStep;
 
         //Получаем промежуточное изображение
         BufferedImage imageXStep = Scalr.resize(image, Scalr.Method.SPEED, Scalr.Mode.FIT_EXACT,
@@ -249,7 +252,7 @@ public class UserService implements UserDetailsService {
 
         //Задаем окончательные размеры и плавно сжимаем
         BufferedImage newImage = Scalr.resize(imageXStep, Scalr.Method.ULTRA_QUALITY,
-                avatarWidth, avatarHeight, (BufferedImageOp) null);
+                imageWidth, imageHeight, (BufferedImageOp) null);
         newImage.flush();
 
         //скидываем на сервер
@@ -265,7 +268,7 @@ public class UserService implements UserDetailsService {
 
 
     @Transactional
-    public String saveAvatar(User user, InputStream inputStream) { //TODO защита от дубля хеша!!!!!
+    public String saveAvatar(User user, InputStream inputStream) {
         //считаем хэш
         String hashString = Long.toString(user.userHashCode());
 
@@ -273,11 +276,11 @@ public class UserService implements UserDetailsService {
         String[] hash = substringHash(hashString);
 
         String path = String.join(File.separator, "", avatarPath, hash[0], hash[1], hash[2], "");
-        String name = hash[3] + ".jpg";
+        String name = user.getId() + ".jpg";
 
         user.setPhoto(path + name);
         userRepository.save(user);
-        changeUserPhoto(uploadsHome +  path, name, inputStream);
+        resizeAndSaveImage(uploadsHome +  path, name, inputStream, avatarHeight, avatarWidth);
 
         return path + name;
     }
@@ -287,6 +290,7 @@ public class UserService implements UserDetailsService {
     @SneakyThrows
     private String saveImage(MultipartFile image) {
         StringBuilder name = new StringBuilder(Objects.requireNonNull(image.getOriginalFilename()));
+        if (name.toString().equals("")) name.insert(0, "1").insert(1, image.getContentType());
         String[] hash = substringHash(Integer.toString(image.hashCode()));
         String path = String.join(File.separator, uploadsHome, uploadsPath, hash[0], hash[1], hash[2], "");
 
@@ -296,10 +300,23 @@ public class UserService implements UserDetailsService {
         //защитимся от перезаписи файлов
         while (true) {
             if (!new File(path + name).exists()) break;
-            else name.insert(0, "1");
+            else name.insert(0, "0");
         }
 
-        Files.copy(image.getInputStream(), Path.of(path + name));
+
+        BufferedImage bufferedImage = ImageIO.read(image.getInputStream());
+        int height = bufferedImage.getHeight();
+        int width = bufferedImage.getWidth();
+
+        //большие картинки сжимаем
+        if (width > uploadsMaxWidth) {
+            float step = width / uploadsMaxWidth;
+            width = (int) (width / step);
+            height = (int) (height / step);
+            resizeAndSaveImage(path, name.toString(), image.getInputStream(), height, width);
+        } //маленькие сохраяняем как есть
+        else Files.copy(image.getInputStream(), Path.of(path + name));
+
         return String.join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], name);
     }
 
