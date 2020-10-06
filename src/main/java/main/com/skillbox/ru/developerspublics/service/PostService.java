@@ -5,6 +5,7 @@ import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiModeration;
 import main.com.skillbox.ru.developerspublics.api.request.RequestPostPutApiPost;
 import main.com.skillbox.ru.developerspublics.api.response.*;
+import main.com.skillbox.ru.developerspublics.model.enums.Decision;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsCodes;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsValues;
 import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +60,7 @@ public class PostService {
         this.userService = userService;
     }
 
-
+//================================= GETTERS ============================================================================
     private Post getInitPostById(int id) {
         Optional<Post> optionalPost = postsRepository.findById(id);
         if (optionalPost.isPresent()) {
@@ -132,30 +134,14 @@ public class PostService {
     }
 
 
-    @Transactional
-    public void deletePost(Post post) {
-        initPost(post);
-        Post postDB = postsRepository.findByTitle(post.getTitle());
-        if (postDB != null) postsRepository.delete(postDB);
-        for (TagToPost tagToPost: post.getTagToPosts()) {
-            Tag tag = tagService.getTagById(tagToPost.getTagId());
-            tagToPostService.deleteTagToPost(tagToPost);
-            if (tagToPostService.getTagToPostByTagId(tag.getId()).size() == 0) tagService.deleteTag(tag);
-        }
-    }
-
-
     public Post getPostByTitle(String title) {
         return postsRepository.findByTitle(title);
     }
 
 
-    private int countActivePosts() {
-        return postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
-                1,
-                ModerationStatuses.ACCEPTED.toString(),
-                new Date(System.currentTimeMillis()),
-                null).size();
+    private String getAnnounce(Post post) {
+        String text = Jsoup.parse(post.getText()).text();
+        return ((text.length() > announceSize) ? text.substring(0, announceSize) : text);
     }
 
 
@@ -166,21 +152,10 @@ public class PostService {
                         ModerationStatuses.ACCEPTED.toString(),
                         new Date(System.currentTimeMillis()),
                         "%" + query + "%",
-                        PageRequest.of(offset/limit, offset+limit, Sort.by("time"))
+                        PageRequest.of(offset/limit, limit, Sort.by("time"))
                 );
         initPosts(posts);
         return posts;
-    }
-
-
-    private int countActivePostsByQuery(String query) {
-        return postsRepository
-                .findActivePostsByQuery(
-                        1,
-                        ModerationStatuses.ACCEPTED.toString(),
-                        new Date(System.currentTimeMillis()),
-                        "%" + query + "%",
-                        null).size();
     }
 
 
@@ -190,14 +165,13 @@ public class PostService {
         Calendar thisDay = Calendar.getInstance();
         thisDay.setTime(new SimpleDateFormat("yyyy-MM-dd").parse(date));
         //для sql-запроса получаем 2 даты:
-        // - 00:00:00 следующего дня
-        thisDay.roll(Calendar.DATE, 1);
-        Date dayAfter = thisDay.getTime();
-        // - 23:59:59 предыдущего дня
-        thisDay.roll(Calendar.DATE, -2);
+        // - 23:59:59 текущего дня
         thisDay.set(Calendar.HOUR, 23);
         thisDay.set(Calendar.MINUTE, 59);
         thisDay.set(Calendar.SECOND, 59);
+        Date dayAfter = thisDay.getTime();
+        // - 23:59:59 предыдущего дня
+        thisDay.roll(Calendar.DATE, -1);
         Date dayBefore = thisDay.getTime();
 
         List<Post> posts = postsRepository.findByIsActiveAndModerationStatusAndTimeAfterAndTimeBefore(
@@ -215,91 +189,6 @@ public class PostService {
 
     private List<Post> getPostsByUserId(int userId) {
         return postsRepository.findByUserId(userId);
-    }
-
-
-    private boolean isPostActive(Post post) {
-        //проверяем выполнение сразу 3х условий
-        //1 - стоит галочка "пост активен"
-        //2 - проверяем статус -> д.б. ACCEPTED
-        //3 - проверяем дату публикации -> д.б. не в будующем
-        return post.getIsActive() == 1 &&
-                post.getModerationStatus().equals(ModerationStatuses.ACCEPTED.toString())
-                && post.getTimestamp() <= (System.currentTimeMillis() / 1000);
-    }
-
-
-    private void initPost(Post post) {
-        if (post.getModeratorId() != null) {
-            post.setModeratorPost(userService.getUserById(post.getModeratorId()));
-        }
-
-        post.setUserPost(userService.getUserById(post.getUserId()));
-
-        post.setPostVotes(postVoteService.getPostVotesByPostId(post.getId()));
-
-        post.setPostComments(postCommentService.getPostCommentsByPostId(post.getId()));
-
-        post.setTagToPosts(tagToPostService.getTagToPostsByPostId(post.getId()));
-    }
-
-
-    private void initPosts(List<Post> posts) {
-        for (Post post : posts) {
-            initPost(post);
-        }
-    }
-
-
-    private List<Post> sortPostList(List<Post> posts, int offset, int limit) {
-        return posts.stream()
-                .sorted(Comparator.comparing(Post::getTime).reversed())
-                .skip(offset)
-                .limit(limit).collect(Collectors.toList());
-    }
-
-
-    private List<PostResponse> responsePosts(List<Post> posts) {
-        List<PostResponse> list = new ArrayList<>();
-        //приводим к нужному виду
-        for (Post post : posts) {
-            list.add(new PostResponse(
-                    post.getId(),
-                    post.getTimestamp(),
-                    new UserIdNameResponse(post.getUserPost().getId(), post.getUserPost().getName()),
-                    post.getTitle(),
-                    getAnnounce(post),
-                    getLikesDislikesCount(post,1),
-                    getLikesDislikesCount(post,-1),
-                    getCommentsCount(post),
-                    post.getViewCount()
-            ));
-        }
-        return list;
-    }
-
-
-    private PostByIdResponse postByIdToJSON(Post post) {
-        return new PostByIdResponse(
-                post.getId(),
-                post.getTimestamp(),
-                new UserIdNameResponse(post.getUserPost().getId(), post.getUserPost().getName()),
-                post.getTitle(),
-                post.getText(),
-                post.getIsActive() == 1,
-                getLikesDislikesCount(post,1),
-                getLikesDislikesCount(post,-1),
-                getCommentsCount(post),
-                post.getViewCount(),
-                postCommentService.getPostCommentResponseList(post.getPostComments()),
-                getPostTagsList(post)
-        );
-    }
-
-
-    private String getAnnounce(Post post) {
-        String text = Jsoup.parse(post.getText()).text();
-        return ((text.length() > announceSize) ? text.substring(0, announceSize) : text);
     }
 
 
@@ -328,42 +217,90 @@ public class PostService {
         }
         return list;
     }
+//================================= /GETTERS ===========================================================================
+
+//================================= CRUD ===============================================================================
+    @Transactional
+    public void deletePost(Post post) {
+        initPost(post);
+        Post postDB = postsRepository.findByTitle(post.getTitle());
+        if (postDB != null) postsRepository.delete(postDB);
+        for (TagToPost tagToPost: post.getTagToPosts()) {
+            Tag tag = tagService.getTagById(tagToPost.getTagId());
+            tagToPostService.deleteTagToPost(tagToPost);
+            if (tagToPostService.getTagToPostByTagId(tag.getId()).size() == 0) tagService.deleteTag(tag);
+        }
+    }
 
 
     @Transactional
     public boolean savePost(long timestamp, int isActive, String title, String text, int userId, List<String> tagsNames) {
-        //создаем новый
-        Post post = new Post();
-        //заполняем обязательные поля
-        post.setTime(timestamp);
-        post.setIsActive(isActive);
-        post.setTitle(title);
-        post.setText(text);
-        post.setUserId(userId);
-        //проверяем настройку премодерации:
-        // - YES -> NEW
-        // - NO  -> ACCEPTED
-        if (globalSettingService.findGlobalSettingByCode(GlobalSettingsCodes.POST_PREMODERATION.toString()).getValue()
-                .equals(GlobalSettingsValues.YES.toString())) {
-            post.setModerationStatus(ModerationStatuses.NEW.getStatus());
-        }
-        else post.setModerationStatus(ModerationStatuses.ACCEPTED.toString());
+        try {
+            //создаем новый
+            Post post = new Post();
+            //заполняем обязательные поля
+            post.setTime(timestamp);
+            post.setIsActive(isActive);
+            post.setTitle(title);
+            post.setText(text);
+            post.setUserId(userId);
+            //проверяем настройку премодерации:
+            // - YES -> NEW
+            // - NO  -> ACCEPTED
+            if (globalSettingService.findGlobalSettingByCode(GlobalSettingsCodes.POST_PREMODERATION.toString()).getValue()
+                    .equals(GlobalSettingsValues.YES.toString())) {
+                post.setModerationStatus(ModerationStatuses.NEW.getStatus());
+            } else post.setModerationStatus(ModerationStatuses.ACCEPTED.toString());
 
-        post.setViewCount(0);
-        //отправляем в репозиторий
-        postsRepository.save(post);
+            post.setViewCount(0);
+            //отправляем в репозиторий
+            postsRepository.save(post);
 
-        //сохраним тэги и привяжем их к посту
-        for (String tagName : tagsNames) {
-            tagService.saveTag(tagName, post.getId());
+            //сохраним тэги и привяжем их к посту
+            for (String tagName : tagsNames) {
+                tagService.saveTag(tagName, post.getId());
+            }
         }
+        catch (Exception e) { return false; }
+
         return true;
+    }
+
+
+    private int countActivePosts() {
+        return postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
+                1,
+                ModerationStatuses.ACCEPTED.toString(),
+                new Date(System.currentTimeMillis()),
+                null).size();
+    }
+
+
+    private int countActivePostsByQuery(String query) {
+        return postsRepository
+                .findActivePostsByQuery(
+                        1,
+                        ModerationStatuses.ACCEPTED.toString(),
+                        new Date(System.currentTimeMillis()),
+                        "%" + query + "%",
+                        null).size();
+    }
+
+
+    private boolean isPostActive(Post post) {
+        //проверяем выполнение сразу 3х условий
+        //1 - стоит галочка "пост активен"
+        //2 - проверяем статус -> д.б. ACCEPTED
+        //3 - проверяем дату публикации -> д.б. не в будующем
+        return post.getIsActive() == 1 &&
+                post.getModerationStatus().equals(ModerationStatuses.ACCEPTED.toString())
+                && post.getTimestamp() <= (System.currentTimeMillis() / 1000);
     }
 
 
     @Transactional
     private boolean editPost(int id, long timestamp, int isActive, String title, String text, int userId,
-                         List<String> tagsNames) {
+                             List<String> tagsNames) {
         //находим в базе
         Post post = getPostById(id);
         if (post == null) return false;
@@ -400,6 +337,75 @@ public class PostService {
     }
 
 
+    private void initPost(Post post) {
+        if (post.getModeratorId() != null) {
+            post.setModeratorPost(userService.getUserById(post.getModeratorId()));
+        }
+
+        post.setUserPost(userService.getUserById(post.getUserId()));
+
+        post.setPostVotes(postVoteService.getPostVotesByPostId(post.getId()));
+
+        post.setPostComments(postCommentService.getPostCommentsByPostId(post.getId()));
+
+        post.setTagToPosts(tagToPostService.getTagToPostsByPostId(post.getId()));
+    }
+
+
+    private void initPosts(List<Post> posts) {
+        for (Post post : posts) {
+            initPost(post);
+        }
+    }
+//================================= /CRUD ==============================================================================
+
+    private List<Post> sortPostList(List<Post> posts, int offset, int limit) {
+        return posts.stream()
+                .sorted(Comparator.comparing(Post::getTime).reversed())
+                .skip(offset)
+                .limit(limit).collect(Collectors.toList());
+    }
+
+
+    private List<PostResponse> responsePosts(List<Post> posts) {
+        List<PostResponse> list = new ArrayList<>();
+        //приводим к нужному виду
+        for (Post post : posts) {
+            list.add(new PostResponse(
+                    post.getId(),
+                    post.getTimestamp(),
+                    new UserIdNameResponse(post.getUserPost().getId(), post.getUserPost().getName()),
+                    post.getTitle(),
+                    getAnnounce(post),
+                    getLikesDislikesCount(post,1),
+                    getLikesDislikesCount(post,-1),
+                    getCommentsCount(post),
+                    post.getViewCount()
+            ));
+        }
+        return list;
+    }
+
+
+    public PostByIdResponse postByIdToJSON(Post post) {
+        return new PostByIdResponse(
+                post.getId(),
+                post.getTimestamp(),
+                new UserIdNameResponse(post.getUserPost().getId(), post.getUserPost().getName()),
+                post.getTitle(),
+                post.getText(),
+                post.getIsActive() == 1,
+                getLikesDislikesCount(post,1),
+                getLikesDislikesCount(post,-1),
+                getCommentsCount(post),
+                post.getViewCount(),
+                postCommentService.getPostCommentResponseList(post.getPostComments()),
+                getPostTagsList(post)
+        );
+    }
+
+//================================= ResponseEntity =====================================================================
+
     public ResponseEntity<?> postApiPost(RequestPostPutApiPost requestBody) {
         return postPutApiPost(requestBody, null);
     }
@@ -412,6 +418,12 @@ public class PostService {
 
     @Transactional
     private ResponseEntity<?> postPutApiPost(RequestPostPutApiPost requestBody, Integer postId) {
+        // @Secured(USER)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        User user = userService.findUserByLogin(authentication.getName());
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+
         //актуализируем время
         long timestamp = requestBody.getTimestamp();
         if (timestamp < System.currentTimeMillis()) {
@@ -440,21 +452,19 @@ public class PostService {
                     ));
 
         //ошибок нет - добавляем пост
-        int userId = userService
-                .findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName())
-                .getId();
+        int userId = user.getId();
         int isActive = requestBody.getActive();
         List<String> tagsNames = requestBody.getTags();
 
         //POST /api/post  -> postId = null -> создаем новый
         //PUT /api/post/{ID}  -> postId != null -> изменяем
-        boolean result = true;
+        boolean result;
         if (postId == null) {
             result = savePost(timestamp, isActive, title, text, userId, tagsNames);
         }
         else result = editPost(postId, timestamp, isActive, title, text, userId, tagsNames);
 
-        if (!result) ResponseEntity.status(200)
+        if (!result) return ResponseEntity.status(HttpStatus.OK)
                 .body(new ResultFalseErrorsResponse(
                         ErrorsResponse.builder().text("Не удалось сохранить пост").build()
                 ));
@@ -466,7 +476,7 @@ public class PostService {
 
     public ResponseEntity<?> getApiPost(int offset, int limit, String mode) {
         return ResponseEntity
-                .status(200)
+                .status(HttpStatus.OK)
                 .body(new ApiPostResponse(
                         countActivePosts(),
                         responsePosts(getActivePosts(offset, limit, mode))));
@@ -474,6 +484,7 @@ public class PostService {
 
 
     public ResponseEntity<?> getApiPostSearch(int offset, int limit, String query) {
+        if (query == null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         //создадим список для найденных постов findPosts
         List<Post> findPosts;
 
@@ -487,7 +498,7 @@ public class PostService {
 
         //собираем ответ
         return ResponseEntity
-                .status(200)
+                .status(HttpStatus.OK)
                 .body(new ApiPostResponse(countActivePostsByQuery(query), responsePosts(findPosts)));
     }
 
@@ -501,7 +512,9 @@ public class PostService {
         //При успешном запросе увеличиваем количество просмотров поста на 1, кроме случаев:
         // - Если модератор авторизован, то не считаем его просмотры вообще
         // - Если автор авторизован, то не считаем просмотры своих же публикаций
-        User user = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        User user = userService.findUserByLogin(authentication.getName());
 
         //смотрит не аноним
         if (user != null) {
@@ -567,12 +580,14 @@ public class PostService {
 
 
     public ResponseEntity<?> getApiPostModeration(int offset, int limit, String status) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         //выдергиваем из контекста пользователя
-        User user = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
-
+        User user = userService.findUserByLogin(authentication.getName());
+        if (user == null || user.getIsModerator() != 1)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         //переходим на верхний регистр
         status = status.toUpperCase();
-
         //получим список постов
         List<Post> posts = new ArrayList<>();
         for (Post post : postsRepository.findByModerationStatus(status)) {
@@ -581,31 +596,22 @@ public class PostService {
             //ACCEPTED-DECLINED -> выводим только для текущего пользователя
             if (post.getIsActive() == 1) {
                 initPost(post);
-                if (status.equals(ModerationStatuses.NEW.toString())) {
-                    posts.add(post);
-                }
-                else if (post.getModeratorId() != null) {
-                    if (post.getModeratorId() == user.getId()) {
-                        posts.add(post);
-                    }
-                }
+                if (status.equals(ModerationStatuses.NEW.toString())) posts.add(post);
+                else if (post.getModeratorId() != null && post.getModeratorId() == user.getId()) posts.add(post);
             }
         }
-
-        //запоминаем размер -> сортируем и обрезаем
-        int postsSize = posts.size();
-        posts = sortPostList(posts, offset, limit);
         //собираем ответ
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiPostResponse(postsSize, responsePosts(posts)));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ApiPostResponse(posts.size(), responsePosts(sortPostList(posts, offset, limit))));
     }
 
 
     public ResponseEntity<?> getApiPostMy(int offset, int limit, String status) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         //получим список постов пользователя
         List<Post> posts = new ArrayList<>();
-        for (Post post : getPostsByUserId(userService
-                             .findUserByLogin(
-                                    SecurityContextHolder.getContext().getAuthentication().getName()).getId())) {
+        for (Post post : getPostsByUserId(userService.findUserByLogin(authentication.getName()).getId())) {
             initPost(post);
             //в зависимости от статуса добавляем нужные
             switch (status) {
@@ -635,17 +641,20 @@ public class PostService {
 
 
     public ResponseEntity<?> postApiModeration(RequestApiModeration requestBody) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         //переводим decision -> status
         String status = "";
         String decision = requestBody.getDecision();
-        if (decision.equals("accept")) status = ModerationStatuses.ACCEPTED.toString();
-        else if (decision.equals("decline")) status = ModerationStatuses.DECLINED.toString();
+        if (decision == null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        if (decision.equals(Decision.ACCEPT.getDecision())) status = ModerationStatuses.ACCEPTED.toString();
+        else if (decision.equals(Decision.DECLINE.getDecision())) status = ModerationStatuses.DECLINED.toString();
 
         //проверяем на ошибки: не найден модератор, не правильный статус, не найден пост
         boolean hasErrors = false;
-        User moderator = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
+        User moderator = userService.findUserByLogin(authentication.getName());
 
-        if (moderator == null || status.equals("")) hasErrors = true;
+        if (moderator == null || moderator.getIsModerator() != 1 || status.equals("")) hasErrors = true;
         else if (!setModerationStatus(requestBody.getPostId(), status, moderator.getId())) hasErrors = true;
 
         //собираем ответ
@@ -695,7 +704,9 @@ public class PostService {
 
 
     public ResponseEntity<?> getApiStatisticsMy() {
-        User user = userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        User user = userService.findUserByLogin(authentication.getName());
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 
         int postsCount = 0;
@@ -730,11 +741,11 @@ public class PostService {
 
     public ResponseEntity<?> getApiStatisticsAll() {
         //if STATISTICS_IS_PUBLIC = NO & Auth=false -> HTTP.401
-        if (globalSettingService
-                .findGlobalSettingByCode(
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (globalSettingService.findGlobalSettingByCode(
                         GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString()).getValue()
-                            .equals(GlobalSettingsValues.NO.toString()) &&
-                userService.findUserByLogin(SecurityContextHolder.getContext().getAuthentication().getName()) == null)
+                            .equals(GlobalSettingsValues.NO.toString()))
+            if (authentication == null || userService.findUserByLogin(authentication.getName()) == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 
         //init parameters

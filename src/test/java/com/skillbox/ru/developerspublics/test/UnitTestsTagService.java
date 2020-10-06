@@ -1,7 +1,10 @@
 package com.skillbox.ru.developerspublics.test;
 
 
+import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.DevelopersPublicationsApplication;
+import main.com.skillbox.ru.developerspublics.api.response.TagResponse;
+import main.com.skillbox.ru.developerspublics.api.response.TagsListResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
@@ -46,6 +49,7 @@ public class UnitTestsTagService {
     @Transactional
     private void init() {
         user = new User("test@test.test", "testUser", "testPassword");
+        user.setIsModerator(1);
         userService.saveUser(user);
         user = userService.findUserByLogin(user.getEmail());
         String title = "1234567890";
@@ -72,19 +76,26 @@ public class UnitTestsTagService {
         ResponseEntity<?> response = tagService.getApiTag("");
 
         Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertNotEquals(response.getBody(), "TagsListResponse(tags=[])");
+        TagsListResponse tlr = (TagsListResponse) response.getBody();
+        Assert.assertNotNull(tlr);
+        Assert.assertNotEquals(0, tlr.getTags().size());
 
         cleanDB();
     }
 
     @Test
     @Transactional
+    @SneakyThrows
     public void testGetApiTagTestTag() {
         init();
+        Thread.sleep(500);
         ResponseEntity<?> response = tagService.getApiTag(tagName);
-
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertTrue(Objects.requireNonNull(response.getBody()).toString().contains("name=" + tagName));
+        Thread.sleep(500);
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        TagsListResponse tlr = (TagsListResponse) response.getBody();
+        Assert.assertNotNull(tlr);
+        TagResponse tr = tlr.getTags().get(0);
+        Assert.assertEquals(tagName, tr.getName());
 
         cleanDB();
     }

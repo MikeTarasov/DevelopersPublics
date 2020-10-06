@@ -84,7 +84,7 @@ public class UnitTestsPostVoteService {
         RequestApiPostLike request = new RequestApiPostLike();
         ResponseEntity<?> response = postVoteService.postApiPostLike(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.UNAUTHORIZED);
+        Assert.assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         Assert.assertNull(response.getBody());
     }
 
@@ -100,7 +100,7 @@ public class UnitTestsPostVoteService {
         RequestApiPostLike request = new RequestApiPostLike();
         ResponseEntity<?> response = postVoteService.postApiPostLike(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.UNAUTHORIZED);
+        Assert.assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         Assert.assertNull(response.getBody());
     }
 
@@ -113,8 +113,8 @@ public class UnitTestsPostVoteService {
 
         ResponseEntity<?> response = postVoteService.postApiPostLike(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(false));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(false), response.getBody());
 
         clearAll();
     }
@@ -128,8 +128,8 @@ public class UnitTestsPostVoteService {
 
         ResponseEntity<?> response = postVoteService.postApiPostLike(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(true));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(true), response.getBody());
 
         clearAll();
     }
@@ -144,8 +144,8 @@ public class UnitTestsPostVoteService {
         ResponseEntity<?> response = postVoteService.postApiPostLike(request);
         response = postVoteService.postApiPostLike(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(false));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(false), response.getBody());
 
         clearAll();
     }
@@ -160,8 +160,8 @@ public class UnitTestsPostVoteService {
         ResponseEntity<?> response = postVoteService.postApiPostLike(request);
         response = postVoteService.postApiPostDislike(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(true));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(true), response.getBody());
 
         clearAll();
     }

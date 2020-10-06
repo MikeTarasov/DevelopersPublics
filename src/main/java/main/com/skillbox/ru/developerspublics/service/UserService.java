@@ -171,6 +171,11 @@ public class UserService implements UserDetailsService {
         }
 
         //если нет - задаем роль, кодируем пароль и сохраняем в репозиторий
+
+        //  first user = moderator
+        if (userRepository.count() == 0) user.setIsModerator(1);
+        //  /first user = moderator
+
         user.setRoles();
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userRepository.save(user);

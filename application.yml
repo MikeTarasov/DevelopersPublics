@@ -1,7 +1,8 @@
 #Replace 'localhost' to ip if DB on other server
 #Replace 'devpostsdb' with your DB name
 spring.dataSource.url: jdbc:mysql://localhost:3306/devpostsdb?verifyServerCertificate=false&useSSL=false&requireSSL=false
-  &serverTimezone=UTC
+  &serverTimezone=Europe/Moscow
+#spring.jpa.properties.hibernate.jdbc.time_zone: UTC
 
 #Replace with your DB username here:
 spring.dataSource.username: root
@@ -38,6 +39,8 @@ announce.size: 1000
 avatar.width: 36
 #avatar height
 avatar.height: 36
+
+uploads.height: 970
 
 #captcha total chars
 captcha.chars: 6

@@ -104,8 +104,8 @@ public class UnitTestsUserService {
 
         ResponseEntity<?> response = service.postApiAuthLogin(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(false));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(false), response.getBody());
 
         deleteUser();
     }
@@ -121,8 +121,8 @@ public class UnitTestsUserService {
 
         ResponseEntity<?> response = service.postApiAuthLogin(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(false));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(false), response.getBody());
 
         deleteUser();
     }
@@ -138,9 +138,8 @@ public class UnitTestsUserService {
 
         ResponseEntity<?> response = service.postApiAuthLogin(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(),
-                new ResultUserResponse(
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultUserResponse(
                         new UserResponse(
                                 testUser.getId(),
                                 testUser.getName(),
@@ -148,9 +147,9 @@ public class UnitTestsUserService {
                                 testUser.getEmail(),
                                 testUser.getIsModerator() == 1,
                                 service.getModerationCount(testUser),
-                                testUser.getIsModerator() == 1
-                        )
-                ));
+                                testUser.getIsModerator() == 1)),
+                response.getBody()
+                );
 
         deleteUser();
     }
@@ -163,8 +162,8 @@ public class UnitTestsUserService {
         testUser.setEmail("bcjddhvsidos");
         saveUser();
         ResponseEntity<?> response = service.getApiAuthCheck();
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(false));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(false), response.getBody());
         deleteUser();
     }
 
@@ -178,8 +177,8 @@ public class UnitTestsUserService {
                 Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
         ));
         ResponseEntity<?> response = service.getApiAuthCheck();
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(false));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(false), response.getBody());
         deleteUser();
     }
 
@@ -188,8 +187,8 @@ public class UnitTestsUserService {
     @Transactional
     public void testGetApiAuthCheckAuthNull() {
         ResponseEntity<?> response = service.getApiAuthCheck();
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(false));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(false), response.getBody());
         deleteUser();
     }
 
@@ -200,9 +199,8 @@ public class UnitTestsUserService {
         authUser();
         ResponseEntity<?> response = service.getApiAuthCheck();
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(),
-                new ResultUserResponse(
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultUserResponse(
                         new UserResponse(
                                 testUser.getId(),
                                 testUser.getName(),
@@ -211,8 +209,8 @@ public class UnitTestsUserService {
                                 testUser.getIsModerator() == 1,
                                 service.getModerationCount(testUser),
                                 testUser.getIsModerator() == 1
-                        )
-                ));
+                        )),
+                response.getBody());
 
         deleteUser();
     }
@@ -227,8 +225,8 @@ public class UnitTestsUserService {
         requestBody.setEmail("1");
 
         ResponseEntity<?> response = service.postApiAuthRestore(requestBody);
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(false));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(false), response.getBody());
         User dbUser = service.findUserByLogin(testUser.getEmail());
         Assert.assertNull(dbUser.getCode());
         deleteUser();
@@ -245,8 +243,8 @@ public class UnitTestsUserService {
         requestBody.setEmail(testUser.getEmail());
 
         ResponseEntity<?> response = service.postApiAuthRestore(requestBody);
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(true));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(true), response.getBody());
         User dbUser = service.findUserByLogin(testUser.getEmail());
         Assert.assertNotNull(dbUser.getCode());
         deleteUser();
@@ -267,15 +265,14 @@ public class UnitTestsUserService {
         );
         ResponseEntity<?> response = service.postApiAuthPassword(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(),
-                new ResultFalseErrorsResponse(
-                        new ErrorsResponse(
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                                 true,
                                 true,
                                 false,
                                 false,
-                                false)));
+                                false)),
+                response.getBody());
 
         deleteUser();
     }
@@ -295,15 +292,14 @@ public class UnitTestsUserService {
         );
         ResponseEntity<?> response = service.postApiAuthPassword(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(),
-                new ResultFalseErrorsResponse(
-                        new ErrorsResponse(
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                                 true,
                                 false,
                                 true,
                                 false,
-                                false)));
+                                false)),
+                response.getBody());
 
         deleteUser();
     }
@@ -323,15 +319,14 @@ public class UnitTestsUserService {
         );
         ResponseEntity<?> response = service.postApiAuthPassword(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(),
-                new ResultFalseErrorsResponse(
-                        new ErrorsResponse(
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                                 false,
                                 true,
                                 true,
                                 false,
-                                false)));
+                                false)),
+                response.getBody());
 
         deleteUser();
     }
@@ -351,8 +346,8 @@ public class UnitTestsUserService {
         );
         ResponseEntity<?> response = service.postApiAuthPassword(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(true));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(true), response.getBody());
 
         deleteUser();
     }
@@ -372,8 +367,8 @@ public class UnitTestsUserService {
         );
         ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(true));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(true), response.getBody());
 
         deleteUser();
     }
@@ -393,14 +388,14 @@ public class UnitTestsUserService {
         );
         ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(),
-                new ResultFalseErrorsResponse(new ErrorsResponse(
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                 true,
                         true,
                         true,
                         true,
-                        false)));
+                        false)),
+                response.getBody());
 
         deleteUser();
     }
@@ -419,14 +414,15 @@ public class UnitTestsUserService {
         );
         ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(),
-                new ResultFalseErrorsResponse(new ErrorsResponse(
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                         true,
                         true,
                         true,
                         false,
-                        true)));
+                        true)),
+                response.getBody());
+
         deleteUser();
     }
 
@@ -444,14 +440,14 @@ public class UnitTestsUserService {
         );
         ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(),
-                new ResultFalseErrorsResponse(new ErrorsResponse(
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                         true,
                         false,
                         true,
                         false,
-                        false)));
+                        false)),
+                response.getBody());
         deleteUser();
     }
 
@@ -468,14 +464,14 @@ public class UnitTestsUserService {
         );
         ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(),
-                new ResultFalseErrorsResponse(new ErrorsResponse(
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                         true,
                         true,
                         false,
                         false,
-                        false)));
+                        false)),
+                response.getBody());
         deleteUser();
     }
 
@@ -486,10 +482,10 @@ public class UnitTestsUserService {
         authUser();
         ResponseEntity<?> response = service.getApiAuthLogout();
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(true));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(true), response.getBody());
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Assert.assertEquals(userDetails.getUsername(), "anonymous");
+        Assert.assertEquals("anonymous", userDetails.getUsername());
 
         deleteUser();
     }
@@ -510,8 +506,8 @@ public class UnitTestsUserService {
                 null,
                 null);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(true));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(true), response.getBody());
 
         deleteUser();
     }
@@ -536,11 +532,11 @@ public class UnitTestsUserService {
                 null,
                 null);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(true));
-        Assert.assertNotEquals(testUser.getPassword(), password);
-        Assert.assertNotEquals(testUser.getEmail(), email);
-        Assert.assertNotEquals(testUser.getName(), name);
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(true), response.getBody());
+        Assert.assertNotEquals(password, testUser.getPassword());
+        Assert.assertNotEquals(email, testUser.getEmail());
+        Assert.assertNotEquals(name, testUser.getName());
 
         deleteUser();
     }
@@ -559,10 +555,10 @@ public class UnitTestsUserService {
                 userPassword + "1",
                 "0");
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(true));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(true), response.getBody());
         Assert.assertNotNull(repository.findUserByEmail(testUser.getEmail()).getPhoto());
-        Assert.assertNotEquals(testUser.getPassword(), service.encodePassword(userPassword));
+        Assert.assertNotEquals(service.encodePassword(userPassword), testUser.getPassword());
 
         deleteUser();
     }
@@ -587,9 +583,9 @@ public class UnitTestsUserService {
                 null,
                 null);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultResponse(true));
-        Assert.assertEquals(service.findUserByLogin(testUser.getEmail()).getPhoto(), "");
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultResponse(true), response.getBody());
+        Assert.assertEquals("", service.findUserByLogin(testUser.getEmail()).getPhoto());
 
         deleteUser();
     }
@@ -612,11 +608,10 @@ public class UnitTestsUserService {
                 null,
                 null);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(
-                response.getBody(),
-                new ResultFalseErrorsResponse(
-                        ErrorsResponse.builder().user("Пользователь не найден!").build()));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(
+                ErrorsResponse.builder().user("Пользователь не найден!").build()),
+                response.getBody());
         deleteUser();
     }
 
@@ -636,10 +631,9 @@ public class UnitTestsUserService {
                 null,
                 null);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(
-                response.getBody(),
-                new ResultFalseErrorsResponse(ErrorsResponse.builder().name("Имя указано неверно").build()));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(ErrorsResponse.builder().name("Имя указано неверно").build()),
+                response.getBody());
 
         deleteUser();
     }
@@ -661,11 +655,10 @@ public class UnitTestsUserService {
                 null,
                 null);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(
-                response.getBody(),
-                new ResultFalseErrorsResponse(ErrorsResponse.builder().email("Этот e-mail уже зарегистрирован").build())
-        );
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(
+                ErrorsResponse.builder().email("Этот e-mail уже зарегистрирован").build()),
+                response.getBody());
 
         deleteUser();
         service.deleteUser(testModerator);
@@ -688,12 +681,10 @@ public class UnitTestsUserService {
                 null,
                 null);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(
-                response.getBody(),
-                new ResultFalseErrorsResponse(
-                        ErrorsResponse.builder().password("Пароль короче 6-ти символов").build())
-        );
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(
+                        ErrorsResponse.builder().password("Пароль короче 6-ти символов").build()),
+                response.getBody());
 
         deleteUser();
     }
@@ -712,12 +703,10 @@ public class UnitTestsUserService {
                 userPassword + "1",
                 "0");
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(
-                response.getBody(),
-                new ResultFalseErrorsResponse(
-                        ErrorsResponse.builder().photo("Фото слишком большое, нужно не более 5 Мб").build())
-        );
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(
+                        ErrorsResponse.builder().photo("Фото слишком большое, нужно не более 5 Мб").build()),
+                response.getBody());
 
         deleteUser();
     }
@@ -730,8 +719,8 @@ public class UnitTestsUserService {
         MultipartFile avatar = getAvatar(testFilePath);
 
         ResponseEntity<?> response = service.postApiImage(avatar);
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertNotEquals(response.getBody(), "");
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertNotEquals("", response.getBody());
         deleteUser();
     }
 }

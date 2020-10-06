@@ -84,7 +84,7 @@ public class UnitTestsPostCommentService {
         RequestApiComment request = new RequestApiComment(null, 0, commentText);
         ResponseEntity<?> response = postCommentService.postApiComment(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.UNAUTHORIZED);
+        Assert.assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         Assert.assertNull(response.getBody());
     }
 
@@ -95,7 +95,7 @@ public class UnitTestsPostCommentService {
         RequestApiComment request = new RequestApiComment(0, post.getId(), commentText);
         ResponseEntity<?> response = postCommentService.postApiComment(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.BAD_REQUEST);
+        Assert.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         Assert.assertNull(response.getBody());
         clearAll();
     }
@@ -107,7 +107,7 @@ public class UnitTestsPostCommentService {
         RequestApiComment request = new RequestApiComment(null, 0, commentText);
         ResponseEntity<?> response = postCommentService.postApiComment(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.BAD_REQUEST);
+        Assert.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         Assert.assertNull(response.getBody());
         clearAll();
     }
@@ -119,8 +119,8 @@ public class UnitTestsPostCommentService {
         RequestApiComment request = new RequestApiComment(null, post.getId(), "1");
         ResponseEntity<?> response = postCommentService.postApiComment(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(response.getBody(), new ResultFalseErrorsResponse(new ErrorsResponse("error")));
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
+        Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse("error")), response.getBody());
         clearAll();
     }
 
@@ -131,9 +131,9 @@ public class UnitTestsPostCommentService {
         RequestApiComment request = new RequestApiComment(null, post.getId(), commentText);
         ResponseEntity<?> response = postCommentService.postApiComment(request);
 
-        Assert.assertEquals(response.getStatusCode(), HttpStatus.OK);
+        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         System.out.println("comment id = " + response.getBody());
-        Assert.assertNotEquals(response.getBody(), 0);
+        Assert.assertNotEquals(0, response.getBody());
         clearAll();
     }
 }

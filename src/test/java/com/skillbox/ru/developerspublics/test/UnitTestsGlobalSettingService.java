@@ -29,7 +29,7 @@ public class UnitTestsGlobalSettingService {
         ResponseEntity<?> responseEntity = service.getApiInit();
         Assert.assertNotNull(responseEntity);
         Assert.assertNotNull(responseEntity.getBody());
-        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+        Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     }
 
     @Test
@@ -38,7 +38,7 @@ public class UnitTestsGlobalSettingService {
         ResponseEntity<?> responseEntity = service.getApiSettings();
         Assert.assertNotNull(responseEntity);
         Assert.assertNotNull(responseEntity.getBody());
-        Assert.assertEquals(responseEntity.getStatusCode(), HttpStatus.OK);
+        Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     }
 
     @Test
@@ -53,8 +53,8 @@ public class UnitTestsGlobalSettingService {
             }
         }
         ResponseEntity<?> goodResponse = service.putApiSettings(goodRequest);
-        Assert.assertEquals(goodResponse.getStatusCode(), HttpStatus.OK);
-        Assert.assertEquals(goodResponse.getBody(), new ResultResponse(true));
+        Assert.assertEquals(HttpStatus.OK, goodResponse.getStatusCode());
+        Assert.assertEquals(new ResultResponse(true), goodResponse.getBody());
     }
 
     @Test
@@ -62,7 +62,7 @@ public class UnitTestsGlobalSettingService {
     public void testPutApiSettings400() {
         RequestApiSettings nullRequest = new RequestApiSettings();
         ResponseEntity<?> nullResponse = service.putApiSettings(nullRequest);
-        Assert.assertEquals(nullResponse.getStatusCode(), HttpStatus.BAD_REQUEST);
-        Assert.assertEquals(nullResponse.getBody(), new MessageResponse("Глобальная настройка не найдена!"));
+        Assert.assertEquals(HttpStatus.BAD_REQUEST, nullResponse.getStatusCode());
+        Assert.assertEquals(new MessageResponse("Глобальная настройка не найдена!"), nullResponse.getBody());
     }
 }
