@@ -1,14 +1,20 @@
 #Replace 'localhost' to ip if DB on other server
 #Replace 'devpostsdb' with your DB name
-spring.dataSource.url: jdbc:mysql://u2jdsvfuheag93qv:XZX2wxRhHl33YhbgJwAy@bsvjrvblkisuaomwadw9-mysql.services.clever-cloud.com:3306/bsvjrvblkisuaomwadw9?verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=Europe/Paris
-#  :mysql://localhost:3306/devpostsdb?verifyServerCertificate=false&useSSL=false&requireSSL=false
+spring.dataSource.url: jdbc:mysql://bsvjrvblkisuaomwadw9-mysql.services.clever-cloud.com:3306/bsvjrvblkisuaomwadw9?verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=Europe/Paris
+#spring.dataSource.url: jdbc:mysql://u2jdsvfuheag93qv:XZX2wxRhHl33YhbgJwAy@bsvjrvblkisuaomwadw9-mysql.services.clever-cloud.com:3306/bsvjrvblkisuaomwadw9?verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=Europe/Paris
+#spring.dataSource.url: jdbc:mysql://localhost:3306/devpostsdb?verifyServerCertificate=false&useSSL=false&requireSSL=false
 #  &serverTimezone=Europe/Moscow}
+#spring.datasource.driver-class-name: com.mysql.jdbc.Driver
+spring.jpa.database-platform: org.hibernate.dialect.MySQL5Dialect
+#spring:autoconfigure:exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+
+#spring.jpa.generate-ddl: true
 server.port: ${PORT:8080}
 
 ##Replace with your DB username here:
-#spring.dataSource.username: epiz_26906310
+spring.dataSource.username: u2jdsvfuheag93qv
 ##Replace with your DB password here:
-#spring.dataSource.password: mr1n78v6
+spring.dataSource.password: XZX2wxRhHl33YhbgJwAy
 
 spring.jpa.hibernate.ddl-auto: update
 
@@ -19,7 +25,7 @@ spring.servlet.multipart.max-request-size: 10MB
 spring.jackson.serialization.FAIL_ON_EMPTY_BEANS: false
 
 #Replace with your host here:
-blog.host: mktarasov-java-skillbox.epizy.com:8080
+blog.host: mktarasov-java-skillbox.herokuapp.com:8080
 
 #Replace with your email here:
 moderator.email: developerspublics@gmail.com
@@ -27,7 +33,7 @@ moderator.email: developerspublics@gmail.com
 moderator.email.password: wzhaqlnptimbivpl
 
 #path to avatars on server
-uploads.home: /home/vol9_6/epizy.com/epiz_26906310/mktarasov-java-skillbox.epizy.com
+uploads.home: /home/mktarasov-java-skillbox
 #path to avatars on browser
 avatar.path: avatar
 #path to uploads img on posts
