@@ -46,12 +46,18 @@ import java.util.*;
 
 @Service
 public class UserService implements UserDetailsService {
-    private final UsersRepository userRepository;
-    private final PostsRepository postsRepository;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final JavaMailSender emailSender;
-    private final AuthenticationProviderImpl authenticationProvider;
-    private final CaptchaCodeService captchaCodeService;
+    @Autowired
+    private UsersRepository userRepository;
+    @Autowired
+    private PostsRepository postsRepository;
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Autowired
+    private JavaMailSender emailSender;
+    @Autowired
+    private AuthenticationProviderImpl authenticationProvider;
+    @Autowired
+    private CaptchaCodeService captchaCodeService;
 
     @Value("${blog.host}")
     private String rootPage;
@@ -75,20 +81,20 @@ public class UserService implements UserDetailsService {
     private float uploadsMaxWidth;
 
 
-    @Autowired
-    public UserService (UsersRepository userRepository,
-                        PostsRepository postsRepository,
-                        BCryptPasswordEncoder bCryptPasswordEncoder,
-                        JavaMailSender emailSender,
-                        AuthenticationProviderImpl authenticationProvider,
-                        CaptchaCodeService captchaCodeService) {
-        this.userRepository = userRepository;
-        this.postsRepository = postsRepository;
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.emailSender = emailSender;
-        this.authenticationProvider = authenticationProvider;
-        this.captchaCodeService = captchaCodeService;
-    }
+//    @Autowired
+//    public UserService (UsersRepository userRepository,
+//                        PostsRepository postsRepository,
+//                        BCryptPasswordEncoder bCryptPasswordEncoder,
+//                        JavaMailSender emailSender,
+//                        AuthenticationProviderImpl authenticationProvider,
+//                        CaptchaCodeService captchaCodeService) {
+//        this.userRepository = userRepository;
+//        this.postsRepository = postsRepository;
+//        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+//        this.emailSender = emailSender;
+//        this.authenticationProvider = authenticationProvider;
+//        this.captchaCodeService = captchaCodeService;
+//    }
 
 //    ============================ GETTERS ==========================================
 

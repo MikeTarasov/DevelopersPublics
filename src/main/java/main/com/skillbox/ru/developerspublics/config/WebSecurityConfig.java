@@ -17,13 +17,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-    private final AuthenticationProviderImpl authenticationProvider;
-
-
     @Autowired
-    public WebSecurityConfig(AuthenticationProviderImpl authenticationProvider) {
-        this.authenticationProvider = authenticationProvider;
-    }
+    private AuthenticationProviderImpl authenticationProvider;
+
+
+//    @Autowired
+//    public WebSecurityConfig(AuthenticationProviderImpl authenticationProvider) {
+//        this.authenticationProvider = authenticationProvider;
+//    }
 
 
     //заставляем Spring использовать кодировщик BCrypt для хеширования и сравнения паролей
