@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: main.com.skillbox.ru.developerspublics.DevelopersPublication
+ sApplication
+
