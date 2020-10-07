@@ -27,6 +27,7 @@
             <artifactId>jsoup</artifactId>
             <version>1.13.1</version>
         </dependency>
+
 <!--        <Spring Boot Web> -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -127,7 +128,6 @@
             <artifactId>spring-webmvc</artifactId>
             <version>5.2.5.RELEASE</version>
         </dependency>
-<!--        -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
@@ -138,6 +138,7 @@
             <artifactId>spring-security-web</artifactId>
             <version>5.3.3.RELEASE</version>
         </dependency>
+
 <!--        @Secure annotations-->
         <dependency>
             <groupId>org.springframework.security</groupId>
@@ -191,9 +192,7 @@
             <version>4.13</version>
             <scope>test</scope>
         </dependency>
-
 <!--        </Test>-->
-
     </dependencies>
 
     <build>
@@ -203,27 +202,13 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>2.2.6.RELEASE</version>
                 <configuration>
-<!--                    <archive>-->
-<!--                        <manifest>-->
-
-                            <mainClass>main.com.skillbox.ru.developerspublics.DevelopersPublicationsApplication</mainClass>
-<!--                        </manifest>-->
-<!--                    </archive>-->
-
+                    <mainClass>main.com.skillbox.ru.developerspublics.DevelopersPublicationsApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>
                         <goals>
                             <goal>repackage</goal>
                         </goals>
-<!--                        <configuration>-->
-<!--                            <additionalProperties>-->
-<!--                                <encoding.source>${project.build.sourceEncoding}</encoding.source>-->
-<!--                                <encoding.reporting>${project.reporting.outputEncoding}</encoding.reporting>-->
-<!--                                <java.source>${maven.compiler.source}</java.source>-->
-<!--                                <java.target>${maven.compiler.target}</java.target>-->
-<!--                            </additionalProperties>-->
-<!--                        </configuration>-->
                     </execution>
                 </executions>
             </plugin>
