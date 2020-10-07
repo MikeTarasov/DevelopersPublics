@@ -2,9 +2,6 @@
 #Replace 'devpostsdb' with your DB name
 spring.dataSource.url: jdbc:mysql://bsvjrvblkisuaomwadw9-mysql.services.clever-cloud.com:3306/bsvjrvblkisuaomwadw9?verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=Europe/Paris
 spring.jpa.database-platform: org.hibernate.dialect.MySQL5Dialect
-#spring:autoconfigure:exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-
-#spring.jpa.generate-ddl: true
 server.port: ${PORT:8080}
 
 ##Replace with your DB username here:
@@ -21,14 +18,14 @@ spring.servlet.multipart.max-request-size: 10MB
 spring.jackson.serialization.FAIL_ON_EMPTY_BEANS: false
 
 #Replace with your host here:
-blog.host: mktarasov-java-skillbox.herokuapp.com:8080
+blog.host: mktarasov-java-skillbox.herokuapp.com
 
 #Replace with your email here:
 moderator.email: developerspublics@gmail.com
 #Replace with your application password here:
 moderator.email.password: wzhaqlnptimbivpl
 
-#path to avatars on server
+#path to images on server
 uploads.home: /tmp/codon/tmp/cache/mktarasov-java-skillbox
 #path to avatars on browser
 avatar.path: avatar
@@ -42,7 +39,6 @@ announce.size: 1000
 avatar.width: 36
 #avatar height
 avatar.height: 36
-
 #uploads max width
 uploads.width: 640
 

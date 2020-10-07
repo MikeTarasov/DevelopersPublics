@@ -81,21 +81,6 @@ public class UserService implements UserDetailsService {
     private float uploadsMaxWidth;
 
 
-//    @Autowired
-//    public UserService (UsersRepository userRepository,
-//                        PostsRepository postsRepository,
-//                        BCryptPasswordEncoder bCryptPasswordEncoder,
-//                        JavaMailSender emailSender,
-//                        AuthenticationProviderImpl authenticationProvider,
-//                        CaptchaCodeService captchaCodeService) {
-//        this.userRepository = userRepository;
-//        this.postsRepository = postsRepository;
-//        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-//        this.emailSender = emailSender;
-//        this.authenticationProvider = authenticationProvider;
-//        this.captchaCodeService = captchaCodeService;
-//    }
-
 //    ============================ GETTERS ==========================================
 
     @Override
@@ -355,19 +340,21 @@ public class UserService implements UserDetailsService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             String htmlMsg = "<h3>Здравствуйте, " + user.getName() + "!</h3>" +
-                    "<p><br>&nbsp;&nbsp;&nbsp;&nbsp;От Вашего имени подана заявка на смену пароля на сайте developerspublics.ru.<br>" +
+                    "<p><br>&nbsp;&nbsp;&nbsp;&nbsp;От Вашего имени подана заявка на смену пароля на сайте "
+                    + rootPage + ".<br>" +
                     "Для подтверждения смены пароля перейдите по ссылке " +
                     "<a href=\"http://" + rootPage + "/login/change-password/"+hash+"\">СМЕНИТЬ ПАРОЛЬ</a>" +
-                    "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;Если вы не инициировали это действие, возможно, ваша учетная запись была взломана.<br>" +
-                    "Пожалуйста, свяжитесь с администрацией сайта developerspublics.ru<br><br>" +
+                    "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;Если вы не инициировали это действие, возможно, " +
+                    "ваша учетная запись была взломана.<br>" +
+                    "Пожалуйста, свяжитесь с администрацией сайта " + rootPage + "<br><br>" +
                     "С уважением,<br>" +
-                    "администрация сайта developerspublics.ru</p>";
+                    "администрация сайта " + rootPage + "</p>";
 
             message.setContent(htmlMsg, "text/html; charset=utf-8");
 
             helper.setTo(user.getEmail());
 
-            helper.setSubject("Восстановление пароля на сайте developerspublics.ru");
+            helper.setSubject("Восстановление пароля на сайте " + rootPage);
 
             emailSender.send(message);
         }
