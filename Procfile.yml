@@ -1,1 +1,1 @@
-web: java -jar out/artifacts/DevelopersPublics_jar/DevelopersPublics.jar
+web: java -jar target/DevelopersPublics-1.0.jar
