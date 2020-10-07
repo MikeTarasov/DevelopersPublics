@@ -17,17 +17,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class ApiAuthController
 {
-    private final CaptchaCodeService captchaCodeService;
-    private final UserService userService;
+    @Autowired
+    private CaptchaCodeService captchaCodeService;
+    @Autowired
+    private UserService userService;
 
     private final String USER = "ROLE_USER";
-
-    @Autowired
-    public ApiAuthController(CaptchaCodeService captchaCodeService,
-                             UserService userService) {
-        this.captchaCodeService = captchaCodeService;
-        this.userService = userService;
-    }
 
 
     //POST /api/auth/login

@@ -17,19 +17,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/post")
 public class ApiPostController
 {
-    private final UserService userService;
-    private final PostService postService;
-    private final PostVoteService postVoteService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private PostService postService;
+    @Autowired
+    private PostVoteService postVoteService;
 
     private final String USER = "ROLE_USER";
     private final String MODERATOR = "ROLE_MODERATOR";
-
-    @Autowired
-    public ApiPostController(UserService userService, PostService postService, PostVoteService postVoteService) {
-        this.userService = userService;
-        this.postService = postService;
-        this.postVoteService = postVoteService;
-    }
 
 
     //GET /api/post/
