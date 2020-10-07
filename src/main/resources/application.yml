@@ -29,7 +29,7 @@ moderator.email: developerspublics@gmail.com
 moderator.email.password: wzhaqlnptimbivpl
 
 #path to avatars on server
-uploads.home: /home/mktarasov-java-skillbox
+uploads.home: mktarasov-java-skillbox
 #path to avatars on browser
 avatar.path: avatar
 #path to uploads img on posts
