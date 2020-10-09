@@ -8,6 +8,7 @@ import main.com.skillbox.ru.developerspublics.config.AuthenticationProviderImpl;
 import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
+import main.com.skillbox.ru.developerspublics.model.repository.UploadsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.UsersRepository;
 import org.imgscalr.Scalr;
 import org.json.simple.JSONObject;
@@ -58,6 +59,8 @@ public class UserService implements UserDetailsService {
     private AuthenticationProviderImpl authenticationProvider;
     @Autowired
     private CaptchaCodeService captchaCodeService;
+    @Autowired
+    private UploadsService uploadsService;
 
     @Value("${blog.host}")
     private String rootPage;
@@ -214,16 +217,16 @@ public class UserService implements UserDetailsService {
 
 
     @Transactional
-    private void removePhoto(User user) {
+    private void removePhoto(User user) { //TODO
         String path = user.getPhoto();
         user.setPhoto("");
         userRepository.save(user);
-        File avatar = new File(uploadsHome + path);
-        avatar.delete();
+        new File(uploadsHome + path).delete();
+        uploadsService.deleteImage(path);
     }
 
 
-    @Transactional
+    @Transactional //TODO
     @SneakyThrows
     private void resizeAndSaveImage(String path, String name, InputStream inputStream, int imageHeight, int imageWidth) {
         //получаем исходное изображение
@@ -255,11 +258,14 @@ public class UserService implements UserDetailsService {
 
         //закрываем стрим
         inputStream.close();
+
+        //backup
+        uploadsService.saveImage(file.getPath());
     }
 
 
     @Transactional
-    public String saveAvatar(User user, InputStream inputStream) {
+    public String saveAvatar(User user, InputStream inputStream) { //TODO
         //считаем хэш
         String hashString = Long.toString(user.userHashCode());
 
@@ -279,7 +285,7 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     @SneakyThrows
-    private String saveImage(MultipartFile image) {
+    private String saveImage(MultipartFile image) { //TODO
         StringBuilder name = new StringBuilder(Objects.requireNonNull(image.getOriginalFilename()));
         if (name.toString().equals("")) name.insert(0, "1").insert(1, image.getContentType());
         String[] hash = substringHash(Integer.toString(image.hashCode()));
@@ -306,7 +312,11 @@ public class UserService implements UserDetailsService {
             height = (int) (height / step);
             resizeAndSaveImage(path, name.toString(), image.getInputStream(), height, width);
         } //маленькие сохраяняем как есть
-        else Files.copy(image.getInputStream(), Path.of(path + name));
+        else {
+            Files.copy(image.getInputStream(), Path.of(path + name));
+            //backup
+            uploadsService.saveImage(path + name);
+        }
 
         return String.join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], name);
     }
@@ -380,9 +390,15 @@ public class UserService implements UserDetailsService {
 
 
     public ResponseEntity<?> getAvatar(String path, String a, String b, String c, String name) {
-        Resource file = new FileSystemResource(String.join(File.separator, uploadsHome, path, a, b, c, name));
+        String filePath = String.join(File.separator, "", path, a, b, c, name);
+        Resource file = new FileSystemResource(uploadsHome + filePath);
 
-        if (file.exists()) return ResponseEntity.ok().body(file);
+        if (file.exists()) return ResponseEntity.ok().body(file); //TODO
+
+        // <backup>
+        if (uploadsService.restoreImage(uploadsHome, filePath))
+            return ResponseEntity.ok().body(new FileSystemResource(uploadsHome + filePath));
+        // </backup>
 
         return ResponseEntity.notFound().build();
     }
