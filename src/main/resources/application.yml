@@ -3,7 +3,7 @@ db.host: bsvjrvblkisuaomwadw9-mysql.services.clever-cloud.com
 #Replace with your DB name
 db.name: bsvjrvblkisuaomwadw9
 #Replace with your time-zone
-db.timezone: Europe/Moscow
+db.timezone: Europe/Dublin
 
 spring.dataSource.url: jdbc:mysql://${db.host}:3306/${db.name}?reconnect=true&verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=${db.timezone}
 
