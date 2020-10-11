@@ -18,19 +18,12 @@ import java.util.Optional;
 
 @Service
 public class TagToPostService {
-    private final PostsRepository postsRepository;
-    private final TagsRepository tagsRepository;
-    private final TagToPostsRepository tagToPostsRepository;
-
-
     @Autowired
-    public TagToPostService(PostsRepository postsRepository,
-                            TagsRepository tagsRepository,
-                            TagToPostsRepository tagToPostsRepository) {
-        this.postsRepository = postsRepository;
-        this.tagsRepository = tagsRepository;
-        this.tagToPostsRepository = tagToPostsRepository;
-    }
+    private PostsRepository postsRepository;
+    @Autowired
+    private TagsRepository tagsRepository;
+    @Autowired
+    private TagToPostsRepository tagToPostsRepository;
 
 
     public List<TagToPost> getTagToPostsByPostId(int postId) {

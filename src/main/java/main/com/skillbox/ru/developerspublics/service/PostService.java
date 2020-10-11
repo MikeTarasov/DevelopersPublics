@@ -30,35 +30,24 @@ import java.util.stream.Collectors;
 
 @Service
 public class PostService {
-    private final PostsRepository postsRepository;
-    private final GlobalSettingService globalSettingService;
-    private final PostCommentService postCommentService;
-    private final PostVoteService postVoteService;
-    private final TagService tagService;
-    private final TagToPostService tagToPostService;
-    private final UserService userService;
+    @Autowired
+    private PostsRepository postsRepository;
+    @Autowired
+    private GlobalSettingService globalSettingService;
+    @Autowired
+    private PostCommentService postCommentService;
+    @Autowired
+    private PostVoteService postVoteService;
+    @Autowired
+    private TagService tagService;
+    @Autowired
+    private TagToPostService tagToPostService;
+    @Autowired
+    private UserService userService;
 
     //размер анонса
     @Value("${announce.size}")
     private int announceSize;
-
-
-    @Autowired
-    public PostService (PostsRepository postsRepository,
-                        GlobalSettingService globalSettingService,
-                        PostCommentService postCommentService,
-                        PostVoteService postVoteService,
-                        TagService tagService,
-                        TagToPostService tagToPostService,
-                        UserService userService) {
-        this.postsRepository = postsRepository;
-        this.globalSettingService = globalSettingService;
-        this.postCommentService = postCommentService;
-        this.postVoteService = postVoteService;
-        this.tagService = tagService;
-        this.tagToPostService = tagToPostService;
-        this.userService = userService;
-    }
 
 //================================= GETTERS ============================================================================
     private Post getInitPostById(int id) {

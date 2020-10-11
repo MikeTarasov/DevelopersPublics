@@ -22,8 +22,10 @@ import java.util.*;
 
 @Service
 public class CaptchaCodeService {
-    private final CaptchaCodesRepository captchaCodesRepository;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Autowired
+    private CaptchaCodesRepository captchaCodesRepository;
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Value("${captcha.chars}")
     private int iTotalChars;
@@ -33,13 +35,6 @@ public class CaptchaCodeService {
 
     @Value("${captcha.width}")
     private int iWidth;
-
-    @Autowired
-    public CaptchaCodeService(CaptchaCodesRepository captchaCodesRepository,
-                              BCryptPasswordEncoder bCryptPasswordEncoder) {
-        this.captchaCodesRepository = captchaCodesRepository;
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-    }
 
 
     public CaptchaCode getCaptchaCodeBySecretCode(String secretCode) {

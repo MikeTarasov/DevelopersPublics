@@ -19,19 +19,12 @@ import java.util.List;
 
 @Service
 public class PostVoteService {
-    private final PostsRepository postsRepository;
-    private final PostVotesRepository postVotesRepository;
-    private final UserService userService;
-
-
     @Autowired
-    public PostVoteService(PostsRepository postsRepository,
-                           PostVotesRepository postVotesRepository,
-                           UserService userService) {
-        this.postsRepository = postsRepository;
-        this.postVotesRepository = postVotesRepository;
-        this.userService = userService;
-    }
+    private PostsRepository postsRepository;
+    @Autowired
+    private PostVotesRepository postVotesRepository;
+    @Autowired
+    private UserService userService;
 
 
     public List<PostVote> getPostVotesByPostId(int postId) {

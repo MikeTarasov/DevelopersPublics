@@ -20,19 +20,12 @@ import java.util.List;
 
 @Service
 public class PostCommentService {
-    private final PostCommentsRepository postCommentsRepository;
-    private final PostsRepository postsRepository;
-    private final UserService userService;
-
-
     @Autowired
-    public PostCommentService(PostCommentsRepository postCommentsRepository,
-                              PostsRepository postsRepository,
-                              UserService userService) {
-        this.postCommentsRepository = postCommentsRepository;
-        this.postsRepository = postsRepository;
-        this.userService = userService;
-    }
+    private PostCommentsRepository postCommentsRepository;
+    @Autowired
+    private PostsRepository postsRepository;
+    @Autowired
+    private UserService userService;
 
 
     public List<PostComment> getPostCommentsByPostId(int postId) {

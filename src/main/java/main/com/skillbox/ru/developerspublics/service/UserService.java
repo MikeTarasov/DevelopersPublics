@@ -8,7 +8,6 @@ import main.com.skillbox.ru.developerspublics.config.AuthenticationProviderImpl;
 import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
-import main.com.skillbox.ru.developerspublics.model.repository.UploadsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.UsersRepository;
 import org.imgscalr.Scalr;
 import org.json.simple.JSONObject;

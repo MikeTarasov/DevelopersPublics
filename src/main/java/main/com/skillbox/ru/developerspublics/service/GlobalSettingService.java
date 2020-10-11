@@ -21,13 +21,8 @@ import java.util.List;
 
 @Service
 public class GlobalSettingService {
-    private final GlobalSettingsRepository globalSettingsRepository;
-
-
     @Autowired
-    public GlobalSettingService(GlobalSettingsRepository globalSettingsRepository) {
-        this.globalSettingsRepository = globalSettingsRepository;
-    }
+    private GlobalSettingsRepository globalSettingsRepository;
 
 
     public List<GlobalSetting> getAllGlobalSettings() {

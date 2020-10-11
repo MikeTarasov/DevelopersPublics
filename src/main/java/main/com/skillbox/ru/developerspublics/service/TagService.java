@@ -22,22 +22,14 @@ public class TagService {
     private float maxWeight;
     private HashMap<Integer, Float> weightMap;
 
-    private final PostsRepository postsRepository;
-    private final TagsRepository tagsRepository;
-    private final TagToPostsRepository tagToPostsRepository;
-    private final TagToPostService tagToPostService;
-
-
     @Autowired
-    public TagService(PostsRepository postsRepository,
-                      TagsRepository tagsRepository,
-                      TagToPostsRepository tagToPostsRepository,
-                      TagToPostService tagToPostService) {
-        this.postsRepository = postsRepository;
-        this.tagsRepository = tagsRepository;
-        this.tagToPostsRepository = tagToPostsRepository;
-        this.tagToPostService = tagToPostService;
-    }
+    private PostsRepository postsRepository;
+    @Autowired
+    private TagsRepository tagsRepository;
+    @Autowired
+    private TagToPostsRepository tagToPostsRepository;
+    @Autowired
+    private TagToPostService tagToPostService;
 
 
     public Tag getTagByName(String tagName) {
