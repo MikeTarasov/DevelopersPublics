@@ -230,6 +230,7 @@ public class UserService implements UserDetailsService {
     @SneakyThrows
     private void resizeAndSaveImage(String path, String name, InputStream inputStream, int imageHeight, int imageWidth) {
         //получаем исходное изображение
+        String imageType = name.substring(name.lastIndexOf(".") + 1);
         BufferedImage image = ImageIO.read(inputStream);
 
         //Сначала грубо уменьшаем до smartStep (width = avatarWidth * smartStep),потом плавно уменьшаем до нужного р-ра
@@ -253,14 +254,15 @@ public class UserService implements UserDetailsService {
         File folder = new File(path);
         if (!folder.exists()) folder.mkdirs();
 
-        File file = new File(folder.getAbsolutePath() + File.separator + name);
-        ImageIO.write(newImage, "jpg", file);
+        String filePath = folder.getAbsolutePath() + File.separator + name;
+        File file = new File(filePath);
+        ImageIO.write(newImage, imageType, file);
 
         //закрываем стрим
         inputStream.close();
 
         //backup
-        uploadsService.saveImage(file.getPath());
+        uploadsService.saveImage(filePath);
     }
 
 
@@ -310,12 +312,13 @@ public class UserService implements UserDetailsService {
             float step = width / uploadsMaxWidth;
             width = (int) (width / step);
             height = (int) (height / step);
+            bufferedImage.flush();
             resizeAndSaveImage(path, name.toString(), image.getInputStream(), height, width);
         } //маленькие сохраяняем как есть
         else {
             Files.copy(image.getInputStream(), Path.of(path + name));
             //backup
-            uploadsService.saveImage(path + name);
+            uploadsService.saveImage(Path.of(path + name).toAbsolutePath().toString());
         }
 
         return String.join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], name);
@@ -390,14 +393,14 @@ public class UserService implements UserDetailsService {
 
 
     public ResponseEntity<?> getAvatar(String path, String a, String b, String c, String name) {
-        String filePath = String.join(File.separator, "", path, a, b, c, name);
-        Resource file = new FileSystemResource(uploadsHome + filePath);
+        String filePath = String.join(File.separator, uploadsHome, path, a, b, c, name);
 
+        Resource file = new FileSystemResource(filePath);
         if (file.exists()) return ResponseEntity.ok().body(file); //TODO
 
         // <backup>
-        if (uploadsService.restoreImage(uploadsHome, filePath))
-            return ResponseEntity.ok().body(new FileSystemResource(uploadsHome + filePath));
+        if (uploadsService.restoreImage(Path.of(filePath).toAbsolutePath().getParent().toString(), name))
+            return ResponseEntity.ok().body(new FileSystemResource(filePath));
         // </backup>
 
         return ResponseEntity.notFound().build();

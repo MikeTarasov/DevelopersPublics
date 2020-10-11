@@ -1,7 +1,7 @@
-#Replace 'localhost' to ip if DB on other server
-#Replace 'devpostsdb' with your DB name
-spring.dataSource.url: jdbc:mysql://bsvjrvblkisuaomwadw9-mysql.services.clever-cloud.com:3306/bsvjrvblkisuaomwadw9?verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=Europe/Paris
-spring.jpa.database-platform: org.hibernate.dialect.MySQL5Dialect
+#Replace 'bsvjrvblkisuaomwadw9-mysql.services.clever-cloud.com' to ip of DB
+#Replace 'bsvjrvblkisuaomwadw9' with your DB name
+spring.dataSource.url: jdbc:mysql://bsvjrvblkisuaomwadw9-mysql.services.clever-cloud.com:3306/bsvjrvblkisuaomwadw9?reconnect=true&verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=Europe/Paris
+#spring.jpa.database-platform: org.hibernate.dialect.MySQL5Dialect
 server.port: ${PORT:8080}
 
 ##Replace with your DB username here:
@@ -26,7 +26,7 @@ moderator.email: developerspublics@gmail.com
 moderator.email.password: wzhaqlnptimbivpl
 
 #path to images on server
-uploads.home: /tmp/codon/tmp/cache/mktarasov-java-skillbox
+uploads.home: ${APP_HOME}/images/
 #path to avatars on browser
 avatar.path: avatar
 #path to uploads img on posts

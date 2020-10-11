@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,14 +24,24 @@ public class UploadsService {
 
     @SneakyThrows
     public void saveImage(String path) {
-        uploadsRepository.save(new Uploads(path, Files.readAllBytes(Path.of(path))));
+        Uploads upload = uploadsRepository.findByPath(path);
+        if (upload == null) {
+            uploadsRepository.save(new Uploads(path, Files.readAllBytes(Path.of(path))));
+        }
+        else {
+            upload.setBytes(Files.readAllBytes(Path.of(path)));
+            uploadsRepository.save(upload);
+        }
     }
 
-    public boolean restoreImage(String homePath, String path) {
+    public boolean restoreImage(String path, String name) {
         try {
-            Uploads uploads = uploadsRepository.findByPath(path);
+            String filePath = String.join(File.separator, path, name);
+            Uploads uploads = uploadsRepository.findByPath(filePath);
             if (uploads == null) return false;
-            FileOutputStream fos = new FileOutputStream(homePath + path);
+
+            new File(path).mkdirs();
+            FileOutputStream fos = new FileOutputStream(filePath);
             fos.write(uploads.getBytes());
             fos.flush();
             fos.close();
