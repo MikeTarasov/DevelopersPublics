@@ -43,6 +43,7 @@ announce.size: 1000
 avatar.width: 36
 #avatar height
 avatar.height: 36
+
 #uploads max width
 uploads.width: 640
 
