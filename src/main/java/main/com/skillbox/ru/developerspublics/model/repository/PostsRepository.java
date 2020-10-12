@@ -58,4 +58,6 @@ public interface PostsRepository extends PagingAndSortingRepository<Post, Intege
                             @Param("modStatus") String moderationStatus,
                             @Param("date") Date time,
                             Pageable pageable);
+
+    Post findByTextContaining(String path);
 }

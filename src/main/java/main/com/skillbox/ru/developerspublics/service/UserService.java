@@ -216,6 +216,7 @@ public class UserService implements UserDetailsService {
 
 
     @Transactional
+    @SneakyThrows
     private void removePhoto(User user) { //TODO
         String path = user.getPhoto();
         user.setPhoto("");

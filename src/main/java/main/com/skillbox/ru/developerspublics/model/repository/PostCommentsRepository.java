@@ -11,4 +11,6 @@ import java.util.List;
 public interface PostCommentsRepository extends JpaRepository<PostComment, Integer> {
 
     List<PostComment> findByPostId(int postId);
+
+    PostComment findByTextContaining(String path);
 }

@@ -53,5 +53,8 @@ captcha.chars: 6
 captcha.height: 35
 #captcha width
 captcha.width: 100
-#Replace with your captcha life-time in milliseconds here:
+
+#Replace with your captcha life-time in milliseconds here (default=3600000 (1 hour)):
 captcha.life.time: 3600000
+#Replace with your images auto-clean time in milliseconds here (default=36000000 (10 hour)):
+images.auto.clean.time: 36000000
