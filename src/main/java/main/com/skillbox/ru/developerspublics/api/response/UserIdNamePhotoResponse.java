@@ -6,7 +6,8 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class UserIdNamePhotoResponse {
-    int id;
-    String name;
-    String photo;
+
+  private int id;
+  private String name;
+  private String photo;
 }

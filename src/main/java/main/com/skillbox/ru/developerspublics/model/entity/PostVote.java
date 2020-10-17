@@ -1,12 +1,23 @@
 package main.com.skillbox.ru.developerspublics.model.entity;
 
-import lombok.*;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
-
-import javax.persistence.*;
 import java.time.Instant;
 import java.util.Date;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
 
 
 @Data
@@ -14,8 +25,8 @@ import java.util.Date;
 @NoArgsConstructor
 @Table(name = "post_votes")
 @Entity
-public class PostVote
-{
+public class PostVote {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;

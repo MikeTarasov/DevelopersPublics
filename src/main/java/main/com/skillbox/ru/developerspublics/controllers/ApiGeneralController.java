@@ -4,33 +4,52 @@ package main.com.skillbox.ru.developerspublics.controllers;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiComment;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiModeration;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiSettings;
-import main.com.skillbox.ru.developerspublics.api.response.*;
-import main.com.skillbox.ru.developerspublics.service.*;
+import main.com.skillbox.ru.developerspublics.service.GlobalSettingService;
+import main.com.skillbox.ru.developerspublics.service.PostCommentService;
+import main.com.skillbox.ru.developerspublics.service.PostService;
+import main.com.skillbox.ru.developerspublics.service.TagService;
+import main.com.skillbox.ru.developerspublics.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.ui.ModelMap;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
 
 @RestController
-public class ApiGeneralController
-{
-    @Autowired
-    private GlobalSettingService globalSettingService;
-    @Autowired
-    private TagService tagService;
-    @Autowired
-    private PostService postService;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private PostCommentService postCommentService;
+public class ApiGeneralController {
+
+    private final GlobalSettingService globalSettingService;
+    private final TagService tagService;
+    private final PostService postService;
+    private final UserService userService;
+    private final PostCommentService postCommentService;
 
     private final String USER = "ROLE_USER";
     private final String MODERATOR = "ROLE_MODERATOR";
+
+    @Autowired
+    public ApiGeneralController(
+        GlobalSettingService globalSettingService,
+        TagService tagService, PostService postService,
+        UserService userService,
+        PostCommentService postCommentService) {
+        this.globalSettingService = globalSettingService;
+        this.tagService = tagService;
+        this.postService = postService;
+        this.userService = userService;
+        this.postCommentService = postCommentService;
+    }
 
 
     //GET /api/init/

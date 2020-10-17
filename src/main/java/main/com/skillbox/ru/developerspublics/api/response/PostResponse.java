@@ -6,13 +6,14 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class PostResponse {
-    int id;
-    long timestamp;
-    UserIdNameResponse user;
-    String title;
-    String announce;
-    int likeCount;
-    int dislikeCount;
-    int commentCount;
-    int viewCount;
+
+  private int id;
+  private long timestamp;
+  private UserIdNameResponse user;
+  private String title;
+  private String announce;
+  private int likeCount;
+  private int dislikeCount;
+  private int commentCount;
+  private int viewCount;
 }

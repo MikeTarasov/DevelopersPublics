@@ -17,15 +17,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    private final AuthenticationProviderImpl authenticationProvider;
+
     @Autowired
-    private AuthenticationProviderImpl authenticationProvider;
-
-
-//    @Autowired
-//    public WebSecurityConfig(AuthenticationProviderImpl authenticationProvider) {
-//        this.authenticationProvider = authenticationProvider;
-//    }
-
+    public WebSecurityConfig(AuthenticationProviderImpl authenticationProvider) {
+        this.authenticationProvider = authenticationProvider;
+    }
 
     //заставляем Spring использовать кодировщик BCrypt для хеширования и сравнения паролей
     @Bean
@@ -37,11 +35,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .csrf().disable()
-                .formLogin()
-                .loginPage("/login")
-                .usernameParameter("e_mail")
-                .passwordParameter("password")
+            .csrf().disable()
+            .formLogin()
+            .loginPage("/login")
+            .usernameParameter("e_mail")
+            .passwordParameter("password")
                 .successForwardUrl("/")
                 .and()
                 .logout()
@@ -50,7 +48,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .logoutSuccessUrl("/")
                 .and()
                 .authorizeRequests()
-                .antMatchers("/v2/api-docs", "/swagger-ui.html").hasRole("MODERATOR")
                 .antMatchers("/login/change-password/*").anonymous();
     }
 
@@ -66,7 +63,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) {
         web
-                .ignoring()
-                .antMatchers("/resources/**", "/static/**", "/css/**", "/js/**", "/images/**");
+            .ignoring()
+            .antMatchers("/resources/**", "/static/**", "/css/**", "/js/**", "/images/**");
     }
 }

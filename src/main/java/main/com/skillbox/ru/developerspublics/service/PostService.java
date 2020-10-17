@@ -1,16 +1,39 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiModeration;
 import main.com.skillbox.ru.developerspublics.api.request.RequestPostPutApiPost;
-import main.com.skillbox.ru.developerspublics.api.response.*;
+import main.com.skillbox.ru.developerspublics.api.response.ApiCalendarResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ApiPostResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ApiStatisticsResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ErrorsResponse;
+import main.com.skillbox.ru.developerspublics.api.response.PostByIdResponse;
+import main.com.skillbox.ru.developerspublics.api.response.PostResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ResultFalseErrorsResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
+import main.com.skillbox.ru.developerspublics.api.response.UserIdNameResponse;
+import main.com.skillbox.ru.developerspublics.model.entity.Post;
+import main.com.skillbox.ru.developerspublics.model.entity.PostVote;
+import main.com.skillbox.ru.developerspublics.model.entity.Tag;
+import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
+import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.enums.Decision;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsCodes;
 import main.com.skillbox.ru.developerspublics.model.enums.GlobalSettingsValues;
 import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
-import main.com.skillbox.ru.developerspublics.model.entity.*;
-import main.com.skillbox.ru.developerspublics.model.repository.*;
+import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,34 +45,42 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Service
 public class PostService {
-    @Autowired
-    private PostsRepository postsRepository;
-    @Autowired
-    private GlobalSettingService globalSettingService;
-    @Autowired
-    private PostCommentService postCommentService;
-    @Autowired
-    private PostVoteService postVoteService;
-    @Autowired
-    private TagService tagService;
-    @Autowired
-    private TagToPostService tagToPostService;
-    @Autowired
-    private UserService userService;
+
+    private final PostsRepository postsRepository;
+    private final GlobalSettingService globalSettingService;
+    private final PostCommentService postCommentService;
+    private final PostVoteService postVoteService;
+    private final TagService tagService;
+    private final TagToPostService tagToPostService;
+    private final UserService userService;
 
     //размер анонса
     @Value("${announce.size}")
     private int announceSize;
 
-//================================= GETTERS ============================================================================
+    @Autowired
+    public PostService(
+        PostsRepository postsRepository,
+        GlobalSettingService globalSettingService,
+        PostCommentService postCommentService,
+        PostVoteService postVoteService,
+        TagService tagService,
+        TagToPostService tagToPostService,
+        UserService userService) {
+        this.postsRepository = postsRepository;
+        this.globalSettingService = globalSettingService;
+        this.postCommentService = postCommentService;
+        this.postVoteService = postVoteService;
+        this.tagService = tagService;
+        this.tagToPostService = tagToPostService;
+        this.userService = userService;
+    }
+
+
     private Post getInitPostById(int id) {
         Optional<Post> optionalPost = postsRepository.findById(id);
         if (optionalPost.isPresent()) {
@@ -206,9 +237,8 @@ public class PostService {
         }
         return list;
     }
-//================================= /GETTERS ===========================================================================
 
-//================================= CRUD ===============================================================================
+
     @Transactional
     public void deletePost(Post post) {
         initPost(post);
@@ -332,11 +362,8 @@ public class PostService {
         }
 
         post.setUserPost(userService.getUserById(post.getUserId()));
-
         post.setPostVotes(postVoteService.getPostVotesByPostId(post.getId()));
-
         post.setPostComments(postCommentService.getPostCommentsByPostId(post.getId()));
-
         post.setTagToPosts(tagToPostService.getTagToPostsByPostId(post.getId()));
     }
 
@@ -346,7 +373,7 @@ public class PostService {
             initPost(post);
         }
     }
-//================================= /CRUD ==============================================================================
+
 
     private List<Post> sortPostList(List<Post> posts, int offset, int limit) {
         return posts.stream()
@@ -393,7 +420,6 @@ public class PostService {
         );
     }
 
-//================================= ResponseEntity =====================================================================
 
     public ResponseEntity<?> postApiPost(RequestPostPutApiPost requestBody) {
         return postPutApiPost(requestBody, null);
@@ -719,7 +745,6 @@ public class PostService {
                 if (post.getTimestamp() < firstPublication) firstPublication = post.getTimestamp();
             }
         }
-
 
         if (postsCount == 0) firstPublication = 0;
 

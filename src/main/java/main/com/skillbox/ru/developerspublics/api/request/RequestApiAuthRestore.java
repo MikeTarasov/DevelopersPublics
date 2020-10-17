@@ -4,5 +4,6 @@ import lombok.Data;
 
 @Data
 public class RequestApiAuthRestore {
-    String email;
+
+  private String email;
 }

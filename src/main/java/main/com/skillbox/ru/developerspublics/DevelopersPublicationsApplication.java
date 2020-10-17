@@ -11,17 +11,17 @@ import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableScheduling
-//@ConfigurationPropertiesScan(basePackages = "src.main.java.main.com.skillbox.ru.developerspublics")
 public class DevelopersPublicationsApplication {
-    @Value("${db.timezone}")
-    private String timeZone;
 
-    @PostConstruct
-    public void started() {
-        TimeZone.setDefault(TimeZone.getTimeZone(timeZone));
-    }
+  @Value("${db.timezone}")
+  private String timeZone;
 
-    public static void main(String[] args) {
-        SpringApplication.run(DevelopersPublicationsApplication.class, args);
-    }
+  @PostConstruct
+  public void started() {
+    TimeZone.setDefault(TimeZone.getTimeZone(timeZone));
+  }
+
+  public static void main(String[] args) {
+    SpringApplication.run(DevelopersPublicationsApplication.class, args);
+  }
 }

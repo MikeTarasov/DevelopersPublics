@@ -10,29 +10,42 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
 @RequestMapping("/api/post")
-public class ApiPostController
-{
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private PostService postService;
-    @Autowired
-    private PostVoteService postVoteService;
+public class ApiPostController {
+
+    private final UserService userService;
+    private final PostService postService;
+    private final PostVoteService postVoteService;
 
     private final String USER = "ROLE_USER";
     private final String MODERATOR = "ROLE_MODERATOR";
+
+    @Autowired
+    public ApiPostController(UserService userService,
+        PostService postService,
+        PostVoteService postVoteService) {
+        this.userService = userService;
+        this.postService = postService;
+        this.postVoteService = postVoteService;
+    }
 
 
     //GET /api/post/
     @GetMapping("")
     public ResponseEntity<?> getApiPost(@RequestParam(name = "offset") int offset,
-                           @RequestParam(name = "limit") int limit,
-                           @RequestParam(name = "mode") String mode) {
+        @RequestParam(name = "limit") int limit,
+        @RequestParam(name = "mode") String mode) {
         return postService.getApiPost(offset, limit, mode);
     }
 

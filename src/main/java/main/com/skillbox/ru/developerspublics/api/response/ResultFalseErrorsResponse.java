@@ -4,13 +4,14 @@ import lombok.Data;
 
 @Data
 public class ResultFalseErrorsResponse {
-    boolean result;
-    ErrorsResponse errors;
 
-    public ResultFalseErrorsResponse(ErrorsResponse errors) {
-        result = false;
-        this.errors = errors;
-    }
+  private boolean result;
+  private ErrorsResponse errors;
+
+  public ResultFalseErrorsResponse(ErrorsResponse errors) {
+    result = false;
+    this.errors = errors;
+  }
 }
 
 

@@ -6,8 +6,9 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class PostCommentResponse {
-    int id;
-    long timestamp;
-    String text;
-    UserIdNamePhotoResponse user;
+
+  private int id;
+  private long timestamp;
+  private String text;
+  private UserIdNamePhotoResponse user;
 }

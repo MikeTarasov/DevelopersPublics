@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class TagResponse {
-    String name;
-    Float weight;
+
+  private String name;
+  private Float weight;
 }

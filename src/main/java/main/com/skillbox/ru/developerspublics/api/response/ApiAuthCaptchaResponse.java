@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class ApiAuthCaptchaResponse {
-    String secret;
-    String image;
+
+  private String secret;
+  private String image;
 }

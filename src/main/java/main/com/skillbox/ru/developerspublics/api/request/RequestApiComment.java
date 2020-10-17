@@ -9,9 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RequestApiComment {
-    @JsonProperty("parent_id")
-    Integer parentId;
-    @JsonProperty("post_id")
-    int postId;
-    String text;
+
+  @JsonProperty("parent_id")
+  private Integer parentId;
+  @JsonProperty("post_id")
+  private int postId;
+  private String text;
 }

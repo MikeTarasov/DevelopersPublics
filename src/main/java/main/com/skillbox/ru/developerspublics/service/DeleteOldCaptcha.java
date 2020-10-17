@@ -8,11 +8,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DeleteOldCaptcha {
-    @Autowired
-    private CaptchaCodeService captchaCodeService;
+
+    private final CaptchaCodeService captchaCodeService;
 
     @Value("${captcha.life.time}")
     private long lifeTime;
+
+    @Autowired
+    public DeleteOldCaptcha(
+        CaptchaCodeService captchaCodeService) {
+        this.captchaCodeService = captchaCodeService;
+    }
 
     @Scheduled(fixedRateString = "${captcha.life.time}")
     public void autoDeleteOldCaptcha() {

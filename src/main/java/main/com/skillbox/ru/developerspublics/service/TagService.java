@@ -1,6 +1,11 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import main.com.skillbox.ru.developerspublics.api.response.TagResponse;
 import main.com.skillbox.ru.developerspublics.api.response.TagsListResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
@@ -14,22 +19,29 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-
 
 @Service
 public class TagService {
+
     private float maxWeight;
     private HashMap<Integer, Float> weightMap;
 
+    private final PostsRepository postsRepository;
+    private final TagsRepository tagsRepository;
+    private final TagToPostsRepository tagToPostsRepository;
+    private final TagToPostService tagToPostService;
+
     @Autowired
-    private PostsRepository postsRepository;
-    @Autowired
-    private TagsRepository tagsRepository;
-    @Autowired
-    private TagToPostsRepository tagToPostsRepository;
-    @Autowired
-    private TagToPostService tagToPostService;
+    public TagService(
+        PostsRepository postsRepository,
+        TagsRepository tagsRepository,
+        TagToPostsRepository tagToPostsRepository,
+        TagToPostService tagToPostService) {
+        this.postsRepository = postsRepository;
+        this.tagsRepository = tagsRepository;
+        this.tagToPostsRepository = tagToPostsRepository;
+        this.tagToPostService = tagToPostService;
+    }
 
 
     public Tag getTagByName(String tagName) {

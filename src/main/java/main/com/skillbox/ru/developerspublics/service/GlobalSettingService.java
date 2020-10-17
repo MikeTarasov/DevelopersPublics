@@ -1,6 +1,9 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiSettings;
 import main.com.skillbox.ru.developerspublics.api.response.ApiInitResponse;
@@ -14,18 +17,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 
 @Service
 public class GlobalSettingService {
-    @Autowired
-    private GlobalSettingsRepository globalSettingsRepository;
+
+    private final GlobalSettingsRepository globalSettingsRepository;
+    private final ApiInitResponse apiInitResponse;
 
     @Autowired
-    private ApiInitResponse apiInitResponse;
+    public GlobalSettingService(
+        GlobalSettingsRepository globalSettingsRepository,
+        ApiInitResponse apiInitResponse) {
+        this.globalSettingsRepository = globalSettingsRepository;
+        this.apiInitResponse = apiInitResponse;
+    }
 
 
     public List<GlobalSetting> getAllGlobalSettings() {

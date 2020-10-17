@@ -1,22 +1,22 @@
 package main.com.skillbox.ru.developerspublics.config;
 
 
+import java.util.Properties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import java.util.Properties;
 
 
 @Configuration
 public class MailConfig {
+
     @Value("${moderator.email}")
     private String myEmail;
 
     @Value("${moderator.email.password}")
     private String myPassword;
-
 
     @Bean
     public JavaMailSender getJavaMailSender() {
@@ -24,7 +24,6 @@ public class MailConfig {
         mailSender.setHost("smtp.gmail.com");
         mailSender.setPort(587);
         mailSender.setDefaultEncoding("utf-8");
-
         mailSender.setUsername(myEmail);
         mailSender.setPassword(myPassword);
 

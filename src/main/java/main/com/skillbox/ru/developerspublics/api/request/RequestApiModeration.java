@@ -5,7 +5,8 @@ import lombok.Data;
 
 @Data
 public class RequestApiModeration {
-    @JsonProperty("post_id")
-    int postId;
-    String decision;
+
+  @JsonProperty("post_id")
+  private int postId;
+  private String decision;
 }

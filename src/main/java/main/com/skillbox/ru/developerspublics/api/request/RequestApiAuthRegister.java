@@ -9,11 +9,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RequestApiAuthRegister {
-    @JsonProperty("e_mail")
-    String email;
-    String name;
-    String password;
-    String captcha;
-    @JsonProperty("captcha_secret")
-    String captchaSecret;
+
+  @JsonProperty("e_mail")
+  private String email;
+  private String name;
+  private String password;
+  private String captcha;
+  @JsonProperty("captcha_secret")
+  private String captchaSecret;
 }

@@ -1,5 +1,7 @@
 package main.com.skillbox.ru.developerspublics.service;
 
+import java.time.Instant;
+import java.util.List;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiPostLike;
 import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.Post;
@@ -13,18 +15,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import java.time.Instant;
-import java.util.List;
 
 
 @Service
 public class PostVoteService {
+
+    private final PostsRepository postsRepository;
+    private final PostVotesRepository postVotesRepository;
+    private final UserService userService;
+
     @Autowired
-    private PostsRepository postsRepository;
-    @Autowired
-    private PostVotesRepository postVotesRepository;
-    @Autowired
-    private UserService userService;
+    public PostVoteService(
+        PostsRepository postsRepository,
+        PostVotesRepository postVotesRepository,
+        UserService userService) {
+        this.postsRepository = postsRepository;
+        this.postVotesRepository = postVotesRepository;
+        this.userService = userService;
+    }
 
 
     public List<PostVote> getPostVotesByPostId(int postId) {
@@ -33,11 +41,16 @@ public class PostVoteService {
 
 
     private boolean setLikeDislike(int postId, int userId, int value) {
-        //запрещаем ставить оценки на свои посты
         Post post;
-        if (postsRepository.findById(postId).isPresent()) post = postsRepository.findById(postId).get();
-        else return false;
-        if (post.getUserId() == userId) return false;
+        if (postsRepository.findById(postId).isPresent()) {
+            post = postsRepository.findById(postId).get();
+        } else {
+            return false;
+        }
+        //запрещаем ставить оценки на свои посты
+        if (post.getUserId() == userId) {
+            return false;
+        }
 
         //ищем в БД
         PostVote postVote = postVotesRepository.findByPostIdAndUserId(postId, userId);

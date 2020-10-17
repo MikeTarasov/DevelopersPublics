@@ -4,11 +4,12 @@ import lombok.Data;
 
 @Data
 public class ResultUserResponse {
-    boolean result;
-    UserResponse user;
 
-    public ResultUserResponse(UserResponse userResponse) {
-        result = true;
-        user = userResponse;
-    }
+  private boolean result;
+  private UserResponse user;
+
+  public ResultUserResponse(UserResponse userResponse) {
+    result = true;
+    user = userResponse;
+  }
 }

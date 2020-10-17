@@ -6,11 +6,12 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class UserResponse {
-    int id;
-    String name;
-    String photo;
-    String email;
-    boolean moderation;
-    int moderationCount;
-    boolean settings;
+
+  private int id;
+  private String name;
+  private String photo;
+  private String email;
+  private boolean moderation;
+  private int moderationCount;
+  private boolean settings;
 }

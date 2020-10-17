@@ -1,7 +1,13 @@
 package main.com.skillbox.ru.developerspublics.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiComment;
-import main.com.skillbox.ru.developerspublics.api.response.*;
+import main.com.skillbox.ru.developerspublics.api.response.ApiCommentTrueResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ErrorsResponse;
+import main.com.skillbox.ru.developerspublics.api.response.PostCommentResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ResultFalseErrorsResponse;
+import main.com.skillbox.ru.developerspublics.api.response.UserIdNamePhotoResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.PostComment;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.repository.PostCommentsRepository;
@@ -14,18 +20,23 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-
 
 @Service
 public class PostCommentService {
+
+    private final PostCommentsRepository postCommentsRepository;
+    private final PostsRepository postsRepository;
+    private final UserService userService;
+
     @Autowired
-    private PostCommentsRepository postCommentsRepository;
-    @Autowired
-    private PostsRepository postsRepository;
-    @Autowired
-    private UserService userService;
+    public PostCommentService(
+        PostCommentsRepository postCommentsRepository,
+        PostsRepository postsRepository,
+        UserService userService) {
+        this.postCommentsRepository = postCommentsRepository;
+        this.postsRepository = postsRepository;
+        this.userService = userService;
+    }
 
 
     public List<PostComment> getPostCommentsByPostId(int postId) {

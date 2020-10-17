@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RequestApiPostLike {
-    @JsonProperty("post_id")
-    int postId;
+
+  @JsonProperty("post_id")
+  private int postId;
 }

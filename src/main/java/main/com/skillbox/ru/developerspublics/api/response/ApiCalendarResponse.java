@@ -1,14 +1,14 @@
 package main.com.skillbox.ru.developerspublics.api.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
 import java.util.TreeMap;
 import java.util.TreeSet;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 @Data
 @AllArgsConstructor
 public class ApiCalendarResponse {
-    TreeSet<String> years;
-    TreeMap<String, Integer> posts;
+
+  private TreeSet<String> years;
+  private TreeMap<String, Integer> posts;
 }

@@ -1,18 +1,18 @@
 package main.com.skillbox.ru.developerspublics.api.request;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class RequestPostPutApiPost {
-    long timestamp;
-    int active;
-    String title;
-    List<String> tags;
-    String text;
+
+  private long timestamp;
+  private int active;
+  private String title;
+  private List<String> tags;
+  private String text;
 }

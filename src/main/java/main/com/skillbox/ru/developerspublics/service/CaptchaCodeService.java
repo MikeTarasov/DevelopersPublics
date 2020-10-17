@@ -1,6 +1,17 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Date;
+import java.util.Random;
+import javax.imageio.ImageIO;
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.response.ApiAuthCaptchaResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.CaptchaCode;
@@ -12,20 +23,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.time.Instant;
-import java.util.*;
 
 
 @Service
 public class CaptchaCodeService {
-    @Autowired
-    private CaptchaCodesRepository captchaCodesRepository;
-    @Autowired
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    private final CaptchaCodesRepository captchaCodesRepository;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Value("${captcha.chars}")
     private int iTotalChars;
@@ -35,6 +39,14 @@ public class CaptchaCodeService {
 
     @Value("${captcha.width}")
     private int iWidth;
+
+    @Autowired
+    public CaptchaCodeService(
+        CaptchaCodesRepository captchaCodesRepository,
+        BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.captchaCodesRepository = captchaCodesRepository;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    }
 
 
     public CaptchaCode getCaptchaCodeBySecretCode(String secretCode) {

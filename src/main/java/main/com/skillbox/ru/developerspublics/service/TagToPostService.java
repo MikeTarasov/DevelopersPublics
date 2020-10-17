@@ -1,9 +1,11 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 
+import java.util.List;
+import java.util.Optional;
+import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
-import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.TagToPostsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.TagsRepository;
@@ -12,18 +14,23 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-
 
 @Service
 public class TagToPostService {
+
+    private final PostsRepository postsRepository;
+    private final TagsRepository tagsRepository;
+    private final TagToPostsRepository tagToPostsRepository;
+
     @Autowired
-    private PostsRepository postsRepository;
-    @Autowired
-    private TagsRepository tagsRepository;
-    @Autowired
-    private TagToPostsRepository tagToPostsRepository;
+    public TagToPostService(
+        PostsRepository postsRepository,
+        TagsRepository tagsRepository,
+        TagToPostsRepository tagToPostsRepository) {
+        this.postsRepository = postsRepository;
+        this.tagsRepository = tagsRepository;
+        this.tagToPostsRepository = tagToPostsRepository;
+    }
 
 
     public List<TagToPost> getTagToPostsByPostId(int postId) {
