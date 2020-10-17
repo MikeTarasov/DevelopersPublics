@@ -3,7 +3,7 @@ package main.com.skillbox.ru.developerspublics.service;
 
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiSettings;
-import main.com.skillbox.ru.developerspublics.api.response.BlogInfo;
+import main.com.skillbox.ru.developerspublics.api.response.ApiInitResponse;
 import main.com.skillbox.ru.developerspublics.api.response.MessageResponse;
 import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.GlobalSetting;
@@ -23,6 +23,9 @@ import java.util.List;
 public class GlobalSettingService {
     @Autowired
     private GlobalSettingsRepository globalSettingsRepository;
+
+    @Autowired
+    private ApiInitResponse apiInitResponse;
 
 
     public List<GlobalSetting> getAllGlobalSettings() {
@@ -75,11 +78,11 @@ public class GlobalSettingService {
     }
 
 
-    public ResponseEntity<BlogInfo> getApiInit() {
+    public ResponseEntity<?> getApiInit() {
         //при запуске проверяем заполнены ли глобальные настройки
         initGlobalSettings();
         //и возвращаем инфо о блоге
-        return ResponseEntity.status(HttpStatus.OK).body(new BlogInfo());
+        return ResponseEntity.status(HttpStatus.OK).body(apiInitResponse);
     }
 
 

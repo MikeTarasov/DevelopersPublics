@@ -58,3 +58,11 @@ captcha.width: 100
 captcha.life.time: 3600000
 #Replace with your images auto-clean time in milliseconds here (default=36000000 (10 hour)):
 images.auto.clean.time: 36000000
+
+#footer blog-info
+blog.title: Developers Publications
+blog.subtitle: Рассказы разработчиков
+blog.phone: +7 904 550-48-47
+blog.email: mktarasov@gmail.com
+blog.copyright: Михаил Тарасов
+blog.copyrightFrom: 2020

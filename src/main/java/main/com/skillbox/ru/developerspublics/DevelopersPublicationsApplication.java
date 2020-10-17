@@ -11,6 +11,7 @@ import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableScheduling
+//@ConfigurationPropertiesScan(basePackages = "src.main.java.main.com.skillbox.ru.developerspublics")
 public class DevelopersPublicationsApplication {
     @Value("${db.timezone}")
     private String timeZone;

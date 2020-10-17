@@ -35,7 +35,7 @@ public class ApiGeneralController
 
     //GET /api/init/
     @GetMapping("/api/init")
-    public ResponseEntity<BlogInfo> getApiInit() {
+    public ResponseEntity<?> getApiInit() {
         return globalSettingService.getApiInit();
     }
 
