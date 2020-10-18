@@ -109,16 +109,13 @@ public class UserService implements UserDetailsService {
   @SneakyThrows
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
     User user = findUserByLogin(email);
-
     if (user == null) {
       return null;
     }
-
     Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
     for (Role role : user.getRoles()) {
       grantedAuthorities.add(new SimpleGrantedAuthority(role.getAuthority()));
     }
-
     return new org.springframework.security.core.userdetails.User(
         user.getUsername(),
         user.getPassword(),
@@ -132,12 +129,12 @@ public class UserService implements UserDetailsService {
   }
 
 
-  public User getUserById(int id) {
+  public User findUserById(int id) {
     return userRepository.findById(id).orElseGet(User::new);
   }
 
 
-  private User getUserByCode(String code) {
+  private User findUserByCode(String code) {
     return userRepository.findUserByCode(code);
   }
 
@@ -184,7 +181,6 @@ public class UserService implements UserDetailsService {
     if (userRepository.findUserByEmail(user.getEmail()) != null) {
       return false;
     }
-
     //если нет - задаем роль, кодируем пароль и сохраняем в репозиторий
 
     //  first user = moderator
@@ -245,16 +241,22 @@ public class UserService implements UserDetailsService {
     user.setPhoto("");
     userRepository.save(user);
     new File(uploadsHome + path).delete();
+    //backup
     uploadsService.deleteImage(path);
   }
 
 
   @Transactional
   @SneakyThrows
-  private void resizeAndSaveImage(String path, String name, InputStream inputStream,
+  private void resizeAndSaveImage(String homePath, String path, String name,
+      InputStream inputStream,
       int imageHeight, int imageWidth) {
     //получаем исходное изображение
     String imageType = name.substring(name.lastIndexOf(".") + 1);
+    if (imageType.equals("")) {
+      imageType = "jpg";
+      name = name + "." + imageType;
+    }
     BufferedImage image = ImageIO.read(inputStream);
 
     //Сначала грубо уменьшаем до smartStep (width = avatarWidth * smartStep),потом плавно уменьшаем до нужного р-ра
@@ -275,20 +277,19 @@ public class UserService implements UserDetailsService {
     newImage.flush();
 
     //скидываем на сервер
-    File folder = new File(path);
+    File folder = new File(homePath + path);
     if (!folder.exists()) {
       folder.mkdirs();
     }
 
-    String filePath = folder.getAbsolutePath() + File.separator + name;
-    File file = new File(filePath);
+    File file = new File(folder.getAbsolutePath() + File.separator + name);
     ImageIO.write(newImage, imageType, file);
 
     //закрываем стрим
     inputStream.close();
 
     //backup
-    uploadsService.saveImage(filePath);
+    uploadsService.saveImage(uploadsHome, path + name);
   }
 
 
@@ -303,9 +304,9 @@ public class UserService implements UserDetailsService {
     String path = String.join(File.separator, "", avatarPath, hash[0], hash[1], hash[2], "");
     String name = user.getId() + ".jpg";
 
-    user.setPhoto(path + name);
+    user.setPhoto(String.join(File.separator, path + name));
     userRepository.save(user);
-    resizeAndSaveImage(uploadsHome + path, name, inputStream, avatarHeight, avatarWidth);
+    resizeAndSaveImage(uploadsHome, path, name, inputStream, avatarHeight, avatarWidth);
 
     return path + name;
   }
@@ -316,20 +317,22 @@ public class UserService implements UserDetailsService {
   private String saveImage(MultipartFile image) {
     StringBuilder name = new StringBuilder(Objects.requireNonNull(image.getOriginalFilename()));
     if (name.toString().equals("")) {
-      name.insert(0, "1").insert(1, image.getContentType());
+      name.insert(0, "1.jpg");
     }
     String[] hash = substringHash(Integer.toString(image.hashCode()));
-    String path = String
+    String pathServer = String
         .join(File.separator, uploadsHome, uploadsPath, hash[0], hash[1], hash[2], "");
+    String pathDB = String
+        .join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], "");
 
     //создаем директрорию, если её нет
-    File folder = new File(path);
+    File folder = new File(pathServer);
     if (!folder.exists()) {
       folder.mkdirs();
     }
     //защитимся от перезаписи файлов
     while (true) {
-      if (!new File(path + name).exists()) {
+      if (!new File(pathServer + name).exists()) {
         break;
       } else {
         name.insert(0, "0");
@@ -346,12 +349,13 @@ public class UserService implements UserDetailsService {
       width = (int) (width / step);
       height = (int) (height / step);
       bufferedImage.flush();
-      resizeAndSaveImage(path, name.toString(), image.getInputStream(), height, width);
+      resizeAndSaveImage(uploadsHome, pathDB, name.toString(), image.getInputStream(), height,
+          width);
     } //маленькие сохраяняем как есть
     else {
-      Files.copy(image.getInputStream(), Path.of(path + name));
+      Files.copy(image.getInputStream(), Path.of(pathServer + name));
       //backup
-      uploadsService.saveImage(Path.of(path + name).toAbsolutePath().toString());
+      uploadsService.saveImage(uploadsHome, pathDB + name);
     }
 
     return String.join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], name);
@@ -420,17 +424,18 @@ public class UserService implements UserDetailsService {
 
 
   public ResponseEntity<?> getAvatar(String path, String a, String b, String c, String name) {
-    String filePath = String.join(File.separator, uploadsHome, path, a, b, c, name);
+    String pathDB = String.join(File.separator, "", path, a, b, c, "");
+    String pathServer = uploadsHome + pathDB + name;
 
-    Resource file = new FileSystemResource(filePath);
+    Resource file = new FileSystemResource(pathServer);
     if (file.exists()) {
       return ResponseEntity.ok().body(file);
     }
 
     // <backup>
     if (uploadsService
-        .restoreImage(Path.of(filePath).toAbsolutePath().getParent().toString(), name)) {
-      return ResponseEntity.ok().body(new FileSystemResource(filePath));
+        .restoreImage(uploadsHome, pathDB, name)) {
+      return ResponseEntity.ok().body(new FileSystemResource(pathServer));
     }
     // </backup>
 
@@ -508,7 +513,7 @@ public class UserService implements UserDetailsService {
     boolean isCaptchaCorrect = false;
 
     //test code
-    User user = getUserByCode(codeRestore);
+    User user = findUserByCode(codeRestore);
     if (user != null) {
       isCodeCorrect = true;
     }
@@ -519,7 +524,7 @@ public class UserService implements UserDetailsService {
     }
 
     //test captcha
-    if (captchaCodeService.getCaptchaCodeByCodeAndSecret(codeCaptcha, captchaSecret) != null) {
+    if (captchaCodeService.findCaptchaCodeByCodeAndSecret(codeCaptcha, captchaSecret) != null) {
       isCaptchaCorrect = true;
     }
 
@@ -554,7 +559,7 @@ public class UserService implements UserDetailsService {
     //проверяем captcha
     boolean isCaptchaCorrect = false;
     if (captchaCodeService
-        .getCaptchaCodeByCodeAndSecret(requestBody.getCaptcha(), requestBody.getCaptchaSecret())
+        .findCaptchaCodeByCodeAndSecret(requestBody.getCaptcha(), requestBody.getCaptchaSecret())
         != null) {
       isCaptchaCorrect = true;
     }

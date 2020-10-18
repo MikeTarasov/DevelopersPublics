@@ -88,7 +88,7 @@ public class UnitTestsUserService {
 
     private CaptchaCode getCaptchaCode() {
         return captchaCodeService
-                .getCaptchaCodeBySecretCode(
+                .findCaptchaCodeBySecretCode(
                         captchaCodeService
                                 .createNewCaptcha().get("secretCode").toString());
     }
