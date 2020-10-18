@@ -22,7 +22,6 @@ import main.com.skillbox.ru.developerspublics.api.response.ResultFalseErrorsResp
 import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
 import main.com.skillbox.ru.developerspublics.api.response.ResultUserResponse;
 import main.com.skillbox.ru.developerspublics.api.response.UserResponse;
-import main.com.skillbox.ru.developerspublics.config.AuthenticationProviderImpl;
 import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
@@ -61,7 +60,6 @@ public class UserService implements UserDetailsService {
   private final PostsRepository postsRepository;
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
   private final JavaMailSender emailSender;
-  private final AuthenticationProviderImpl authenticationProvider;
   private final CaptchaCodeService captchaCodeService;
   private final UploadsService uploadsService;
 
@@ -92,14 +90,12 @@ public class UserService implements UserDetailsService {
       PostsRepository postsRepository,
       BCryptPasswordEncoder bCryptPasswordEncoder,
       JavaMailSender emailSender,
-      AuthenticationProviderImpl authenticationProvider,
       CaptchaCodeService captchaCodeService,
       UploadsService uploadsService) {
     this.userRepository = userRepository;
     this.postsRepository = postsRepository;
     this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     this.emailSender = emailSender;
-    this.authenticationProvider = authenticationProvider;
     this.captchaCodeService = captchaCodeService;
     this.uploadsService = uploadsService;
   }
@@ -417,9 +413,7 @@ public class UserService implements UserDetailsService {
     SecurityContextHolder
         .getContext()
         .setAuthentication(
-            authenticationProvider
-                .authenticate(
-                    new UsernamePasswordAuthenticationToken(loadUserByUsername(email), password)));
+            new UsernamePasswordAuthenticationToken(loadUserByUsername(email), password));
   }
 
 
