@@ -60,7 +60,7 @@ public class UnitTestsTagService {
                 "123456789012345678901234567890123456789012345678901234567890",
                 user.getId(),
                 new ArrayList<>(Collections.singleton(tagName)));
-        post = postService.getPostByTitle(title);
+        post = postService.findPostByTitle(title);
         postService.setModerationStatus(post.getId(), ModerationStatuses.ACCEPTED.toString(), user.getId());
     }
 

@@ -46,30 +46,34 @@ public class UploadsService {
   }
 
   public void deleteImage(String path) {
-    uploadsRepository.delete(uploadsRepository.findByPath(path));
+    Uploads upload = uploadsRepository.findByPath(path);
+    if (upload != null) {
+      uploadsRepository.delete(upload);
+    }
   }
 
   @SneakyThrows
-  public void saveImage(String path) {
+  public void saveImage(String homePath, String path) {
     Uploads upload = uploadsRepository.findByPath(path);
     if (upload == null) {
-      uploadsRepository.save(new Uploads(path, Files.readAllBytes(Path.of(path))));
+      uploadsRepository.save(new Uploads(path, Files.readAllBytes(Path.of(homePath + path))));
     } else {
-      upload.setBytes(Files.readAllBytes(Path.of(path)));
+      upload.setBytes(Files.readAllBytes(Path.of(homePath + path)));
       uploadsRepository.save(upload);
     }
   }
 
-  public boolean restoreImage(String path, String name) {
+  public boolean restoreImage(String homePath, String path, String name) {
     try {
-      String filePath = String.join(File.separator, path, name);
-      Uploads uploads = uploadsRepository.findByPath(filePath);
+      String pathDB = path + name;
+      String pathServer = homePath + pathDB;
+      Uploads uploads = uploadsRepository.findByPath(pathDB);
       if (uploads == null) {
         return false;
       }
 
-      new File(path).mkdirs();
-      FileOutputStream fos = new FileOutputStream(filePath);
+      new File(homePath + path).mkdirs();
+      FileOutputStream fos = new FileOutputStream(pathServer);
       fos.write(uploads.getBytes());
       fos.flush();
       fos.close();
@@ -89,24 +93,26 @@ public class UploadsService {
   @SneakyThrows
   private void cleanUnusedImages() {
     List<Uploads> oldUploads = new ArrayList<>();
-
     for (Uploads upload : uploadsRepository.findAll()) {
       //check avatars
       if (upload.getPath().contains(avatarPath)) {
-        String path = upload.getPath().substring(upload.getPath().indexOf(avatarPath));
+        String path = upload.getPath();
         User user = usersRepository.findByPhotoContaining(path);
         if (user == null) {
           oldUploads.add(upload);
         }
-      } else {  //check uploads
-        if (upload.getPath().contains(uploadsPath)) {
-          String path = upload.getPath().substring(upload.getPath().indexOf(uploadsPath));
-          Post post = postsRepository.findByTextContaining(path);
-          PostComment postComment = postCommentsRepository.findByTextContaining(path);
-          if (post == null && postComment == null) {
-            oldUploads.add(upload);
-          }
+      } //check uploads
+      else if (upload.getPath().contains(uploadsPath)) {
+        String path = upload.getPath();
+        Post post = postsRepository.findByTextContaining(path);
+        PostComment postComment = postCommentsRepository.findByTextContaining(path);
+        if (post == null && postComment == null) {
+          oldUploads.add(upload);
         }
+      }
+      //delete non format
+      else {
+        oldUploads.add(upload);
       }
     }
 

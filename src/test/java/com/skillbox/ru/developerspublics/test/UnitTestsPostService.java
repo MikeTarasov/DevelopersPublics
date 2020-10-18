@@ -33,6 +33,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
+import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = DevelopersPublicationsApplication.class)
@@ -423,9 +424,14 @@ public class UnitTestsPostService {
     @Test
     @Transactional
     public void testGetApiPostIdPostNotFound() {
-        ResponseEntity<?> response = postService.getApiPostId(0);
-        Assert.assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        Assert.assertNull(response.getBody());
+        try {
+            postService.getApiPostId(0);
+        }
+        catch (Exception e) {
+            Assert.assertEquals(
+                e.getMessage(),
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Post id=" + 0 + " not found").getMessage());
+        }
     }
 
     @Test

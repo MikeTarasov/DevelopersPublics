@@ -64,7 +64,7 @@ public class UnitTestsPostVoteService {
                 "123456789012345678901234567890123456789012345678901234567890",
                 userId,
                 new ArrayList<>(Collections.singleton("TESTTAG")));
-        post = postService.getPostByTitle(title);
+        post = postService.findPostByTitle(title);
     }
 
     private void authUser() {

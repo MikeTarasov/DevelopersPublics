@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.response.TagResponse;
 import main.com.skillbox.ru.developerspublics.api.response.TagsListResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
@@ -44,14 +45,14 @@ public class TagService {
     }
 
 
-    public Tag getTagByName(String tagName) {
-        return tagsRepository.findByName(tagName);
-    }
+  public Tag findTagByName(String tagName) {
+    return tagsRepository.findByName(tagName);
+  }
 
 
-    public Tag getTagById(int tagId) {
-        return tagsRepository.findById(tagId).orElseThrow();
-    }
+  public Tag findTagById(int tagId) {
+    return tagsRepository.findById(tagId).orElseThrow();
+  }
 
 
     private HashSet<String> getActiveTags() {
@@ -70,13 +71,14 @@ public class TagService {
     }
 
 
-    private List<TagResponse> getTagResponseList(List<String> tagNameList) {
-        List<TagResponse> list = new ArrayList<>();
-        for (String tagName : tagNameList) {
-            list.add(new TagResponse(tagName, getWeight(getTagByName(tagName))));
-        }
-        return list;
+  @SneakyThrows
+  private List<TagResponse> getTagResponseList(List<String> tagNameList) {
+    List<TagResponse> list = new ArrayList<>();
+    for (String tagName : tagNameList) {
+      list.add(new TagResponse(tagName, getWeight(findTagByName(tagName))));
     }
+    return list;
+  }
 
 
     public void deleteTag(Tag tag) {
@@ -92,7 +94,6 @@ public class TagService {
 
         //считаем вес тэгов  и ищем мах
         maxWeight = 0.0F;
-
 
         for (Tag tag : tagsRepository.findAll()) {
             //если активных постов нет - присваиваем 0
@@ -119,7 +120,7 @@ public class TagService {
     public void saveTag(String tagName, int postId) {
         tagName = tagName.toUpperCase();
         //пробуем найти тэг в БД
-        Tag tag = getTagByName(tagName);
+      Tag tag = findTagByName(tagName);
         //нет такого в БД - создадим новый тэг
         if (tag == null) {
             tag = new Tag();

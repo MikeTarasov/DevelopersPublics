@@ -35,8 +35,8 @@ public class PostVoteService {
     }
 
 
-    public List<PostVote> getPostVotesByPostId(int postId) {
-        return postVotesRepository.findByPostId(postId);
+    public List<PostVote> findPostVotesByPostId(int postId) {
+      return postVotesRepository.findByPostId(postId);
     }
 
 

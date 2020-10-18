@@ -49,14 +49,14 @@ public class CaptchaCodeService {
     }
 
 
-    public CaptchaCode getCaptchaCodeBySecretCode(String secretCode) {
-        return captchaCodesRepository.findBySecretCode(secretCode);
+    public CaptchaCode findCaptchaCodeBySecretCode(String secretCode) {
+      return captchaCodesRepository.findBySecretCode(secretCode);
     }
 
 
-    public CaptchaCode getCaptchaCodeByCodeAndSecret(String code, String secretCode) {
-        return captchaCodesRepository.findByCodeAndSecretCode(code, secretCode);
-    }
+  public CaptchaCode findCaptchaCodeByCodeAndSecret(String code, String secretCode) {
+    return captchaCodesRepository.findByCodeAndSecretCode(code, secretCode);
+  }
 
 
     public void saveCaptcha(String code, String secretCode) {

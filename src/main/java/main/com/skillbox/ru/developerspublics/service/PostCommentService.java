@@ -2,6 +2,8 @@ package main.com.skillbox.ru.developerspublics.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiComment;
 import main.com.skillbox.ru.developerspublics.api.response.ApiCommentTrueResponse;
 import main.com.skillbox.ru.developerspublics.api.response.ErrorsResponse;
@@ -44,33 +46,32 @@ public class PostCommentService {
     }
 
 
-    private PostComment getPostCommentById(int id) {
-        if (postCommentsRepository.findById(id).isPresent()) return postCommentsRepository.findById(id).get();
-        return null;
+    private Optional<PostComment> getPostCommentById(int id) {
+        return postCommentsRepository.findById(id);
     }
 
-
+    @SneakyThrows
     public List<PostCommentResponse> getPostCommentResponseList(List<PostComment> postComments) {
         List<PostCommentResponse> list = new ArrayList<>();
         for (PostComment postComment : postComments) {
-            User commentUser = getCommentUser(postComment);
+            User commentUser = findCommentUser(postComment);
             list.add(new PostCommentResponse(
-                    postComment.getId(),
-                    postComment.getTimestamp(),
-                    postComment.getText(),
-                    new UserIdNamePhotoResponse(
-                            commentUser.getId(),
-                            commentUser.getName(),
-                            commentUser.getPhoto()
-                    )
+                postComment.getId(),
+                postComment.getTimestamp(),
+                postComment.getText(),
+                new UserIdNamePhotoResponse(
+                    commentUser.getId(),
+                    commentUser.getName(),
+                    commentUser.getPhoto()
+                )
             ));
         }
         return list;
     }
 
 
-    private User getCommentUser(PostComment postComment) {
-        return userService.getUserById(postComment.getUserId());
+    private User findCommentUser(PostComment postComment) {
+        return userService.findUserById(postComment.getUserId());
     }
 
 
@@ -78,7 +79,9 @@ public class PostCommentService {
     private int saveComment(Integer parentId, int postId, int userId, String text) {
         PostComment postComment = new PostComment();
 
-        if (parentId != null) postComment.setParentId(parentId);
+        if (parentId != null) {
+            postComment.setParentId(parentId);
+        }
         postComment.setPostId(postId);
         postComment.setUserId(userId);
         postComment.setTime(System.currentTimeMillis());
@@ -100,8 +103,9 @@ public class PostCommentService {
         Integer parentId = requestBody.getParentId();
         if (parentId != null) {
             //try to find parent comment
-            if (getPostCommentById(parentId) == null)
+            if (getPostCommentById(parentId).isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            }
         }
 
         //test postId
