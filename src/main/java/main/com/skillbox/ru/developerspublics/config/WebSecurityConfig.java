@@ -25,13 +25,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         this.authenticationProvider = authenticationProvider;
     }
 
-    //заставляем Spring использовать кодировщик BCrypt для хеширования и сравнения паролей
-    @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-
     @Override
     public void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity

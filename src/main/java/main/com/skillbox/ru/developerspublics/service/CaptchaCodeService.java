@@ -42,10 +42,9 @@ public class CaptchaCodeService {
 
     @Autowired
     public CaptchaCodeService(
-        CaptchaCodesRepository captchaCodesRepository,
-        BCryptPasswordEncoder bCryptPasswordEncoder) {
+        CaptchaCodesRepository captchaCodesRepository) {
         this.captchaCodesRepository = captchaCodesRepository;
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.bCryptPasswordEncoder = new BCryptPasswordEncoder();
     }
 
 

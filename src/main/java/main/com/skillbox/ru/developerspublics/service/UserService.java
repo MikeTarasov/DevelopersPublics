@@ -88,13 +88,12 @@ public class UserService implements UserDetailsService {
   public UserService(
       UsersRepository userRepository,
       PostsRepository postsRepository,
-      BCryptPasswordEncoder bCryptPasswordEncoder,
       JavaMailSender emailSender,
       CaptchaCodeService captchaCodeService,
       UploadsService uploadsService) {
     this.userRepository = userRepository;
     this.postsRepository = postsRepository;
-    this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    this.bCryptPasswordEncoder = new BCryptPasswordEncoder();
     this.emailSender = emailSender;
     this.captchaCodeService = captchaCodeService;
     this.uploadsService = uploadsService;
