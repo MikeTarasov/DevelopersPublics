@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PostCommentsRepository extends JpaRepository<PostComment, Integer> {
 
-    List<PostComment> findByPostId(int postId);
+  List<PostComment> findByPostId(int postId);
 
-    PostComment findByTextContaining(String path);
+  PostComment findByTextContaining(String path);
 }

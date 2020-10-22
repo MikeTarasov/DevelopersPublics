@@ -12,16 +12,16 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TagToPostsRepository extends JpaRepository<TagToPost, Integer> {
 
-    TagToPost findByPostIdAndTagId(int postId, int tagId);
+  TagToPost findByPostIdAndTagId(int postId, int tagId);
 
-    List<TagToPost> findByTagId(int tagId);
+  List<TagToPost> findByTagId(int tagId);
 
-    List<TagToPost> findByPostId(int postId);
+  List<TagToPost> findByPostId(int postId);
 
-    @Query(value = "SELECT COUNT(*) FROM tag2post WHERE tag_id= :tagId", nativeQuery = true)
-    int countTagsToPost(@Param("tagId") int tagId);
+  @Query(value = "SELECT COUNT(*) FROM tag2post WHERE tag_id= :tagId", nativeQuery = true)
+  int countTagsToPost(@Param("tagId") int tagId);
 
-    @Query(value = "SELECT * FROM tag2post JOIN tags ON tag2post.tag_id=tags.id WHERE tags.name= :tagName",
-            nativeQuery = true)
-    List<TagToPost> getTagToPostsByTagName(@Param("tagName") String tagName);
+  @Query(value = "SELECT * FROM tag2post JOIN tags ON tag2post.tag_id=tags.id WHERE tags.name= :tagName",
+      nativeQuery = true)
+  List<TagToPost> getTagToPostsByTagName(@Param("tagName") String tagName);
 }

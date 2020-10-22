@@ -24,25 +24,25 @@ import org.hibernate.annotations.LazyCollectionOption;
 @Entity
 public class TagToPost {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int id;
 
-    @Column(name = "post_id", nullable = false)
-    private int postId;
+  @Column(name = "post_id", nullable = false)
+  private int postId;
 
-    @Column(name = "tag_id", nullable = false)
-    private int tagId;
+  @Column(name = "tag_id", nullable = false)
+  private int tagId;
 
-    @Transient
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @LazyCollection(LazyCollectionOption.EXTRA)
-    @JoinColumn(name = "post_id", insertable = false, updatable = false)
-    private Post postTag;
+  @Transient
+  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @LazyCollection(LazyCollectionOption.EXTRA)
+  @JoinColumn(name = "post_id", insertable = false, updatable = false)
+  private Post postTag;
 
-    @Transient
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @LazyCollection(LazyCollectionOption.EXTRA)
-    @JoinColumn(name = "tag_id", insertable = false, updatable = false)
-    private Tag tagPost;
+  @Transient
+  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @LazyCollection(LazyCollectionOption.EXTRA)
+  @JoinColumn(name = "tag_id", insertable = false, updatable = false)
+  private Tag tagPost;
 }

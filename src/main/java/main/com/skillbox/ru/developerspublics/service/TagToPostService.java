@@ -13,17 +13,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class TagToPostService {
 
-    private final TagToPostsRepository tagToPostsRepository;
+  private final TagToPostsRepository tagToPostsRepository;
 
-    @Autowired
-    public TagToPostService(TagToPostsRepository tagToPostsRepository) {
-      this.tagToPostsRepository = tagToPostsRepository;
-    }
+  @Autowired
+  public TagToPostService(TagToPostsRepository tagToPostsRepository) {
+    this.tagToPostsRepository = tagToPostsRepository;
+  }
 
 
-    public List<TagToPost> getTagToPostsByPostId(int postId) {
-        return tagToPostsRepository.findByPostId(postId);
-    }
+  public List<TagToPost> getTagToPostsByPostId(int postId) {
+    return tagToPostsRepository.findByPostId(postId);
+  }
 
 
   public List<TagToPost> getTagToPostsByTagId(int tagId) {
@@ -31,22 +31,22 @@ public class TagToPostService {
   }
 
 
-    @Transactional
-    public void saveTagToPost(int postId, int tagId) {
-        //проверим на уникальность
-        TagToPost tagToPost = tagToPostsRepository.findByPostIdAndTagId(postId, tagId);
+  @Transactional
+  public void saveTagToPost(int postId, int tagId) {
+    //проверим на уникальность
+    TagToPost tagToPost = tagToPostsRepository.findByPostIdAndTagId(postId, tagId);
 
-        if (tagToPost == null) {
-            tagToPost = new TagToPost();
-            tagToPost.setPostId(postId);
-            tagToPost.setTagId(tagId);
-            tagToPostsRepository.save(tagToPost);
-        }
+    if (tagToPost == null) {
+      tagToPost = new TagToPost();
+      tagToPost.setPostId(postId);
+      tagToPost.setTagId(tagId);
+      tagToPostsRepository.save(tagToPost);
     }
+  }
 
 
-    public void deleteTagToPost(TagToPost tagToPost) {
-        Optional<TagToPost> tagToPostDB = tagToPostsRepository.findById(tagToPost.getId());
-        tagToPostDB.ifPresent(tagToPostsRepository::delete);
-    }
+  public void deleteTagToPost(TagToPost tagToPost) {
+    Optional<TagToPost> tagToPostDB = tagToPostsRepository.findById(tagToPost.getId());
+    tagToPostDB.ifPresent(tagToPostsRepository::delete);
+  }
 }

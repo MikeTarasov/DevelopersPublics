@@ -27,45 +27,45 @@ import org.hibernate.annotations.LazyCollectionOption;
 @Entity
 public class PostComment {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int id;
 
-    //id комментария PostComment, который комментируем или null (если комментируем пост)
-    @Column(name = "parent_id")
-    private Integer parentId;
+  //id комментария PostComment, который комментируем или null (если комментируем пост)
+  @Column(name = "parent_id")
+  private Integer parentId;
 
-    @Column(name = "post_id", nullable = false)
-    private int postId;
+  @Column(name = "post_id", nullable = false)
+  private int postId;
 
-    @Column(name = "user_id", nullable = false)
-    private int userId;
+  @Column(name = "user_id", nullable = false)
+  private int userId;
 
-    @Column(columnDefinition = "DATETIME", nullable = false)
-    private Date time;
+  @Column(columnDefinition = "DATETIME", nullable = false)
+  private Date time;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String text;
+  @Column(columnDefinition = "TEXT", nullable = false)
+  private String text;
 
-    @Transient
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @LazyCollection(LazyCollectionOption.EXTRA)
-    @JoinColumn(name = "post_id", insertable = false, updatable = false)
-    private Post commentPost;
+  @Transient
+  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @LazyCollection(LazyCollectionOption.EXTRA)
+  @JoinColumn(name = "post_id", insertable = false, updatable = false)
+  private Post commentPost;
 
-    @Transient
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @LazyCollection(LazyCollectionOption.EXTRA)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
-    private User commentUser;
+  @Transient
+  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @LazyCollection(LazyCollectionOption.EXTRA)
+  @JoinColumn(name = "user_id", insertable = false, updatable = false)
+  private User commentUser;
 
-    //get timestamp in seconds
-    public long getTimestamp() {
-        return time.getTime() / 1000;
-    }
+  //get timestamp in seconds
+  public long getTimestamp() {
+    return time.getTime() / 1000;
+  }
 
-    //timestamp in milliseconds to java.util.Date
-    public void setTime(long timestamp) {
-        time = Date.from(Instant.ofEpochMilli(timestamp));
-    }
+  //timestamp in milliseconds to java.util.Date
+  public void setTime(long timestamp) {
+    time = Date.from(Instant.ofEpochMilli(timestamp));
+  }
 }
