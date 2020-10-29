@@ -9,9 +9,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CaptchaCodesRepository extends JpaRepository<CaptchaCode, Integer> {
 
-    List<CaptchaCode> findByTimeLessThan(Date time);
+  List<CaptchaCode> findByTimeLessThan(Date time);
 
-    CaptchaCode findByCodeAndSecretCode(String code, String secretCode);
+  CaptchaCode findByCodeAndSecretCode(String code, String secretCode);
 
-    CaptchaCode findBySecretCode(String secretCode);
+  CaptchaCode findBySecretCode(String secretCode);
 }

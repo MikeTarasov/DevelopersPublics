@@ -15,18 +15,18 @@ import lombok.NoArgsConstructor;
 @Entity
 public class Uploads {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int id;
 
-    @Column(columnDefinition = "VARCHAR(255)", nullable = false)
-    private String path;
+  @Column(columnDefinition = "VARCHAR(255)", nullable = false)
+  private String path;
 
-    @Column(columnDefinition = "MEDIUMBLOB", nullable = false)
-    private byte[] bytes;
+  @Column(columnDefinition = "MEDIUMBLOB", nullable = false)
+  private byte[] bytes;
 
-    public Uploads(String path, byte[] bytes) {
-        this.path = path;
-        this.bytes = bytes;
-    }
+  public Uploads(String path, byte[] bytes) {
+    this.path = path;
+    this.bytes = bytes;
+  }
 }

@@ -73,7 +73,7 @@ public class UploadsService {
       }
 
       new File(homePath + path).mkdirs();
-      FileOutputStream fos = new FileOutputStream(pathServer); //TODO
+      FileOutputStream fos = new FileOutputStream(pathServer);
       fos.write(uploads.getBytes());
       fos.flush();
       fos.close();

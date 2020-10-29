@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface GlobalSettingsRepository extends JpaRepository<GlobalSetting, Integer> {
 
-    GlobalSetting findGlobalSettingByCode(String code);
+  GlobalSetting findGlobalSettingByCode(String code);
 }

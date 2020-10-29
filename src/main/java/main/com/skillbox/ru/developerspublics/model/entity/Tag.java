@@ -23,18 +23,18 @@ import org.hibernate.annotations.LazyCollectionOption;
 @Entity
 public class Tag {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int id;
 
-    @Column(nullable = false)
-    private String name;
+  @Column(nullable = false)
+  private String name;
 
-    @Transient
-    @OneToMany(mappedBy = "tagPost", fetch = FetchType.LAZY)
-    @LazyCollection(LazyCollectionOption.EXTRA)
-    private List<TagToPost> tagToPosts;
+  @Transient
+  @OneToMany(mappedBy = "tagPost", fetch = FetchType.LAZY)
+  @LazyCollection(LazyCollectionOption.EXTRA)
+  private List<TagToPost> tagToPosts;
 
-    @Transient
-    private float tagWeight;
+  @Transient
+  private float tagWeight;
 }

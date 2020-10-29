@@ -20,27 +20,27 @@ import lombok.NoArgsConstructor;
 @Entity
 public class CaptchaCode {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(nullable = false)
-    private int id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  @Column(nullable = false)
+  private int id;
 
-    @Column(columnDefinition = "DATETIME", nullable = false)
-    private Date time;
+  @Column(columnDefinition = "DATETIME", nullable = false)
+  private Date time;
 
-    @Column(columnDefinition = "TINYTEXT", nullable = false)
-    private String code;
+  @Column(columnDefinition = "TINYTEXT", nullable = false)
+  private String code;
 
-    @Column(name = "secret_code", columnDefinition = "TINYTEXT", nullable = false)
-    private String secretCode;
+  @Column(name = "secret_code", columnDefinition = "TINYTEXT", nullable = false)
+  private String secretCode;
 
-    //get timestamp
-    public long getTimestamp() {
-        return time.getTime();
-    }
+  //get timestamp
+  public long getTimestamp() {
+    return time.getTime();
+  }
 
-    //timestamp in milliseconds to java.util.Date
-    public void setTime(long timestamp) {
-        time = Date.from(Instant.ofEpochMilli(timestamp));
-    }
+  //timestamp in milliseconds to java.util.Date
+  public void setTime(long timestamp) {
+    time = Date.from(Instant.ofEpochMilli(timestamp));
+  }
 }
