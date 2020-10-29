@@ -84,14 +84,10 @@ public class PostService {
 
 
   private Post getInitPostById(int id) {
-    Optional<Post> optionalPost = getPostById(id);
-    if (optionalPost.isPresent()) {
-      Post post = optionalPost.get();
-      initPost(post);
-      return post;
-    } else {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post id=" + id + " not found");
-    }
+    Post post = getPostById(id).orElseThrow(
+        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post id=" + id + " not found"));
+    initPost(post);
+    return post;
   }
 
 

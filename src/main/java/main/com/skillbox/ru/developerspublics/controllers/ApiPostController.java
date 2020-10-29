@@ -41,7 +41,6 @@ public class ApiPostController {
   }
 
 
-  //GET /api/post/
   @GetMapping("")
   public ResponseEntity<?> getApiPost(@RequestParam(name = "offset") int offset,
       @RequestParam(name = "limit") int limit,
@@ -50,7 +49,6 @@ public class ApiPostController {
   }
 
 
-  //GET /api/post/search/
   @GetMapping("/search")
   public ResponseEntity<?> getApiPostSearch(@RequestParam(name = "offset") int offset,
       @RequestParam(name = "limit") int limit,
@@ -59,14 +57,12 @@ public class ApiPostController {
   }
 
 
-  //GET /api/post/{ID}
   @GetMapping("/{ID}")
   public ResponseEntity<?> getApiPostId(@PathVariable(name = "ID") int id) {
     return postService.getApiPostId(id);
   }
 
 
-  //GET /api/post/byDate
   @GetMapping("/byDate")
   public ResponseEntity<?> getApiPostByDate(@RequestParam(name = "offset") int offset,
       @RequestParam(name = "limit") int limit,
@@ -74,7 +70,7 @@ public class ApiPostController {
     return postService.getApiPostByDate(offset, limit, date);
   }
 
-  //GET /api/post/byTag
+
   @GetMapping("/byTag")
   public ResponseEntity<?> getApiPostByTag(@RequestParam(name = "offset") int offset,
       @RequestParam(name = "limit") int limit,
@@ -82,7 +78,7 @@ public class ApiPostController {
     return postService.getApiPostByTag(offset, limit, tagName);
   }
 
-  //GET /api/post/moderation
+
   @Secured(MODERATOR)
   @GetMapping("/moderation")
   public ResponseEntity<?> getApiPostModeration(@RequestParam(name = "offset") int offset,
@@ -91,7 +87,7 @@ public class ApiPostController {
     return postService.getApiPostModeration(offset, limit, status);
   }
 
-  //GET /api/post/my
+
   @Secured(USER)
   @GetMapping("/my")
   public ResponseEntity<?> getApiPostMy(@RequestParam(name = "offset") int offset,
@@ -100,14 +96,14 @@ public class ApiPostController {
     return postService.getApiPostMy(offset, limit, status);
   }
 
-  //POST /api/post
+
   @Secured(USER)
   @PostMapping("")
   public ResponseEntity<?> postApiPost(@RequestBody RequestPostPutApiPost requestBody) {
     return postService.postApiPost(requestBody);
   }
 
-  //PUT /api/post/{ID}
+
   @Secured(USER)
   @PutMapping("/{ID}")
   public ResponseEntity<?> putApiPostId(@RequestBody RequestPostPutApiPost requestBody,
@@ -120,13 +116,13 @@ public class ApiPostController {
     return postService.putApiPost(requestBody, postId);
   }
 
-  //POST /api/post/like
+
   @PostMapping("/like")
   public ResponseEntity<?> postApiPostLike(@RequestBody RequestApiPostLike requestBody) {
     return postVoteService.postApiPostLike(requestBody);
   }
 
-  //POST /api/post/dislike
+
   @PostMapping("/dislike")
   public ResponseEntity<?> postApiPostDislike(@RequestBody RequestApiPostLike requestBody) {
     return postVoteService.postApiPostDislike(requestBody);

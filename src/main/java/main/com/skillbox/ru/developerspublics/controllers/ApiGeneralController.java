@@ -52,14 +52,12 @@ public class ApiGeneralController {
   }
 
 
-  //GET /api/init/
   @GetMapping("/api/init")
   public ResponseEntity<?> getApiInit() {
     return globalSettingService.getApiInit();
   }
 
 
-  //POST /api/comment/
   @Secured(USER)
   @PostMapping("/api/comment")
   public ResponseEntity<?> postApiComment(@RequestBody RequestApiComment requestBody) {
@@ -67,14 +65,12 @@ public class ApiGeneralController {
   }
 
 
-  //GET /api/tag/
   @GetMapping("/api/tag")
   public ResponseEntity<?> getApiTag(@RequestParam(name = "query", required = false) String query) {
     return tagService.getApiTag(query);
   }
 
 
-  //POST /api/moderation
   @Secured(MODERATOR)
   @PostMapping("/api/moderation")
   public ResponseEntity<?> postApiModeration(@RequestBody RequestApiModeration requestBody) {
@@ -82,7 +78,6 @@ public class ApiGeneralController {
   }
 
 
-  //GET /api/calendar
   @GetMapping("/api/calendar")
   public ResponseEntity<?> getApiCalendar(
       @RequestParam(name = "year", required = false) Integer year) {
@@ -90,7 +85,6 @@ public class ApiGeneralController {
   }
 
 
-  //POST /api/profile/my
   @Secured(USER)
   @PostMapping(value = "/api/profile/my", consumes = {"multipart/form-data", "application/json"})
   public ResponseEntity<?> postApiProfileMy(@RequestBody(required = false) String requestBody,
@@ -104,7 +98,6 @@ public class ApiGeneralController {
   }
 
 
-  //POST /api/image
   @Secured(USER)
   @PostMapping(value = "/api/image", consumes = {"multipart/form-data"})
   public @ResponseBody
@@ -113,7 +106,6 @@ public class ApiGeneralController {
   }
 
 
-  //GET /api/statistics/my
   @Secured(USER)
   @GetMapping("/api/statistics/my")
   public ResponseEntity<?> getApiStatisticsMy() {
@@ -121,21 +113,18 @@ public class ApiGeneralController {
   }
 
 
-  //GET /api/statistics/all
   @GetMapping("/api/statistics/all")
   public ResponseEntity<?> getApiStatisticsAll() {
     return postService.getApiStatisticsAll();
   }
 
 
-  //GET /api/settings
   @GetMapping("/api/settings")
   public ResponseEntity<?> getApiSettings() {
     return globalSettingService.getApiSettings();
   }
 
 
-  //PUT /api/settings
   @Secured(MODERATOR)
   @PutMapping("/api/settings")
   public ResponseEntity<?> putApiSettings(@RequestBody RequestApiSettings requestBody) {

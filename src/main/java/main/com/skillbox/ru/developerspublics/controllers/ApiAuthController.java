@@ -34,7 +34,6 @@ public class ApiAuthController {
   }
 
 
-  //POST /api/auth/login
   @PostMapping("/login")
   public ResponseEntity<?> postApiAuthLogin(
       @RequestBody RequestApiAuthLogin requestApiAuthLogin) {
@@ -42,42 +41,36 @@ public class ApiAuthController {
   }
 
 
-  //GET /api/auth/check
   @GetMapping("/check")
   public ResponseEntity<?> authCheck() {
     return userService.getApiAuthCheck();
   }
 
 
-  //POST /api/auth/restore
   @PostMapping("/restore")
   public ResponseEntity<?> postApiAuthRestore(@RequestBody RequestApiAuthRestore requestBody) {
     return userService.postApiAuthRestore(requestBody);
   }
 
 
-  //POST /api/auth/password
   @PostMapping("/password")
   public ResponseEntity<?> postApiAuthPassword(@RequestBody RequestApiAuthPassword requestBody) {
     return userService.postApiAuthPassword(requestBody);
   }
 
 
-  //POST /api/auth/register
   @PostMapping("/register")
   public ResponseEntity<?> postApiAuthRegister(@RequestBody RequestApiAuthRegister requestBody) {
     return userService.postApiAuthRegister(requestBody);
   }
 
 
-  //GET /api/auth/captcha
   @GetMapping("/captcha")
   public ResponseEntity<?> getApiAuthCaptcha() {
     return captchaCodeService.getApiAuthCaptcha();
   }
 
 
-  //GET /api/auth/logout
   @Secured(USER)
   @GetMapping("/logout")
   public ResponseEntity<?> getApiAuthLogout() {

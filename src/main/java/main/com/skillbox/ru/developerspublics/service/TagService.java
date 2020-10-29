@@ -15,6 +15,7 @@ import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.TagToPostsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.TagsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,9 @@ public class TagService {
   private final TagToPostService tagToPostService;
   private float maxWeight;
   private HashMap<Integer, Float> weightMap;
+
+  @Value("${tag.min.weight}")
+  private float tagMinWeight;
 
   @Autowired
   public TagService(
@@ -115,7 +119,14 @@ public class TagService {
 
     //если есть акт. посты и мах вес - приводим вес к удельному
     if (count != 0 && maxWeight != 0) {
+      //без ограничений на минимальный шрифт тэгов
       weightMap.replaceAll((k, v) -> weightMap.get(k) / maxWeight);
+      //с ограничением на минимальный шрифт тегов
+//      for (Integer key : weightMap.keySet()) {
+//        float weight = weightMap.get(key) / maxWeight;
+//        if (weight < tagMinWeight) weight = tagMinWeight;
+//        weightMap.replace(key, weight);
+//      }
     }
   }
 
