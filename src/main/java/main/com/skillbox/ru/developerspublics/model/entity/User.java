@@ -40,11 +40,11 @@ public class User implements UserDetails {
   private int id;
 
   //является ли модератором (isModerator = 1)
-  @Column(name = "is_moderator", columnDefinition = "TINYINT", nullable = false)
+  @Column(name = "is_moderator", columnDefinition = "INT", nullable = false)
   private int isModerator;
 
   //дата регистрации
-  @Column(name = "reg_time", columnDefinition = "DATETIME", nullable = false)
+  @Column(name = "reg_time", columnDefinition = "TIMESTAMP", nullable = false)
   private Date regTime;
 
   //имя пользователя

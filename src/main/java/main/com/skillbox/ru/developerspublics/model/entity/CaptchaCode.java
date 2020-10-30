@@ -25,13 +25,13 @@ public class CaptchaCode {
   @Column(nullable = false)
   private int id;
 
-  @Column(columnDefinition = "DATETIME", nullable = false)
+  @Column(columnDefinition = "TIMESTAMP", nullable = false)
   private Date time;
 
-  @Column(columnDefinition = "TINYTEXT", nullable = false)
+  @Column(columnDefinition = "TEXT", nullable = false)
   private String code;
 
-  @Column(name = "secret_code", columnDefinition = "TINYTEXT", nullable = false)
+  @Column(name = "secret_code", columnDefinition = "TEXT", nullable = false)
   private String secretCode;
 
   //get timestamp

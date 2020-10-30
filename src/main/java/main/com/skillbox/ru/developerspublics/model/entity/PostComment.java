@@ -41,7 +41,7 @@ public class PostComment {
   @Column(name = "user_id", nullable = false)
   private int userId;
 
-  @Column(columnDefinition = "DATETIME", nullable = false)
+  @Column(columnDefinition = "TIMESTAMP", nullable = false)
   private Date time;
 
   @Column(columnDefinition = "TEXT", nullable = false)

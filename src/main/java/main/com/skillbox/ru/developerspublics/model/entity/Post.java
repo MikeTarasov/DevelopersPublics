@@ -18,7 +18,6 @@ import javax.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -36,12 +35,11 @@ public class Post {
 
   //признак активности
   //0 -> hidden, 1 -> active
-  @Column(columnDefinition = "TINYINT", nullable = false)
+  @Column(columnDefinition = "INT", nullable = false)
   private int isActive;
 
   //статус проверки модератором
-  @Column(columnDefinition = "ENUM('NEW','ACCEPTED','DECLINED')", nullable = false)
-  @ColumnDefault("'NEW'")
+  @Column(nullable = false)
   private String moderationStatus;
 
   //id модератора, установившего статус или null
@@ -53,7 +51,7 @@ public class Post {
   private int userId;
 
   //дата создания поста
-  @Column(columnDefinition = "DATETIME", nullable = false)
+  @Column(columnDefinition = "TIMESTAMP", nullable = false)
   private Date time;
 
   //заголовок поста
@@ -61,7 +59,7 @@ public class Post {
   private String title;
 
   //содержание поста
-  @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
+  @Column(columnDefinition = "TEXT", nullable = false)
   private String text;
 
   //кол-во просмотров

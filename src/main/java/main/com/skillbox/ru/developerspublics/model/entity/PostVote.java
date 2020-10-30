@@ -37,10 +37,10 @@ public class PostVote {
   @Column(name = "post_id", nullable = false)
   private int postId;
 
-  @Column(columnDefinition = "DATETIME", nullable = false)
+  @Column(columnDefinition = "TIMESTAMP", nullable = false)
   private Date time;
 
-  @Column(columnDefinition = "TINYINT", nullable = false)
+  @Column(columnDefinition = "INT", nullable = false)
   private int value;  // +1 -> like, -1 -> dislike
 
   @Transient

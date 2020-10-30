@@ -119,14 +119,16 @@ public class TagService {
 
     //если есть акт. посты и мах вес - приводим вес к удельному
     if (count != 0 && maxWeight != 0) {
-      //без ограничений на минимальный шрифт тэгов
-      weightMap.replaceAll((k, v) -> weightMap.get(k) / maxWeight);
+//      //без ограничений на минимальный шрифт тэгов
+//      weightMap.replaceAll((k, v) -> weightMap.get(k) / maxWeight);
       //с ограничением на минимальный шрифт тегов
-//      for (Integer key : weightMap.keySet()) {
-//        float weight = weightMap.get(key) / maxWeight;
-//        if (weight < tagMinWeight) weight = tagMinWeight;
-//        weightMap.replace(key, weight);
-//      }
+      for (Integer key : weightMap.keySet()) {
+        float weight = weightMap.get(key) / maxWeight;
+        if (weight < tagMinWeight) {
+          weight = tagMinWeight;
+        }
+        weightMap.replace(key, weight);
+      }
     }
   }
 
