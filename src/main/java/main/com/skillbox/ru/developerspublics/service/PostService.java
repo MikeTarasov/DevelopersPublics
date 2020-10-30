@@ -281,7 +281,7 @@ public class PostService {
           .getValue()
           .equals(GlobalSettingsValues.YES.toString())) {
         // - YES -> NEW
-        post.setModerationStatus(ModerationStatuses.NEW.getStatus());
+        post.setModerationStatus(ModerationStatuses.NEW.toString());
       } else {
         // - NO  -> ACCEPTED
         post.setModerationStatus(ModerationStatuses.ACCEPTED.toString());
@@ -353,7 +353,7 @@ public class PostService {
     //редактирует user -> ModerationStatuses.NEW
     //редактирует moderator -> ModerationStatus не меняем!
     if (userService.findUserById(userId).getIsModerator() == 0) {
-      post.setModerationStatus(ModerationStatuses.NEW.getStatus());
+      post.setModerationStatus(ModerationStatuses.NEW.toString());
     }
 
     //отправляем в репозиторий
