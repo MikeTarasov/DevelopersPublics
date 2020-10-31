@@ -1,17 +1,41 @@
 # Developers Publications
-Для запуска приложения необходимо создать:
-*базу - базу данных mySQL8 - devpostsdb
-*пользователя - root с паролем - test123341.
+Для запуска приложения необходимо:
+1. *База Данных: mySQL8 или Postgre 11/12 (работающий сервер с пустой БД),
+2. *Зарегистрированный пользователь в gmail.
 
-После этого проиводится запуск приложения
-Порт, по которому обращаться - 8080
-Путь к приложению - http://localhost:8080
-Путь к Swagger-UI - http://localhost:8080/swagger-ui.html
+Заполняем системные переменные в application.yml:
+1. Данные для подключения к БД: 
 
+    *db.type, 
 
-Типы запросов
+    *db.port,
 
-Post - создание поста
-Get - получить пост
-Put - обновить пост
-Delete - удалить пост
+    *db.host,
+
+    *db.name,
+
+    *db.timezone,
+
+    *spring.dataSource.username,
+
+    *spring.dataSource.password .
+
+2. Адрес блога: 
+
+    *blog.host .
+
+3. Данные gmail почты: 
+
+    *moderator.email,
+
+    *moderator.email.password .
+
+4. Директорию на сервере для изображений: 
+
+    *uploads.home .
+
+После этого создаем .jar файл и запускаем его на сервере.
+
+Порт, по которому обращаться - 8080.
+
+Путь к приложению - http://mktarasov-java-skillbox.herokuapp.com
