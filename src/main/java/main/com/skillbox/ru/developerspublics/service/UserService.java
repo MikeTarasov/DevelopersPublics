@@ -352,7 +352,7 @@ public class UserService implements UserDetailsService {
       uploadsService.saveImage(uploadsHome, pathDB + name);
     }
 
-    return String.join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], name);
+    return pathDB + name;
   }
 
 
@@ -495,28 +495,24 @@ public class UserService implements UserDetailsService {
 
 
   public ResponseEntity<?> postApiAuthPassword(RequestApiAuthPassword requestBody) {
-    String codeRestore = requestBody.getCode();
-    String password = requestBody.getPassword();
-    String codeCaptcha = requestBody.getCaptcha();
-    String captchaSecret = requestBody.getCaptchaSecret();
-
-    boolean isCodeCorrect = false;
-    boolean isPasswordCorrect = true;
-    boolean isCaptchaCorrect = false;
-
     //test code
-    User user = findUserByCode(codeRestore);
+    boolean isCodeCorrect = false;
+    User user = findUserByCode(requestBody.getCode());
     if (user != null) {
       isCodeCorrect = true;
     }
 
     //test password
+    boolean isPasswordCorrect = true;
+    String password = requestBody.getPassword();
     if (password.length() < 6) {
       isPasswordCorrect = false;
     }
 
     //test captcha
-    if (captchaCodeService.findCaptchaCodeByCodeAndSecret(codeCaptcha, captchaSecret) != null) {
+    boolean isCaptchaCorrect = false;
+    if (captchaCodeService.findCaptchaCodeByCodeAndSecret(
+        requestBody.getCaptcha(), requestBody.getCaptchaSecret()) != null) {
       isCaptchaCorrect = true;
     }
 
@@ -667,9 +663,8 @@ public class UserService implements UserDetailsService {
       }
     }
 
-    if (removePhoto != null)
-    //удаление фото
-    {
+    if (removePhoto != null) {
+      //удаление фото
       if (removePhoto.equals("1")) {
         removePhoto(user);
       }

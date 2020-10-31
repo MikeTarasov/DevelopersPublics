@@ -95,7 +95,7 @@ public class TagService {
   }
 
 
-  public void setWeights() {
+  public synchronized void setWeights() {
     //считаем кол-во активных постов
     int count = postsRepository.countActivePosts(new Date(System.currentTimeMillis()));
     weightMap = new HashMap<>();
@@ -121,6 +121,7 @@ public class TagService {
     if (count != 0 && maxWeight != 0) {
 //      //без ограничений на минимальный шрифт тэгов
 //      weightMap.replaceAll((k, v) -> weightMap.get(k) / maxWeight);
+
       //с ограничением на минимальный шрифт тегов
       for (Integer key : weightMap.keySet()) {
         float weight = weightMap.get(key) / maxWeight;
@@ -170,7 +171,6 @@ public class TagService {
         }
       }
     }
-
     //собираем ответ
     return ResponseEntity.status(HttpStatus.OK)
         .body(new TagsListResponse(getTagResponseList(tagNames)));

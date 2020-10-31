@@ -7,10 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
-import main.com.skillbox.ru.developerspublics.model.entity.Post;
-import main.com.skillbox.ru.developerspublics.model.entity.PostComment;
 import main.com.skillbox.ru.developerspublics.model.entity.Uploads;
-import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.repository.PostCommentsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.UploadsRepository;
@@ -94,19 +91,16 @@ public class UploadsService {
   private void cleanUnusedImages() {
     List<Uploads> oldUploads = new ArrayList<>();
     for (Uploads upload : uploadsRepository.findAll()) {
+      String path = upload.getPath();
       //check avatars
       if (upload.getPath().contains(avatarPath)) {
-        String path = upload.getPath();
-        User user = usersRepository.findByPhotoContaining(path);
-        if (user == null) {
+        if (usersRepository.findByPhotoContaining(path) == null) {
           oldUploads.add(upload);
         }
       } //check uploads
       else if (upload.getPath().contains(uploadsPath)) {
-        String path = upload.getPath();
-        Post post = postsRepository.findByTextContaining(path);
-        PostComment postComment = postCommentsRepository.findByTextContaining(path);
-        if (post == null && postComment == null) {
+        if (postsRepository.findByTextContaining(path) == null &&
+            postCommentsRepository.findByTextContaining(path) == null) {
           oldUploads.add(upload);
         }
       }

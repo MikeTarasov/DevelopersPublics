@@ -22,8 +22,6 @@ public class DeleteOldCaptcha {
 
   @Scheduled(fixedRateString = "${captcha.life.time}")
   public void autoDeleteOldCaptcha() {
-    new Thread(() -> {
-      captchaCodeService.deleteOldCaptcha(lifeTime);
-    }).start();
+    new Thread(() -> captchaCodeService.deleteOldCaptcha(lifeTime)).start();
   }
 }

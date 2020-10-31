@@ -88,7 +88,6 @@ public class PostVoteService {
     if (authentication == null) {
       return ResponseEntity.status(401).body(null);
     }
-
     //из контекста достаем пользователя
     User user = userService.findUserByLogin(authentication.getName());
     // === @Secured(USER) ===
