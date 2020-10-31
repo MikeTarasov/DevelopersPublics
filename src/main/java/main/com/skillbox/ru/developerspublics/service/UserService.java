@@ -315,10 +315,9 @@ public class UserService implements UserDetailsService {
       name.insert(0, "1.jpg");
     }
     String[] hash = substringHash(Integer.toString(image.hashCode()));
-    String pathServer = String
-        .join(File.separator, uploadsHome, uploadsPath, hash[0], hash[1], hash[2], "");
     String pathDB = String
         .join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], "");
+    String pathServer = uploadsHome + pathDB;
 
     //создаем директрорию, если её нет
     File folder = new File(pathServer);

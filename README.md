@@ -1,12 +1,28 @@
 # Developers Publications
-Для запуска приложения необходимо создать:
-*базу - базу данных mySQL8 - devpostsdb
-*пользователя - root с паролем - test123341.
+Для запуска приложения необходимо:
+*База Данных: mySQL8 или Postgre 11/12 (работающий сервер с пустой БД),
+*Зарегистрированный пользователь в gmail.
 
-После этого проиводится запуск приложения
+Заполняем системные переменные в application.yml:
+1. Данные для подключения к БД
+*db.type:
+*db.port:
+*db.host:
+*db.name:
+*db.timezone:
+*spring.dataSource.username:
+*spring.dataSource.password:
+2. Адрес блога
+*blog.host:
+3. Данные gmail почты
+*moderator.email:
+*moderator.email.password:
+4. Директорию на сервере для изображений
+*uploads.home:
+
+После этого создаем .jar файл и запускаем его на сервере.
 Порт, по которому обращаться - 8080
-Путь к приложению - http://localhost:8080
-Путь к Swagger-UI - http://localhost:8080/swagger-ui.html
+Путь к приложению - http://blog.host:8080
 
 
 Типы запросов
