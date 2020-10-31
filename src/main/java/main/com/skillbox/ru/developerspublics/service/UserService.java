@@ -244,8 +244,7 @@ public class UserService implements UserDetailsService {
   @Transactional
   @SneakyThrows
   private void resizeAndSaveImage(String homePath, String path, String name,
-      InputStream inputStream,
-      int imageHeight, int imageWidth) {
+      InputStream inputStream, int imageHeight, int imageWidth) {
     //получаем исходное изображение
     String imageType = name.substring(name.lastIndexOf(".") + 1);
     if (imageType.equals("")) {
@@ -299,7 +298,7 @@ public class UserService implements UserDetailsService {
     String path = String.join(File.separator, "", avatarPath, hash[0], hash[1], hash[2], "");
     String name = user.getId() + ".jpg";
 
-    user.setPhoto(String.join(File.separator, path + name));
+    user.setPhoto(path + name);
     userRepository.save(user);
     resizeAndSaveImage(uploadsHome, path, name, inputStream, avatarHeight, avatarWidth);
 
@@ -352,7 +351,7 @@ public class UserService implements UserDetailsService {
       uploadsService.saveImage(uploadsHome, pathDB + name);
     }
 
-    return String.join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], name);
+    return pathDB + name;
   }
 
 
@@ -495,28 +494,24 @@ public class UserService implements UserDetailsService {
 
 
   public ResponseEntity<?> postApiAuthPassword(RequestApiAuthPassword requestBody) {
-    String codeRestore = requestBody.getCode();
-    String password = requestBody.getPassword();
-    String codeCaptcha = requestBody.getCaptcha();
-    String captchaSecret = requestBody.getCaptchaSecret();
-
-    boolean isCodeCorrect = false;
-    boolean isPasswordCorrect = true;
-    boolean isCaptchaCorrect = false;
-
     //test code
-    User user = findUserByCode(codeRestore);
+    User user = findUserByCode(requestBody.getCode());
+    boolean isCodeCorrect = false;
     if (user != null) {
       isCodeCorrect = true;
     }
 
     //test password
+    String password = requestBody.getPassword();
+    boolean isPasswordCorrect = true;
     if (password.length() < 6) {
       isPasswordCorrect = false;
     }
 
     //test captcha
-    if (captchaCodeService.findCaptchaCodeByCodeAndSecret(codeCaptcha, captchaSecret) != null) {
+    boolean isCaptchaCorrect = false;
+    if (captchaCodeService.findCaptchaCodeByCodeAndSecret(
+        requestBody.getCaptcha(), requestBody.getCaptchaSecret()) != null) {
       isCaptchaCorrect = true;
     }
 
@@ -556,12 +551,11 @@ public class UserService implements UserDetailsService {
       isCaptchaCorrect = true;
     }
 
-    //собираем ответ
+    //если ошибок нет
     if (!isEmailExist && !isNameWrong && isPasswordCorrect && isCaptchaCorrect) {
       //создаем new User и отправляем true
       User user = new User(email, name, password);
       boolean isUserSaved = saveUser(user);
-      //собираем ответ
       return new ResponseEntity<>(new ResultResponse(isUserSaved), HttpStatus.OK);
     }
 
@@ -667,9 +661,8 @@ public class UserService implements UserDetailsService {
       }
     }
 
-    if (removePhoto != null)
-    //удаление фото
-    {
+    if (removePhoto != null) {
+      //удаление фото
       if (removePhoto.equals("1")) {
         removePhoto(user);
       }
