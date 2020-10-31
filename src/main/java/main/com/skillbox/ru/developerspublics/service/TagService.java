@@ -133,7 +133,7 @@ public class TagService {
 
   @Transactional
   public void saveTag(String tagName, int postId) {
-    tagName = tagName.toUpperCase().replaceAll("[^\\w]", "_");
+    tagName = tagName.toUpperCase().replaceAll("[^(0-9A-ZА-ЯЁ\\s)]", "_");
     //пробуем найти тэг в БД
     Tag tag = findTagByName(tagName);
     //нет такого в БД - создадим новый тэг
