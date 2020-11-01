@@ -244,8 +244,7 @@ public class UserService implements UserDetailsService {
   @Transactional
   @SneakyThrows
   private void resizeAndSaveImage(String homePath, String path, String name,
-      InputStream inputStream,
-      int imageHeight, int imageWidth) {
+      InputStream inputStream, int imageHeight, int imageWidth) {
     //получаем исходное изображение
     String imageType = name.substring(name.lastIndexOf(".") + 1);
     if (imageType.equals("")) {
@@ -276,7 +275,6 @@ public class UserService implements UserDetailsService {
     if (!folder.exists()) {
       folder.mkdirs();
     }
-
     File file = new File(folder.getAbsolutePath() + File.separator + name);
     ImageIO.write(newImage, imageType, file);
 
@@ -299,7 +297,7 @@ public class UserService implements UserDetailsService {
     String path = String.join(File.separator, "", avatarPath, hash[0], hash[1], hash[2], "");
     String name = user.getId() + ".jpg";
 
-    user.setPhoto(String.join(File.separator, path + name));
+    user.setPhoto(path + name);
     userRepository.save(user);
     resizeAndSaveImage(uploadsHome, path, name, inputStream, avatarHeight, avatarWidth);
 
@@ -425,8 +423,7 @@ public class UserService implements UserDetailsService {
     }
 
     // <backup>
-    if (uploadsService
-        .restoreImage(uploadsHome, pathDB, name)) {
+    if (uploadsService.restoreImage(uploadsHome, pathDB, name)) {
       return ResponseEntity.ok().body(new FileSystemResource(pathServer));
     }
     // </backup>

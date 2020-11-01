@@ -118,7 +118,6 @@ public class PostService {
       if (mode.equals("")) {
           mode = "recent";
       }
-
     List<Post> posts = new ArrayList<>();
     switch (mode) {
       case "recent":
