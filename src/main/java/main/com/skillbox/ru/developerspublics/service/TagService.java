@@ -122,7 +122,6 @@ public class TagService {
     //если есть акт. посты и мах вес - приводим вес к удельному
     if (count != 0 && maxWeight != 0) {
       temp.replaceAll((k, v) -> temp.get(k) / maxWeight);
-
       //  ограничение на минимальный шрифт тегов
       for (Integer key : temp.keySet()) {
         if (temp.get(key) < tagMinWeight) {
