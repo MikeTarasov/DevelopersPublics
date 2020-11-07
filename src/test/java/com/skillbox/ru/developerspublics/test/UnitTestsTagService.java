@@ -82,7 +82,6 @@ public class UnitTestsTagService {
             tagService.deleteTag(tag);
         }
         tagService.saveTag(tagName, post.getId());
-        tagService.setWeights();
     }
 
     private void cleanDB() {
