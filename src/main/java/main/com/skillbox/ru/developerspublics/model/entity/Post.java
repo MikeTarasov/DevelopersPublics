@@ -1,8 +1,10 @@
 package main.com.skillbox.ru.developerspublics.model.entity;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -14,11 +16,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -69,35 +72,28 @@ public class Post {
   private int viewCount;
 
   //привязанный модератор поста
-  @Transient
-  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
-  @JoinColumn(name = "moderator_id")
-  private User moderatorPost;
+//  @ManyToOne(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
+//  @JoinColumn(name = "moderator_id", insertable = false, updatable = false)
+//  private User moderatorPost;
 
   //привязанный автор поста
-  @Transient
-  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
-  @JoinColumn(name = "user_id")
+  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+  @JoinColumn(name = "user_id", updatable = false, insertable = false)
   private User userPost;
 
   //привязанный список лайков/дислайков
-  @Transient
-  @OneToMany(mappedBy = "postVote", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @OneToMany(mappedBy = "postVote", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+  @Fetch(value = FetchMode.SUBSELECT)
   private List<PostVote> postVotes;
 
   //привязанный список комментариев к посту
-  @Transient
-  @OneToMany(mappedBy = "commentPost", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @OneToMany(mappedBy = "commentPost", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+  @Fetch(value = FetchMode.SUBSELECT)
   private List<PostComment> postComments;
 
   //привязанный список тэг-пост
-  @Transient
-  @OneToMany(mappedBy = "postTag", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @OneToMany(mappedBy = "postTag", fetch = FetchType.EAGER)
+  @Fetch(value = FetchMode.SUBSELECT)
   private List<TagToPost> tagToPosts;
 
   //get timestamp in seconds
@@ -108,5 +104,32 @@ public class Post {
   //timestamp in milliseconds to java.util.Date
   public void setTime(long timestamp) {
     time = Date.from(Instant.ofEpochMilli(timestamp));
+  }
+
+  public String toString() {
+    return "Post id="+id+" isactive="+isActive+" modStat="+moderationStatus+" modId="+moderatorId+
+        " userId="+userId+" time="+time+" VC="+viewCount+
+//        " moderatorPost="+(moderatorPost == null ? null : "NOT_NULL")+
+        " userPost="+(userPost == null ? null : "NOT_NULL")+
+        " postVotes="+(postVotes == null ? null : "NOT_NULL")+
+        " postComments="+(postComments == null ? null : "NOT_NULL")+
+        " tagToPosts="+(tagToPosts == null ? null : "NOT_NULL");
+
+  }
+
+
+  public List<PostVote> getPostVotes() {
+    if (postVotes == null) postVotes = new ArrayList<>();
+    return postVotes;
+  }
+
+  public List<PostComment> getPostComments() {
+    if (postComments == null) postComments = new ArrayList<>();
+    return postComments;
+  }
+
+  public List<TagToPost> getTagToPosts() {
+    if (tagToPosts == null) tagToPosts = new ArrayList<>();
+    return tagToPosts;
   }
 }

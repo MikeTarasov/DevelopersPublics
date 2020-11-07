@@ -92,6 +92,10 @@ public class PostCommentService {
     return postComment.getId();
   }
 
+  public void deletePostComment(PostComment postComment) {
+    postCommentsRepository.delete(postComment);
+  }
+
 
   @Transactional
   public ResponseEntity<?> postApiComment(RequestApiComment requestBody) {

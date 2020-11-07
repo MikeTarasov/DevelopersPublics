@@ -68,7 +68,6 @@ public class UploadsService {
       if (uploads == null) {
         return false;
       }
-
       new File(homePath + path).mkdirs();
       FileOutputStream fos = new FileOutputStream(pathServer);
       fos.write(uploads.getBytes());
@@ -93,20 +92,16 @@ public class UploadsService {
     for (Uploads upload : uploadsRepository.findAll()) {
       String path = upload.getPath();
       //check avatars
-      if (upload.getPath().contains(avatarPath)) {
+      if (path.contains(avatarPath)) {
         if (usersRepository.findByPhotoContaining(path) == null) {
           oldUploads.add(upload);
         }
+
       } //check uploads
-      else if (upload.getPath().contains(uploadsPath)) {
-        if (postsRepository.findByTextContaining(path) == null &&
-            postCommentsRepository.findByTextContaining(path) == null) {
+      else if (postsRepository.findByTextContaining(path) == null) {
+        if (postCommentsRepository.findByTextContaining(path) == null) {
           oldUploads.add(upload);
         }
-      }
-      //delete non format
-      else {
-        oldUploads.add(upload);
       }
     }
 

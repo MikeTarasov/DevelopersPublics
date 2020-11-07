@@ -8,12 +8,15 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.persistence.Basic;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -40,11 +43,11 @@ public class User implements UserDetails {
   private int id;
 
   //является ли модератором (isModerator = 1)
-  @Column(name = "is_moderator", columnDefinition = "TINYINT", nullable = false)
+  @Column(columnDefinition = "TINYINT", nullable = false)
   private int isModerator;
 
   //дата регистрации
-  @Column(name = "reg_time", columnDefinition = "DATETIME", nullable = false)
+  @Column(columnDefinition = "DATETIME", nullable = false)
   private Date regTime;
 
   //имя пользователя
@@ -67,26 +70,22 @@ public class User implements UserDetails {
   private String photo;
 
   //посты, требующие модерации
-  @Transient
-  @OneToMany(mappedBy = "moderatorPost", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
-  private List<Post> moderatorPosts;
+//  @OneToMany(mappedBy = "moderatorPost", orphanRemoval = true)
+//  @LazyCollection(LazyCollectionOption.EXTRA)
+//  private List<Post> moderatorPosts;
 
   //посты пользователя
-  @Transient
-  @OneToMany(mappedBy = "userPost", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "userPost", orphanRemoval = true)
   @LazyCollection(LazyCollectionOption.EXTRA)
   private List<Post> userPosts;
 
   //оценки, данные пользователем
-  @Transient
-  @OneToMany(mappedBy = "userVote", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "userVote", orphanRemoval = true)
   @LazyCollection(LazyCollectionOption.EXTRA)
   private List<PostVote> userPostVotes;
 
   //комментарии пользователя
-  @Transient
-  @OneToMany(mappedBy = "commentUser", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "commentUser", orphanRemoval = true)
   @LazyCollection(LazyCollectionOption.EXTRA)
   private List<PostComment> userPostComments;
 
@@ -171,5 +170,15 @@ public class User implements UserDetails {
     result = result * email.length();
     result = result * password.length();
     return result;
+  }
+
+  public String toString() {
+    return "User id=" + id + " isMod=" + isModerator +" time=" + regTime + "name=" + name + " email="
+    +email + " pass=" + password + " code="+code+" photo="+photo+" modPost="+
+//        (moderatorPosts == null ? null : "NOT_NULL") +
+        " userPosts="+(userPosts == null ? null : "NOT_NULL")+
+        " userPostVotes="+(userPostVotes == null ? null : "NOT_NULL")+
+        " userPostComments="+(userPostComments == null ? null : "NOT_NULL")+
+        " roles="+roles;
   }
 }

@@ -30,9 +30,7 @@ public class Tag {
   @Column(nullable = false)
   private String name;
 
-  @Transient
-  @OneToMany(mappedBy = "tagPost", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @OneToMany(mappedBy = "tagPost")
   private List<TagToPost> tagToPosts;
 
   @Transient

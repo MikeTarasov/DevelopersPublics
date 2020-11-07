@@ -1,6 +1,8 @@
 package com.skillbox.ru.developerspublics.test;
 
 
+import java.util.ArrayList;
+import java.util.Collections;
 import main.com.skillbox.ru.developerspublics.DevelopersPublicationsApplication;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiPostLike;
 import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
@@ -23,17 +25,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Collections;
-
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = DevelopersPublicationsApplication.class)
 public class UnitTestsPostVoteService {
+
     private final PostService postService;
     private final PostVoteService postVoteService;
     private final UserService userService;
-
     private final String password = "test";
     private final User user = new User("test@test.test", "test", password);
     private Post post;
@@ -82,8 +81,8 @@ public class UnitTestsPostVoteService {
     @Transactional
     public void testPostApiPostLikeNoName() {
         RequestApiPostLike request = new RequestApiPostLike();
-        ResponseEntity<?> response = postVoteService.postApiPostLike(request);
 
+        ResponseEntity<?> response = postVoteService.postApiPostLike(request);
         Assert.assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         Assert.assertNull(response.getBody());
     }
@@ -91,17 +90,19 @@ public class UnitTestsPostVoteService {
     @Test
     @Transactional
     public void testPostApiPostLikeAnonymous() {
-        SecurityContext context = SecurityContextHolder.getContext();
-        context.setAuthentication(new AnonymousAuthenticationToken(
+        SecurityContextHolder.getContext().setAuthentication(new AnonymousAuthenticationToken(
                 "anonymous",
                 "anonymous",
                 Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
         ));
-        RequestApiPostLike request = new RequestApiPostLike();
-        ResponseEntity<?> response = postVoteService.postApiPostLike(request);
 
+        RequestApiPostLike request = new RequestApiPostLike();
+
+        ResponseEntity<?> response = postVoteService.postApiPostLike(request);
         Assert.assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         Assert.assertNull(response.getBody());
+
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -109,10 +110,10 @@ public class UnitTestsPostVoteService {
     public void testPostApiPostLikeMyPost() {
         authUser();
         savePost(user.getId());
+
         RequestApiPostLike request = new RequestApiPostLike(post.getId());
 
         ResponseEntity<?> response = postVoteService.postApiPostLike(request);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(false), response.getBody());
 
@@ -123,11 +124,11 @@ public class UnitTestsPostVoteService {
     @Transactional
     public void testPostApiPostLikeNotMyPost() {
         authUser();
-        savePost(user.getId() + 1);
+        savePost(6);
+
         RequestApiPostLike request = new RequestApiPostLike(post.getId());
 
         ResponseEntity<?> response = postVoteService.postApiPostLike(request);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(true), response.getBody());
 
@@ -138,12 +139,12 @@ public class UnitTestsPostVoteService {
     @Transactional
     public void testPostApiPostLikeNotMyPostLikeLike() {
         authUser();
-        savePost(user.getId() + 1);
+        savePost(6);
+
         RequestApiPostLike request = new RequestApiPostLike(post.getId());
 
         ResponseEntity<?> response = postVoteService.postApiPostLike(request);
         response = postVoteService.postApiPostLike(request);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(false), response.getBody());
 
@@ -154,12 +155,12 @@ public class UnitTestsPostVoteService {
     @Transactional
     public void testPostApiPostLikeNotMyPostLikeDislike() {
         authUser();
-        savePost(user.getId() + 1);
+        savePost(6);
+
         RequestApiPostLike request = new RequestApiPostLike(post.getId());
 
         ResponseEntity<?> response = postVoteService.postApiPostLike(request);
         response = postVoteService.postApiPostDislike(request);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(true), response.getBody());
 

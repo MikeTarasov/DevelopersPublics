@@ -39,6 +39,10 @@ public class PostVoteService {
     return postVotesRepository.findByPostId(postId);
   }
 
+  public void delete(PostVote postVote) {
+    postVotesRepository.delete(postVote);
+  }
+
 
   private boolean setLikeDislike(int postId, int userId, int value) {
     Post post;
@@ -47,6 +51,7 @@ public class PostVoteService {
     } else {
       return false;
     }
+
     //запрещаем ставить оценки на свои посты
     if (post.getUserId() == userId) {
       return false;
@@ -59,7 +64,6 @@ public class PostVoteService {
       postVote = new PostVote();
       postVote.setPostId(postId);
       postVote.setUserId(userId);
-
     }   //если нашли - одинаковые оценки - не делаем, противоположные меняем местами
     else if (postVote.getValue() == value) {
       return false;

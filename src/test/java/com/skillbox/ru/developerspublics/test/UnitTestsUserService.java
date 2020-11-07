@@ -1,12 +1,19 @@
 package com.skillbox.ru.developerspublics.test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.Collections;
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.DevelopersPublicationsApplication;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthLogin;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthPassword;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRegister;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRestore;
-import main.com.skillbox.ru.developerspublics.api.response.*;
+import main.com.skillbox.ru.developerspublics.api.response.ErrorsResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ResultFalseErrorsResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
+import main.com.skillbox.ru.developerspublics.api.response.ResultUserResponse;
+import main.com.skillbox.ru.developerspublics.api.response.UserResponse;
 import main.com.skillbox.ru.developerspublics.model.entity.CaptchaCode;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.repository.UsersRepository;
@@ -29,9 +36,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.Collections;
 
 
 @ExtendWith(SpringExtension.class)
@@ -98,12 +102,12 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiAuthLoginWrongPassword() {
         saveUser();
+
         RequestApiAuthLogin request = new RequestApiAuthLogin();
         request.setEmail(testUser.getEmail());
         request.setPassword(testUser.getPassword());
 
         ResponseEntity<?> response = service.postApiAuthLogin(request);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(false), response.getBody());
 
@@ -115,12 +119,12 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiAuthLoginUserNotFound() {
         saveUser();
+
         RequestApiAuthLogin request = new RequestApiAuthLogin();
         request.setEmail("123");
         request.setPassword(userPassword);
 
         ResponseEntity<?> response = service.postApiAuthLogin(request);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(false), response.getBody());
 
@@ -132,12 +136,12 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiAuthLogin200() {
         saveUser();
+
         RequestApiAuthLogin request = new RequestApiAuthLogin();
         request.setEmail(testUser.getEmail());
         request.setPassword(userPassword);
 
         ResponseEntity<?> response = service.postApiAuthLogin(request);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultUserResponse(
                         new UserResponse(
@@ -159,11 +163,14 @@ public class UnitTestsUserService {
     @Transactional
     public void testGetApiAuthCheckUserNotFound() {
         authUser();
+
         testUser.setEmail("bcjddhvsidos");
         saveUser();
+
         ResponseEntity<?> response = service.getApiAuthCheck();
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(false), response.getBody());
+
         deleteUser();
     }
 
@@ -176,10 +183,10 @@ public class UnitTestsUserService {
                 "anonymous",
                 Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
         ));
+
         ResponseEntity<?> response = service.getApiAuthCheck();
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(false), response.getBody());
-        deleteUser();
     }
 
 
@@ -189,16 +196,14 @@ public class UnitTestsUserService {
         ResponseEntity<?> response = service.getApiAuthCheck();
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(false), response.getBody());
-        deleteUser();
     }
 
 
     @Test
-    @Transactional
     public void testGetApiAuthCheckTrue() {
         authUser();
-        ResponseEntity<?> response = service.getApiAuthCheck();
 
+        ResponseEntity<?> response = service.getApiAuthCheck();
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultUserResponse(
                         new UserResponse(
@@ -221,6 +226,7 @@ public class UnitTestsUserService {
     public void testPostApiAuthRestoreWrongEmail() {
         testUser.setCode(null);
         saveUser();
+
         RequestApiAuthRestore requestBody = new RequestApiAuthRestore();
         requestBody.setEmail("1");
 
@@ -229,6 +235,7 @@ public class UnitTestsUserService {
         Assert.assertEquals(new ResultResponse(false), response.getBody());
         User dbUser = service.findUserByLogin(testUser.getEmail());
         Assert.assertNull(dbUser.getCode());
+
         deleteUser();
     }
 
@@ -239,6 +246,7 @@ public class UnitTestsUserService {
         testUser.setCode(null);
         testUser.setEmail(realEmail);
         saveUser();
+
         RequestApiAuthRestore requestBody = new RequestApiAuthRestore();
         requestBody.setEmail(testUser.getEmail());
 
@@ -247,6 +255,7 @@ public class UnitTestsUserService {
         Assert.assertEquals(new ResultResponse(true), response.getBody());
         User dbUser = service.findUserByLogin(testUser.getEmail());
         Assert.assertNotNull(dbUser.getCode());
+
         deleteUser();
     }
 
@@ -256,6 +265,7 @@ public class UnitTestsUserService {
     public void testPostApiAuthPasswordWrongCaptcha() {
         testUser.setCode("testCode");
         saveUser();
+
         CaptchaCode captchaCode = getCaptchaCode();
         RequestApiAuthPassword request = new RequestApiAuthPassword(
                 "testCode",
@@ -263,8 +273,8 @@ public class UnitTestsUserService {
                 captchaCode.getCode() + "1",
                 captchaCode.getSecretCode()
         );
-        ResponseEntity<?> response = service.postApiAuthPassword(request);
 
+        ResponseEntity<?> response = service.postApiAuthPassword(request);
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                                 true,
@@ -283,6 +293,7 @@ public class UnitTestsUserService {
     public void testPostApiAuthPasswordWrongPassword() {
         testUser.setCode("testCode");
         saveUser();
+
         CaptchaCode captchaCode = getCaptchaCode();
         RequestApiAuthPassword request = new RequestApiAuthPassword(
                 "testCode",
@@ -290,8 +301,8 @@ public class UnitTestsUserService {
                 captchaCode.getCode(),
                 captchaCode.getSecretCode()
         );
-        ResponseEntity<?> response = service.postApiAuthPassword(request);
 
+        ResponseEntity<?> response = service.postApiAuthPassword(request);
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                                 true,
@@ -310,6 +321,7 @@ public class UnitTestsUserService {
     public void testPostApiAuthPasswordWrongCode() {
         testUser.setCode("testCode");
         saveUser();
+
         CaptchaCode captchaCode = getCaptchaCode();
         RequestApiAuthPassword request = new RequestApiAuthPassword(
                 "wrongCode",
@@ -317,8 +329,8 @@ public class UnitTestsUserService {
                 captchaCode.getCode(),
                 captchaCode.getSecretCode()
         );
-        ResponseEntity<?> response = service.postApiAuthPassword(request);
 
+        ResponseEntity<?> response = service.postApiAuthPassword(request);
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                                 false,
@@ -337,6 +349,7 @@ public class UnitTestsUserService {
     public void testPostApiAuthPassword200() {
         testUser.setCode("testCode");
         saveUser();
+
         CaptchaCode captchaCode = getCaptchaCode();
         RequestApiAuthPassword request = new RequestApiAuthPassword(
             "testCode",
@@ -344,8 +357,8 @@ public class UnitTestsUserService {
                 captchaCode.getCode(),
                 captchaCode.getSecretCode()
         );
-        ResponseEntity<?> response = service.postApiAuthPassword(request);
 
+        ResponseEntity<?> response = service.postApiAuthPassword(request);
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(true), response.getBody());
 
@@ -357,7 +370,6 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiAuthRegister200() {
         CaptchaCode captchaCode = getCaptchaCode();
-
         RequestApiAuthRegister requestBody = new RequestApiAuthRegister(
                 testUser.getEmail(),
                 testUser.getName(),
@@ -378,6 +390,7 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiAuthRegisterEmailExist() {
         authUser();
+
         CaptchaCode captchaCode = getCaptchaCode();
         RequestApiAuthRegister requestBody = new RequestApiAuthRegister(
                 testUser.getEmail(),
@@ -386,8 +399,8 @@ public class UnitTestsUserService {
                 captchaCode.getCode(),
                 captchaCode.getSecretCode()
         );
-        ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
 
+        ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                 true,
@@ -412,8 +425,8 @@ public class UnitTestsUserService {
                 captchaCode.getCode(),
                 captchaCode.getSecretCode()
         );
-        ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
 
+        ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                         true,
@@ -438,8 +451,8 @@ public class UnitTestsUserService {
                 captchaCode.getCode(),
                 captchaCode.getSecretCode()
         );
-        ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
 
+        ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                         true,
@@ -448,6 +461,7 @@ public class UnitTestsUserService {
                         false,
                         false)),
                 response.getBody());
+
         deleteUser();
     }
 
@@ -462,8 +476,8 @@ public class UnitTestsUserService {
                 "1",
                 "2"
         );
-        ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
 
+        ResponseEntity<?> response = service.postApiAuthRegister(requestBody);
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(new ErrorsResponse(
                         true,
@@ -472,6 +486,7 @@ public class UnitTestsUserService {
                         false,
                         false)),
                 response.getBody());
+
         deleteUser();
     }
 
@@ -480,8 +495,8 @@ public class UnitTestsUserService {
     @Transactional
     public void testGetApiAuthLogout() {
         authUser();
-        ResponseEntity<?> response = service.getApiAuthLogout();
 
+        ResponseEntity<?> response = service.getApiAuthLogout();
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(true), response.getBody());
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -495,9 +510,11 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiProfileMyNoChanePhotoAndPassword() {
         authUser();
+
         JSONObject requestBody = new JSONObject();
         requestBody.put("email",testUser.getEmail());
         requestBody.put("name",testUser.getName());
+
         ResponseEntity<?> response = service.postApiProfileMy(
                 requestBody.toString(),
                 null,
@@ -505,7 +522,6 @@ public class UnitTestsUserService {
                 null,
                 null,
                 null);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(true), response.getBody());
 
@@ -517,6 +533,7 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiProfileMyWithChangePasswordWithoutChangePhoto() {
         authUser();
+
         JSONObject requestBody = new JSONObject();
         String email = testUser.getEmail();
         String name = testUser.getName();
@@ -524,6 +541,7 @@ public class UnitTestsUserService {
         requestBody.put("email",email + "1");
         requestBody.put("name",name + "1");
         requestBody.put("password",password + "1");
+
         ResponseEntity<?> response = service.postApiProfileMy(
                 requestBody.toString(),
                 null,
@@ -531,7 +549,6 @@ public class UnitTestsUserService {
                 null,
                 null,
                 null);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(true), response.getBody());
         Assert.assertNotEquals(password, testUser.getPassword());
@@ -546,7 +563,9 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiProfileMyWithChangePasswordAndPhoto() {
         authUser();
+
         MultipartFile avatar = getAvatar(testFilePath);
+
         ResponseEntity<?> response = service.postApiProfileMy(
                 null,
                 avatar,
@@ -554,7 +573,6 @@ public class UnitTestsUserService {
                 testUser.getName(),
                 userPassword + "1",
                 "0");
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(true), response.getBody());
         Assert.assertNotNull(repository.findUserByEmail(testUser.getEmail()).getPhoto());
@@ -569,12 +587,14 @@ public class UnitTestsUserService {
     @SneakyThrows
     public void testPostApiProfileMyDeletePhotoWithoutChangePassword() {
         authUser();
+
         service.saveAvatar(testUser, new FileInputStream(new File(testFilePath)));
         JSONObject requestBody = new JSONObject();
         requestBody.put("email",testUser.getEmail());
         requestBody.put("name",testUser.getName());
         requestBody.put("removePhoto","1");
         requestBody.put("photo", "");
+
         ResponseEntity<?> response = service.postApiProfileMy(
                 requestBody.toString(),
                 null,
@@ -582,7 +602,6 @@ public class UnitTestsUserService {
                 null,
                 null,
                 null);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultResponse(true), response.getBody());
         Assert.assertEquals("", service.findUserByLogin(testUser.getEmail()).getPhoto());
@@ -597,9 +616,11 @@ public class UnitTestsUserService {
     public void testPostApiProfileMyUserNotFound() {
         authUser();
         deleteUser();
+
         JSONObject requestBody = new JSONObject();
         requestBody.put("email",testUser.getEmail());
         requestBody.put("name",testUser.getName());
+
         ResponseEntity<?> response = service.postApiProfileMy(
                 requestBody.toString(),
                 null,
@@ -607,12 +628,10 @@ public class UnitTestsUserService {
                 null,
                 null,
                 null);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(
                 ErrorsResponse.builder().user("Пользователь не найден!").build()),
                 response.getBody());
-        deleteUser();
     }
 
 
@@ -620,9 +639,11 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiProfileMyWrongName() {
         authUser();
+
         JSONObject requestBody = new JSONObject();
         requestBody.put("email",testUser.getEmail());
         requestBody.put("name","");
+
         ResponseEntity<?> response = service.postApiProfileMy(
                 requestBody.toString(),
                 null,
@@ -630,7 +651,6 @@ public class UnitTestsUserService {
                 null,
                 null,
                 null);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(ErrorsResponse.builder().name("Имя указано неверно").build()),
                 response.getBody());
@@ -644,9 +664,11 @@ public class UnitTestsUserService {
     public void testPostApiProfileMyWrongEmail() {
         authUser();
         saveModerator();
+
         JSONObject requestBody = new JSONObject();
         requestBody.put("email",testModerator.getEmail());
         requestBody.put("name",testUser.getName());
+
         ResponseEntity<?> response = service.postApiProfileMy(
                 requestBody.toString(),
                 null,
@@ -654,7 +676,6 @@ public class UnitTestsUserService {
                 null,
                 null,
                 null);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(
                 ErrorsResponse.builder().email("Этот e-mail уже зарегистрирован").build()),
@@ -669,10 +690,12 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiProfileMyWrongPassword() {
         authUser();
+
         JSONObject requestBody = new JSONObject();
         requestBody.put("email",testUser.getEmail());
         requestBody.put("name",testUser.getName());
         requestBody.put("password","1");
+
         ResponseEntity<?> response = service.postApiProfileMy(
                 requestBody.toString(),
                 null,
@@ -680,7 +703,6 @@ public class UnitTestsUserService {
                 null,
                 null,
                 null);
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(
                         ErrorsResponse.builder().password("Пароль короче 6-ти символов").build()),
@@ -694,7 +716,9 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiProfileMyLagePhoto() {
         authUser();
+
         MultipartFile avatar = getAvatar(bigFilePath);
+
         ResponseEntity<?> response = service.postApiProfileMy(
                 null,
                 avatar,
@@ -702,7 +726,6 @@ public class UnitTestsUserService {
                 testUser.getName(),
                 userPassword + "1",
                 "0");
-
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertEquals(new ResultFalseErrorsResponse(
                         ErrorsResponse.builder().photo("Фото слишком большое, нужно не более 5 Мб").build()),
@@ -716,11 +739,12 @@ public class UnitTestsUserService {
     @Transactional
     public void testPostApiImage200() {
         authUser();
-        MultipartFile avatar = getAvatar(testFilePath);
 
+        MultipartFile avatar = getAvatar(testFilePath);
         ResponseEntity<?> response = service.postApiImage(avatar);
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         Assert.assertNotEquals("", response.getBody());
+
         deleteUser();
     }
 }

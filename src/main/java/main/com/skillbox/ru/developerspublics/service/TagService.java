@@ -88,9 +88,7 @@ public class TagService {
 
   public void deleteTag(Tag tag) {
     Tag tagDB = tagsRepository.findByName(tag.getName());
-    if (tagDB != null) {
-      tagsRepository.delete(tagDB);
-    }
+    if (tagDB != null) tagsRepository.delete(tagDB);
     new Thread(this::setWeights).start();
   }
 
@@ -161,15 +159,13 @@ public class TagService {
     List<String> tagNames = new ArrayList<>();
 
     //тэг не задан - выводим все
-    if (query == null) {
+    if (query == null || query.equals("")) {
       tagNames.addAll(getActiveTags());
     } else {
       //перебираем все активные тэги и ищем совпадения
       for (String tagName : getActiveTags()) {
-        if (tagName.equals(query)) {
-          //все совпадения заносим в список по шаблону
-          tagNames.add(tagName);
-        }
+        //все совпадения заносим в список по шаблону
+        if (tagName.equals(query)) tagNames.add(tagName);
       }
     }
 
