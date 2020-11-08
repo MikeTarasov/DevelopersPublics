@@ -92,24 +92,20 @@ public class UploadsService {
     for (Uploads upload : uploadsRepository.findAll()) {
       String path = upload.getPath();
       //check avatars
-      if (path.contains(avatarPath)) {
-        if (usersRepository.findByPhotoContaining(path) == null) {
+      if (path.contains(avatarPath) && usersRepository.findByPhotoContaining(path) == null) {
           oldUploads.add(upload);
-        }
-
-      } //check uploads
-      else if (postsRepository.findByTextContaining(path) == null) {
-        if (postCommentsRepository.findByTextContaining(path) == null) {
+      } //else check uploads
+      else if (path.contains(uploadsPath) &&
+               postsRepository.findByTextContaining(path) == null &&
+               postCommentsRepository.findByTextContaining(path) == null) {
           oldUploads.add(upload);
-        }
       }
     }
 
     if (oldUploads.size() != 0) {
       for (Uploads upload : oldUploads) {
-        String path = upload.getPath();
         uploadsRepository.delete(upload);
-        new File(path).delete();
+        new File(upload.getPath()).delete();
       }
     }
   }
