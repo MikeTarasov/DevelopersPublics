@@ -119,14 +119,13 @@ public class UnitTestsPostService {
     }
 
     private void deleteUser() {
-        if (post != null) postService.deletePost(post);
+        deletePost();
         SecurityContextHolder.clearContext();
         userService.deleteUser(user);
     }
 
     private void initPost(int userId) {
-        post = postsRepository.findByTitle(title);
-        if (post != null) postService.deletePost(post);
+        deletePost();
         post = new Post();
         post.setIsActive(1);
         post.setModerationStatus(ModerationStatuses.ACCEPTED.toString());
@@ -138,6 +137,11 @@ public class UnitTestsPostService {
         post.setViewCount(0);
         postsRepository.save(post);
         post = postsRepository.findByTitle(title);
+    }
+
+    private void deletePost() {
+        post = postService.findPostByTitle(title);
+        if (post != null) postService.deletePost(post);
     }
 
     private void saveTag() { tagService.saveTag(tagName, post.getId()); }

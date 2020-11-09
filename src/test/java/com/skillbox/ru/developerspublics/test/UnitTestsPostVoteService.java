@@ -34,8 +34,9 @@ public class UnitTestsPostVoteService {
     private final PostVoteService postVoteService;
     private final UserService userService;
     private final String password = "test";
-    private final User user = new User("test@test.test", "test", password);
+    private User user = new User("test@test.test", "test", password);
     private Post post;
+    private final String title = "1234567890";
 
 
     @Autowired
@@ -49,13 +50,13 @@ public class UnitTestsPostVoteService {
 
     @Transactional
     private void saveUser() {
-        if (userService.findUserByLogin(user.getEmail()) != null) userService.deleteUser(user);
+        clearAll();
         userService.saveUser(user);
     }
 
     @Transactional
     private void savePost(int userId) {
-        String title = "1234567890";
+        deletePost();
         postService.savePost(
                 System.currentTimeMillis(),
                 1,
@@ -71,9 +72,19 @@ public class UnitTestsPostVoteService {
         userService.authUser(user.getEmail(), password);
     }
 
+    private void deletePost() {
+        post = postService.findPostByTitle(title);
+        if (post != null) postService.deletePost(post);
+    }
+
+    private void deleteUser() {
+        user = userService.findUserByLogin(user.getEmail());
+        if (user != null) userService.deleteUser(user);
+    }
+
     private void clearAll() {
-        userService.deleteUser(user);
-        postService.deletePost(post);
+        deletePost();
+        deleteUser();
     }
 
 

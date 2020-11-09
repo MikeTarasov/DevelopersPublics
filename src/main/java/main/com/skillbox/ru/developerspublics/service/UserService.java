@@ -23,7 +23,6 @@ import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
 import main.com.skillbox.ru.developerspublics.api.response.ResultUserResponse;
 import main.com.skillbox.ru.developerspublics.api.response.UserResponse;
 import main.com.skillbox.ru.developerspublics.model.Role;
-import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.repository.PostCommentsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.PostVotesRepository;
@@ -67,9 +66,6 @@ public class UserService implements UserDetailsService {
   private final JavaMailSender emailSender;
   private final CaptchaCodeService captchaCodeService;
   private final UploadsService uploadsService;
-
-  @Autowired
-  private PostService postService;
 
   @Value("${blog.host}")
   private String rootPage;
@@ -198,12 +194,6 @@ public class UserService implements UserDetailsService {
   public void deleteUser(User user) {
     User dbUser = userRepository.findUserByEmail(user.getEmail());
     if (dbUser != null) {
-      // delete user posts
-      if (dbUser.getUserPosts() != null && dbUser.getUserPosts().size() != 0) {
-        for (Post post : dbUser.getUserPosts()) {
-          if (post != null) postService.deletePost(post);
-        }
-      }
       // delete comments
       if (dbUser.getUserPostComments() != null && dbUser.getUserPostComments().size() != 0) {
         dbUser.getUserPostComments().forEach(postCommentsRepository::delete);
