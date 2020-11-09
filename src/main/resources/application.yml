@@ -1,16 +1,16 @@
 #Replace with your DB host
-db.host: bsvjrvblkisuaomwadw9-mysql.services.clever-cloud.com
+db.host: bya4ojkxvswyhriwesik-mysql.services.clever-cloud.com
 #Replace with your DB name
-db.name: bsvjrvblkisuaomwadw9
+db.name: bya4ojkxvswyhriwesik
 #Replace with your time-zone
 db.timezone: Europe/Moscow
 
 spring.dataSource.url: jdbc:mysql://${db.host}:3306/${db.name}?reconnect=true&verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=${db.timezone}
 
 ##Replace with your DB username here:
-spring.dataSource.username: u2jdsvfuheag93qv
+spring.dataSource.username: u8io4kqlvwmqryzq
 ##Replace with your DB password here:
-spring.dataSource.password: XZX2wxRhHl33YhbgJwAy
+spring.dataSource.password: PBNqkUFWiWbk5d4t93oj
 
 server.port: ${PORT:8080}
 spring.jpa.hibernate.ddl-auto: update
