@@ -6,6 +6,8 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -18,6 +20,7 @@ import javax.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -40,7 +43,8 @@ public class Post {
 
   //статус проверки модератором
   @Column(nullable = false)
-  private String moderationStatus;
+  @Enumerated(EnumType.STRING)
+  private ModerationStatuses moderationStatus;
 
   //id модератора, установившего статус или null
   @Column(name = "moderator_id")

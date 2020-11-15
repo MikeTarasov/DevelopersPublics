@@ -3,6 +3,7 @@ package main.com.skillbox.ru.developerspublics.model.repository;
 import java.util.Date;
 import java.util.List;
 import main.com.skillbox.ru.developerspublics.model.entity.Post;
+import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -15,24 +16,24 @@ public interface PostsRepository extends PagingAndSortingRepository<Post, Intege
   Post findByTitle(String title);
 
   List<Post> findByIsActiveAndModerationStatusAndTimeBefore(
-      int isActive, String moderationStatus, Date time, Pageable pageable);
+      int isActive, ModerationStatuses moderationStatus, Date time, Pageable pageable);
 
 
   List<Post> findByIsActiveAndModerationStatusAndTimeAfterAndTimeBefore(
-      int isActive, String moderationStatus, Date dayBefore, Date dayAfter);
+      int isActive, ModerationStatuses moderationStatus, Date dayBefore, Date dayAfter);
 
   @Query(value =
       "SELECT * FROM posts WHERE is_active= :isActive AND moderation_status= :modStatus AND " +
           "time<= :date AND (text LIKE :query OR title LIKE :query)", nativeQuery = true)
   List<Post> findActivePostsByQuery(@Param("isActive") int isActive,
-      @Param("modStatus") String moderationStatus,
+      @Param("modStatus") ModerationStatuses moderationStatus,
       @Param("date") Date time,
       @Param("query") String query,
       Pageable pageable);
 
   List<Post> findByUserId(int userId);
 
-  List<Post> findByModerationStatus(String moderationStatus);
+  List<Post> findByModerationStatus(ModerationStatuses moderationStatus);
 
   @Query(value = "SELECT COUNT(*) FROM posts WHERE is_active=1 AND moderation_status='ACCEPTED'" +
       "AND time<= :time", nativeQuery = true)
@@ -48,7 +49,7 @@ public interface PostsRepository extends PagingAndSortingRepository<Post, Intege
           " DESC, (SELECT COUNT(*) FROM post_votes pv WHERE pv.post_id=p.id AND pv.value=-1), p.time DESC",
       nativeQuery = true)
   List<Post> getBestPosts(@Param("isActive") int isActive,
-      @Param("modStatus") String moderationStatus,
+      @Param("modStatus") ModerationStatuses moderationStatus,
       @Param("date") Date time,
       Pageable pageable);
 
@@ -58,7 +59,7 @@ public interface PostsRepository extends PagingAndSortingRepository<Post, Intege
           " DESC, p.view_count DESC, p.time DESC",
       nativeQuery = true)
   List<Post> getPopularPosts(@Param("isActive") int isActive,
-      @Param("modStatus") String moderationStatus,
+      @Param("modStatus") ModerationStatuses moderationStatus,
       @Param("date") Date time,
       Pageable pageable);
 

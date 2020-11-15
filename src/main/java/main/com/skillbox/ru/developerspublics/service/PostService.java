@@ -99,7 +99,7 @@ public class PostService {
   private List<Post> getInitActivePosts() {
     List<Post> activePosts = new ArrayList<>();
     for (Post post : postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
-        1, ModerationStatuses.ACCEPTED.toString(), new Date(System.currentTimeMillis()),
+        1, ModerationStatuses.ACCEPTED, new Date(System.currentTimeMillis()),
         null)) {
       initPost(post);
       activePosts.add(post);
@@ -110,7 +110,7 @@ public class PostService {
 
   private List<Post> findActivePosts() {
     return postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
-        1, ModerationStatuses.ACCEPTED.toString(), new Date(System.currentTimeMillis()), null);
+        1, ModerationStatuses.ACCEPTED, new Date(System.currentTimeMillis()), null);
   }
 
 
@@ -123,7 +123,7 @@ public class PostService {
       case "recent":
         posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
             1,
-            ModerationStatuses.ACCEPTED.toString(),
+            ModerationStatuses.ACCEPTED,
             new Date(System.currentTimeMillis()),
             PageRequest.of(offset / limit, limit, Sort.by("time").descending()));
         break;
@@ -131,7 +131,7 @@ public class PostService {
       case "popular":
         posts = postsRepository.getPopularPosts(
             1,
-            ModerationStatuses.ACCEPTED.toString(),
+            ModerationStatuses.ACCEPTED,
             new Date(System.currentTimeMillis()),
             PageRequest.of(offset / limit, limit));
         break;
@@ -139,7 +139,7 @@ public class PostService {
       case "best":
         posts = postsRepository.getBestPosts(
             1,
-            ModerationStatuses.ACCEPTED.toString(),
+            ModerationStatuses.ACCEPTED,
             new Date(System.currentTimeMillis()),
             PageRequest.of(offset / limit, limit));
         break;
@@ -147,7 +147,7 @@ public class PostService {
       case "early":
         posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
             1,
-            ModerationStatuses.ACCEPTED.toString(),
+            ModerationStatuses.ACCEPTED,
             new Date(System.currentTimeMillis()),
             PageRequest.of(offset / limit, limit, Sort.by("time")));
         break;
@@ -175,7 +175,7 @@ public class PostService {
     List<Post> posts = postsRepository
         .findActivePostsByQuery(
             1,
-            ModerationStatuses.ACCEPTED.toString(),
+            ModerationStatuses.ACCEPTED,
             new Date(System.currentTimeMillis()),
             "%" + query + "%",
             PageRequest.of(offset / limit, limit, Sort.by("time"))
@@ -202,7 +202,7 @@ public class PostService {
 
     List<Post> posts = postsRepository.findByIsActiveAndModerationStatusAndTimeAfterAndTimeBefore(
         1,
-        ModerationStatuses.ACCEPTED.toString(),
+        ModerationStatuses.ACCEPTED,
         dayBefore,
         dayAfter);
 
@@ -276,14 +276,14 @@ public class PostService {
       post.setUserId(userId);
       //проверяем настройку премодерации:
       if (globalSettingService
-          .findGlobalSettingByCode(GlobalSettingsCodes.POST_PREMODERATION.toString())
+          .findGlobalSettingByCode(GlobalSettingsCodes.POST_PREMODERATION)
           .getValue()
-          .equals(GlobalSettingsValues.YES.toString())) {
+          .equals(GlobalSettingsValues.YES)) {
         // - YES -> NEW
-        post.setModerationStatus(ModerationStatuses.NEW.toString());
+        post.setModerationStatus(ModerationStatuses.NEW);
       } else {
         // - NO  -> ACCEPTED
-        post.setModerationStatus(ModerationStatuses.ACCEPTED.toString());
+        post.setModerationStatus(ModerationStatuses.ACCEPTED);
       }
 
       post.setViewCount(0);
@@ -305,7 +305,7 @@ public class PostService {
   private int countActivePosts() {
     return postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
         1,
-        ModerationStatuses.ACCEPTED.toString(),
+        ModerationStatuses.ACCEPTED,
         new Date(System.currentTimeMillis()),
         null).size();
   }
@@ -315,7 +315,7 @@ public class PostService {
     return postsRepository
         .findActivePostsByQuery(
             1,
-            ModerationStatuses.ACCEPTED.toString(),
+            ModerationStatuses.ACCEPTED,
             new Date(System.currentTimeMillis()),
             "%" + query + "%",
             null).size();
@@ -328,7 +328,7 @@ public class PostService {
     //2 - проверяем статус -> д.б. ACCEPTED
     //3 - проверяем дату публикации -> д.б. не в будующем
     return post.getIsActive() == 1 &&
-        post.getModerationStatus().equals(ModerationStatuses.ACCEPTED.toString())
+        post.getModerationStatus().equals(ModerationStatuses.ACCEPTED)
         && post.getTimestamp() <= (System.currentTimeMillis() / 1000);
   }
 
@@ -352,7 +352,7 @@ public class PostService {
     //редактирует user -> ModerationStatuses.NEW
     //редактирует moderator -> ModerationStatus не меняем!
     if (userService.findUserById(userId).getIsModerator() == 0) {
-      post.setModerationStatus(ModerationStatuses.NEW.toString());
+      post.setModerationStatus(ModerationStatuses.NEW);
     }
 
     //отправляем в репозиторий
@@ -376,7 +376,7 @@ public class PostService {
   }
 
 
-  public boolean setModerationStatus(int postId, String status, int moderatorId) {
+  public boolean setModerationStatus(int postId, ModerationStatuses status, int moderatorId) {
     Optional<Post> optionalPost = getPostById(postId);
     if (optionalPost.isEmpty()) {
       return false;
@@ -661,16 +661,16 @@ public class PostService {
           return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
       }
     //переходим на верхний регистр
-    status = status.toUpperCase();
+    ModerationStatuses moderationStatus = ModerationStatuses.valueOf(status.toUpperCase());
     //получим список постов
     List<Post> posts = new ArrayList<>();
-    for (Post post : postsRepository.findByModerationStatus(status)) {
+    for (Post post : postsRepository.findByModerationStatus(moderationStatus)) {
       //отбираем активные посты с нужным статусом:
       //NEW - выводим все
       //ACCEPTED-DECLINED -> выводим только для текущего пользователя
       if (post.getIsActive() == 1) {
         initPost(post);
-          if (status.equals(ModerationStatuses.NEW.toString())) {
+          if (moderationStatus.equals(ModerationStatuses.NEW)) {
               posts.add(post);
           } else if (post.getModeratorId() != null && post.getModeratorId() == user.getId()) {
               posts.add(post);
@@ -703,21 +703,21 @@ public class PostService {
 
         case "pending":
           if (post.getIsActive() == 1 &&
-              post.getModerationStatus().equals(ModerationStatuses.NEW.toString())) {
+              post.getModerationStatus().equals(ModerationStatuses.NEW)) {
             posts.add(post);
           }
           break;
 
         case "declined":
           if (post.getIsActive() == 1 &&
-              post.getModerationStatus().equals(ModerationStatuses.DECLINED.toString())) {
+              post.getModerationStatus().equals(ModerationStatuses.DECLINED)) {
             posts.add(post);
           }
           break;
 
         case "published":
           if (post.getIsActive() == 1 &&
-              post.getModerationStatus().equals(ModerationStatuses.ACCEPTED.toString())) {
+              post.getModerationStatus().equals(ModerationStatuses.ACCEPTED)) {
             posts.add(post);
           }
           break;
@@ -739,22 +739,22 @@ public class PostService {
           return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
       }
     //переводим decision -> status
-    String status = "";
+    ModerationStatuses status = null;
     String decision = requestBody.getDecision();
       if (decision == null) {
           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
       }
       if (decision.equals(Decision.ACCEPT.getDecision())) {
-          status = ModerationStatuses.ACCEPTED.toString();
+          status = ModerationStatuses.ACCEPTED;
       } else if (decision.equals(Decision.DECLINE.getDecision())) {
-          status = ModerationStatuses.DECLINED.toString();
+          status = ModerationStatuses.DECLINED;
       }
 
     //проверяем на ошибки: не найден модератор, не правильный статус, не найден пост
     boolean hasErrors = false;
     User moderator = userService.findUserByLogin(authentication.getName());
 
-      if (moderator == null || moderator.getIsModerator() != 1 || status.equals("")) {
+      if (moderator == null || moderator.getIsModerator() != 1 || status == null) {
           hasErrors = true;
       } else if (!setModerationStatus(requestBody.getPostId(), status, moderator.getId())) {
           hasErrors = true;
@@ -859,8 +859,8 @@ public class PostService {
     //if STATISTICS_IS_PUBLIC = NO & Auth=false -> HTTP.401
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
       if (globalSettingService.findGlobalSettingByCode(
-          GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString()).getValue()
-          .equals(GlobalSettingsValues.NO.toString())) {
+          GlobalSettingsCodes.STATISTICS_IS_PUBLIC).getValue()
+          .equals(GlobalSettingsValues.NO)) {
           if (authentication == null
               || userService.findUserByLogin(authentication.getName()) == null) {
               return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);

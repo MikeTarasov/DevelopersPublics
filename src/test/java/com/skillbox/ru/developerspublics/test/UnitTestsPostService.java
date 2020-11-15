@@ -43,7 +43,7 @@ public class UnitTestsPostService {
     private final PostService postService;
     private final TagService tagService;
     private final UserService userService;
-    private final String sipValue;
+    private final GlobalSettingsValues sipValue;
     private final GlobalSetting sip;
     private final String password = "testPassword";
     private final User user = new User("test@test.test", "test", password);
@@ -66,17 +66,17 @@ public class UnitTestsPostService {
         this.tagService = tagService;
         this.userService = userService;
         sip = globalSettingsRepository
-                .findGlobalSettingByCode(GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString());
+                .findGlobalSettingByCode(GlobalSettingsCodes.STATISTICS_IS_PUBLIC);
         sipValue = sip.getValue();
     }
 
     private void setNoValue() {
-        sip.setValue(GlobalSettingsValues.NO.toString());
+        sip.setValue(GlobalSettingsValues.NO);
         globalSettingsRepository.save(sip);
     }
 
     private void setYesValue() {
-        sip.setValue(GlobalSettingsValues.YES.toString());
+        sip.setValue(GlobalSettingsValues.YES);
         globalSettingsRepository.save(sip);
     }
 
@@ -110,7 +110,7 @@ public class UnitTestsPostService {
         if (post != null) postsRepository.delete(post);
         post = new Post();
         post.setIsActive(1);
-        post.setModerationStatus(ModerationStatuses.ACCEPTED.toString());
+        post.setModerationStatus(ModerationStatuses.ACCEPTED);
         post.setUserId(user.getId());
         post.setTime(System.currentTimeMillis());
         post.setTitle(title);
@@ -609,11 +609,11 @@ public class UnitTestsPostService {
     public void testGetApiPostModeration200New() {
         authModerator();
         initPost();
-        String status = ModerationStatuses.NEW.getStatus();
+        ModerationStatuses status = ModerationStatuses.NEW;
         post.setModerationStatus(status);
         postsRepository.save(post);
 
-        ResponseEntity<?> response = postService.getApiPostModeration(0, 10, status);
+        ResponseEntity<?> response = postService.getApiPostModeration(0, 10, status.toString());
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiPostResponse apr = (ApiPostResponse) response.getBody();
         Assert.assertNotNull(apr);
@@ -629,11 +629,11 @@ public class UnitTestsPostService {
         authModerator();
         initPost();
         post.setModeratorId(user.getId());
-        String status = ModerationStatuses.DECLINED.getStatus();
+        ModerationStatuses status = ModerationStatuses.DECLINED;
         post.setModerationStatus(status);
         postsRepository.save(post);
 
-        ResponseEntity<?> response = postService.getApiPostModeration(0, 10, status);
+        ResponseEntity<?> response = postService.getApiPostModeration(0, 10, status.toString());
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiPostResponse apr = (ApiPostResponse) response.getBody();
         Assert.assertNotNull(apr);

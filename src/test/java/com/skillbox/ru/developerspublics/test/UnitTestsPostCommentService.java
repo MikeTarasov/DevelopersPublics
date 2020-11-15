@@ -62,7 +62,7 @@ public class UnitTestsPostCommentService {
         userService.authUser(email, password);
         post = new Post();
         post.setIsActive(1);
-        post.setModerationStatus(ModerationStatuses.ACCEPTED.toString());
+        post.setModerationStatus(ModerationStatuses.ACCEPTED);
         post.setUserId(user.getId());
         post.setTime(System.currentTimeMillis());
         post.setTitle(title);

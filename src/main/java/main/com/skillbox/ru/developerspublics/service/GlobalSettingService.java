@@ -39,7 +39,7 @@ public class GlobalSettingService {
   }
 
 
-  public GlobalSetting findGlobalSettingByCode(String code) {
+  public GlobalSetting findGlobalSettingByCode(GlobalSettingsCodes code) {
     return globalSettingsRepository.findGlobalSettingByCode(code);
   }
 
@@ -53,9 +53,9 @@ public class GlobalSettingService {
       for (GlobalSettingsCodes code : GlobalSettingsCodes.values()) {
         globalSettingsRepository.save(new GlobalSetting(
             id,
-            code.name(),
+            code,
             code.getDesc(),
-            GlobalSettingsValues.YES.toString())
+            GlobalSettingsValues.YES)
         );
         id++;
       }
@@ -67,20 +67,20 @@ public class GlobalSettingService {
       Boolean statisticsIsPublic) {
     boolean hasErrors = false;
     for (GlobalSetting gs : getAllGlobalSettings()) {
-      if (gs.getCode().equals(GlobalSettingsCodes.MULTIUSER_MODE.toString())
+      if (gs.getCode().equals(GlobalSettingsCodes.MULTIUSER_MODE)
           && multiUserMode != null) {
-        gs.setValue(multiUserMode ? GlobalSettingsValues.YES.toString()
-            : GlobalSettingsValues.NO.toString());
+        gs.setValue(multiUserMode ? GlobalSettingsValues.YES
+            : GlobalSettingsValues.NO);
         globalSettingsRepository.save(gs);
-      } else if (gs.getCode().equals(GlobalSettingsCodes.POST_PREMODERATION.toString())
+      } else if (gs.getCode().equals(GlobalSettingsCodes.POST_PREMODERATION)
           && postPremoderation != null) {
-        gs.setValue(postPremoderation ? GlobalSettingsValues.YES.toString()
-            : GlobalSettingsValues.NO.toString());
+        gs.setValue(postPremoderation ? GlobalSettingsValues.YES
+            : GlobalSettingsValues.NO);
         globalSettingsRepository.save(gs);
-      } else if (gs.getCode().equals(GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString())
+      } else if (gs.getCode().equals(GlobalSettingsCodes.STATISTICS_IS_PUBLIC)
           && statisticsIsPublic != null) {
-        gs.setValue(statisticsIsPublic ? GlobalSettingsValues.YES.toString()
-            : GlobalSettingsValues.NO.toString());
+        gs.setValue(statisticsIsPublic ? GlobalSettingsValues.YES
+            : GlobalSettingsValues.NO);
         globalSettingsRepository.save(gs);
       } else {
         hasErrors = true;
@@ -104,8 +104,8 @@ public class GlobalSettingService {
     //перебираем все настройки
     for (GlobalSetting globalSetting : getAllGlobalSettings()) {
       //и запоминаем их в ответе -> сразу переводим value String в boolean
-      response.put(globalSetting.getCode(),
-          globalSetting.getValue().equals(GlobalSettingsValues.YES.toString()));
+      response.put(globalSetting.getCode().toString(),
+          globalSetting.getValue().equals(GlobalSettingsValues.YES));
     }
     //и возвращаем его
     return ResponseEntity.status(HttpStatus.OK).body(response);
