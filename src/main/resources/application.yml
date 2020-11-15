@@ -3,9 +3,9 @@ db.type: postgresql
 #Replace with your DB port
 db.port: 5432
 #Replace with your DB host
-db.host: database-pg-instance.cu27bqpx0vf1.eu-west-2.rds.amazonaws.com
+db.host: byknqtanzwgqsfz41ppu-postgresql.services.clever-cloud.com
 #Replace with your DB name
-db.name: devpostdb
+db.name: byknqtanzwgqsfz41ppu
 #Replace with your time-zone
 db.timezone: Europe/Moscow
 
@@ -15,9 +15,9 @@ spring.dataSource.url: jdbc:${db.type}://${db.host}:${db.port}/${db.name}?reconn
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
 
 ##Replace with your DB username here:
-spring.dataSource.username: Administrator
+spring.dataSource.username: u2k1etoapeywyynhifuo
 ##Replace with your DB password here:
-spring.dataSource.password: X3ZX2wxRhHl3Yh7bgJw9Ay
+spring.dataSource.password: UvvGOOLAREdH5TXl8K8S
 
 server.port: ${PORT:8080}
 spring.jpa.hibernate.ddl-auto: update
@@ -29,7 +29,7 @@ spring.servlet.multipart.max-request-size: 10MB
 spring.jackson.serialization.FAIL_ON_EMPTY_BEANS: false
 
 #Replace with your web host here:
-blog.host: mktarasov-java-pg-aws-skillbox.herokuapp.com
+blog.host: mktarasov-java-pg-skillbox.herokuapp.com
 
 #Replace with your email here:
 moderator.email: developerspublics@gmail.com

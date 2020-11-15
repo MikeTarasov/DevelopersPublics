@@ -38,4 +38,4 @@
 
 Порт, по которому обращаться - 8080.
 
-Путь к приложению - http://mktarasov-java-pg-aws-skillbox.herokuapp.com
+Путь к приложению - http://mktarasov-java-pg-skillbox.herokuapp.com
