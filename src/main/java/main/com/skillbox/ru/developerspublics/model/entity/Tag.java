@@ -1,6 +1,7 @@
 package main.com.skillbox.ru.developerspublics.model.entity;
 
 import java.util.List;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -13,8 +14,6 @@ import javax.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
 
 @Data
 @AllArgsConstructor
@@ -30,9 +29,7 @@ public class Tag {
   @Column(nullable = false)
   private String name;
 
-  @Transient
-  @OneToMany(mappedBy = "tagPost", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @OneToMany(mappedBy = "tagPost", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   private List<TagToPost> tagToPosts;
 
   @Transient

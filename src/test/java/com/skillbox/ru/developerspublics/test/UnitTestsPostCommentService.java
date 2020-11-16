@@ -36,17 +36,23 @@ public class UnitTestsPostCommentService {
     private PostsRepository postsRepository;
     private UsersRepository usersRepository;
     private UserService userService;
+    private PostService postService;
     private Post post;
     private User user;
     private final String commentText = "comment text to test comment";
 
     @Autowired
-    public void UnitTestsPostVoteService(PostCommentService postCommentService, UserService userService,
-                                         PostsRepository postsRepository, UsersRepository usersRepository) {
+    public void UnitTestsPostVoteService(
+        PostService postService,
+        PostCommentService postCommentService,
+        UserService userService,
+        PostsRepository postsRepository,
+        UsersRepository usersRepository) {
         this.postCommentService = postCommentService;
         this.userService = userService;
         this.postsRepository = postsRepository;
         this.usersRepository = usersRepository;
+        this.postService = postService;
     }
 
     private void initPost() {
@@ -72,9 +78,9 @@ public class UnitTestsPostCommentService {
     }
 
     private void clearAll() {
-        postsRepository.delete(post);
-        usersRepository.delete(user);
+        postService.deletePost(post);
         userService.getApiAuthLogout();
+        userService.deleteUser(user);
     }
 
     @Test

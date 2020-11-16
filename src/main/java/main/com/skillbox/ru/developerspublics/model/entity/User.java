@@ -22,8 +22,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.enums.Roles;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -66,28 +64,16 @@ public class User implements UserDetails {
   @Column(columnDefinition = "TEXT")
   private String photo;
 
-  //посты, требующие модерации
-  @Transient
-  @OneToMany(mappedBy = "moderatorPost", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
-  private List<Post> moderatorPosts;
-
   //посты пользователя
-  @Transient
-  @OneToMany(mappedBy = "userPost", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @OneToMany(mappedBy = "userPost")
   private List<Post> userPosts;
 
   //оценки, данные пользователем
-  @Transient
-  @OneToMany(mappedBy = "userVote", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @OneToMany(mappedBy = "userVote")
   private List<PostVote> userPostVotes;
 
   //комментарии пользователя
-  @Transient
-  @OneToMany(mappedBy = "commentUser", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @OneToMany(mappedBy = "commentUser")
   private List<PostComment> userPostComments;
 
   //список ролей пользователя

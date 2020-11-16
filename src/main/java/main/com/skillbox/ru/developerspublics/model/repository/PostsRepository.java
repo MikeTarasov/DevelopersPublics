@@ -26,7 +26,7 @@ public interface PostsRepository extends PagingAndSortingRepository<Post, Intege
       "SELECT * FROM posts WHERE is_active= :isActive AND moderation_status= :modStatus AND " +
           "time<= :date AND (text LIKE :query OR title LIKE :query)", nativeQuery = true)
   List<Post> findActivePostsByQuery(@Param("isActive") int isActive,
-      @Param("modStatus") ModerationStatuses moderationStatus,
+      @Param("modStatus") String moderationStatus,
       @Param("date") Date time,
       @Param("query") String query,
       Pageable pageable);
@@ -49,7 +49,7 @@ public interface PostsRepository extends PagingAndSortingRepository<Post, Intege
           " DESC, (SELECT COUNT(*) FROM post_votes pv WHERE pv.post_id=p.id AND pv.value=-1), p.time DESC",
       nativeQuery = true)
   List<Post> getBestPosts(@Param("isActive") int isActive,
-      @Param("modStatus") ModerationStatuses moderationStatus,
+      @Param("modStatus") String moderationStatus,
       @Param("date") Date time,
       Pageable pageable);
 
@@ -59,7 +59,7 @@ public interface PostsRepository extends PagingAndSortingRepository<Post, Intege
           " DESC, p.view_count DESC, p.time DESC",
       nativeQuery = true)
   List<Post> getPopularPosts(@Param("isActive") int isActive,
-      @Param("modStatus") ModerationStatuses moderationStatus,
+      @Param("modStatus") String moderationStatus,
       @Param("date") Date time,
       Pageable pageable);
 

@@ -12,12 +12,11 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 
 @Data
@@ -43,15 +42,11 @@ public class PostVote {
   @Column(columnDefinition = "INT", nullable = false)
   private int value;  // +1 -> like, -1 -> dislike
 
-  @Transient
-  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   @JoinColumn(name = "user_id", insertable = false, updatable = false)
   private User userVote;
 
-  @Transient
-  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   @JoinColumn(name = "post_id", insertable = false, updatable = false)
   private Post postVote;
 

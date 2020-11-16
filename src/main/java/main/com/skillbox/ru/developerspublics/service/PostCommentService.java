@@ -50,7 +50,7 @@ public class PostCommentService {
     return postCommentsRepository.findById(id);
   }
 
-  @SneakyThrows
+
   public List<PostCommentResponse> getPostCommentResponseList(List<PostComment> postComments) {
     List<PostCommentResponse> list = new ArrayList<>();
     for (PostComment postComment : postComments) {
@@ -72,6 +72,11 @@ public class PostCommentService {
 
   private User findCommentUser(PostComment postComment) {
     return userService.findUserById(postComment.getUserId());
+  }
+
+
+  public void deletePostComment(PostComment postComment) {
+    postCommentsRepository.delete(postComment);
   }
 
 

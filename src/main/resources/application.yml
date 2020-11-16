@@ -47,7 +47,7 @@ uploads.path: upload
 announce.size: 1000
 
 #tags min weight
-tag.min.weight: 0.23
+tag.min.weight: 0.22
 
 #avatar width
 avatar.width: 36

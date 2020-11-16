@@ -10,12 +10,9 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
 
 @Data
 @AllArgsConstructor
@@ -34,15 +31,11 @@ public class TagToPost {
   @Column(name = "tag_id", nullable = false)
   private int tagId;
 
-  @Transient
-  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   @JoinColumn(name = "post_id", insertable = false, updatable = false)
   private Post postTag;
 
-  @Transient
-  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   @JoinColumn(name = "tag_id", insertable = false, updatable = false)
   private Tag tagPost;
 }

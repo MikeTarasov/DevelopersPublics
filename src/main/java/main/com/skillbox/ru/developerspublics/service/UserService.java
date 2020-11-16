@@ -24,6 +24,8 @@ import main.com.skillbox.ru.developerspublics.api.response.ResultUserResponse;
 import main.com.skillbox.ru.developerspublics.api.response.UserResponse;
 import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
+import main.com.skillbox.ru.developerspublics.model.repository.PostCommentsRepository;
+import main.com.skillbox.ru.developerspublics.model.repository.PostVotesRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.PostsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.UsersRepository;
 import org.imgscalr.Scalr;
@@ -58,6 +60,8 @@ public class UserService implements UserDetailsService {
 
   private final UsersRepository userRepository;
   private final PostsRepository postsRepository;
+  private final PostCommentsRepository postCommentsRepository;
+  private final PostVotesRepository postVotesRepository;
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
   private final JavaMailSender emailSender;
   private final CaptchaCodeService captchaCodeService;
@@ -88,11 +92,15 @@ public class UserService implements UserDetailsService {
   public UserService(
       UsersRepository userRepository,
       PostsRepository postsRepository,
+      PostCommentsRepository postCommentsRepository,
+      PostVotesRepository postVotesRepository,
       JavaMailSender emailSender,
       CaptchaCodeService captchaCodeService,
       UploadsService uploadsService) {
     this.userRepository = userRepository;
     this.postsRepository = postsRepository;
+    this.postVotesRepository = postVotesRepository;
+    this.postCommentsRepository = postCommentsRepository;
     this.bCryptPasswordEncoder = new BCryptPasswordEncoder();
     this.emailSender = emailSender;
     this.captchaCodeService = captchaCodeService;
@@ -101,7 +109,6 @@ public class UserService implements UserDetailsService {
 
 
   @Override
-  @SneakyThrows
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
     User user = findUserByLogin(email);
     if (user == null) {
@@ -191,9 +198,19 @@ public class UserService implements UserDetailsService {
   }
 
 
+  @Transactional
   public void deleteUser(User user) {
     User dbUser = userRepository.findUserByEmail(user.getEmail());
     if (dbUser != null) {
+      // delete comments
+      if (dbUser.getUserPostComments() != null && dbUser.getUserPostComments().size() != 0) {
+        dbUser.getUserPostComments().forEach(postCommentsRepository::delete);
+      }
+      // delete post votes
+      if (dbUser.getUserPostVotes() != null && dbUser.getUserPostVotes().size() != 0) {
+        dbUser.getUserPostVotes().forEach(postVotesRepository::delete);
+      }
+      // delete user
       userRepository.delete(dbUser);
     }
   }
@@ -230,7 +247,6 @@ public class UserService implements UserDetailsService {
 
 
   @Transactional
-  @SneakyThrows
   private void removePhoto(User user) {
     String path = user.getPhoto();
     user.setPhoto("");
@@ -406,10 +422,11 @@ public class UserService implements UserDetailsService {
 
 
   public void authUser(String email, String password) {
+    UserDetails user = loadUserByUsername(email);
     SecurityContextHolder
         .getContext()
         .setAuthentication(
-            new UsernamePasswordAuthenticationToken(loadUserByUsername(email), password));
+            new UsernamePasswordAuthenticationToken(user, password, user.getAuthorities()));
   }
 
 
@@ -684,7 +701,6 @@ public class UserService implements UserDetailsService {
 
 
   @Transactional
-  @SneakyThrows
   public ResponseEntity<?> postApiImage(MultipartFile image) {
     return ResponseEntity.status(HttpStatus.OK).body(saveImage(image));
   }

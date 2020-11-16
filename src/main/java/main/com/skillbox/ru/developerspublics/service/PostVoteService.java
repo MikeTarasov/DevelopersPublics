@@ -40,6 +40,11 @@ public class PostVoteService {
   }
 
 
+  public void deletePostVote(PostVote postVote) {
+    postVotesRepository.delete(postVote);
+  }
+
+
   private boolean setLikeDislike(int postId, int userId, int value) {
     Post post;
     if (postsRepository.findById(postId).isPresent()) {

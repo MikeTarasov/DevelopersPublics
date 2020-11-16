@@ -1,6 +1,7 @@
 package main.com.skillbox.ru.developerspublics.model.entity;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.CascadeType;
@@ -16,13 +17,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 @Data
 @AllArgsConstructor
@@ -70,36 +70,24 @@ public class Post {
   @Column(nullable = false)
   private int viewCount;
 
-  //привязанный модератор поста
-  @Transient
-  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
-  @JoinColumn(name = "moderator_id")
-  private User moderatorPost;
-
   //привязанный автор поста
-  @Transient
-  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
-  @JoinColumn(name = "user_id")
+  @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+  @JoinColumn(name = "user_id", insertable = false, updatable = false)
   private User userPost;
 
   //привязанный список лайков/дислайков
-  @Transient
-  @OneToMany(mappedBy = "postVote", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @OneToMany(mappedBy = "postVote", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+  @Fetch(value = FetchMode.SUBSELECT)
   private List<PostVote> postVotes;
 
   //привязанный список комментариев к посту
-  @Transient
-  @OneToMany(mappedBy = "commentPost", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @OneToMany(mappedBy = "commentPost", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+  @Fetch(value = FetchMode.SUBSELECT)
   private List<PostComment> postComments;
 
   //привязанный список тэг-пост
-  @Transient
-  @OneToMany(mappedBy = "postTag", fetch = FetchType.LAZY)
-  @LazyCollection(LazyCollectionOption.EXTRA)
+  @OneToMany(mappedBy = "postTag", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+  @Fetch(value = FetchMode.SUBSELECT)
   private List<TagToPost> tagToPosts;
 
   //get timestamp in seconds
@@ -110,5 +98,20 @@ public class Post {
   //timestamp in milliseconds to java.util.Date
   public void setTime(long timestamp) {
     time = Date.from(Instant.ofEpochMilli(timestamp));
+  }
+
+  public List<PostVote> getPostVotes() {
+    if (postVotes == null) postVotes = new ArrayList<>();
+    return postVotes;
+  }
+
+  public List<PostComment> getPostComments() {
+    if (postComments == null) postComments = new ArrayList<>();
+    return postComments;
+  }
+
+  public List<TagToPost> getTagToPosts() {
+    if (tagToPosts == null) tagToPosts = new ArrayList<>();
+    return tagToPosts;
   }
 }
