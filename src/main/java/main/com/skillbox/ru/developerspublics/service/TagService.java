@@ -93,7 +93,7 @@ public class TagService {
   }
 
 
-  public void deleteTag(Tag tag) { //TODO
+  public void deleteTag(Tag tag) {
     Tag tagDB = tagsRepository.findByName(tag.getName());
     if (tagDB != null) {
       tagsRepository.delete(tagDB);

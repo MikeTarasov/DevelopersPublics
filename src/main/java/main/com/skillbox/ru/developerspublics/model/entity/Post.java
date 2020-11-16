@@ -86,7 +86,7 @@ public class Post {
   private List<PostComment> postComments;
 
   //привязанный список тэг-пост
-  @OneToMany(mappedBy = "postTag", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+  @OneToMany(mappedBy = "postTag", fetch = FetchType.EAGER)
   @Fetch(value = FetchMode.SUBSELECT)
   private List<TagToPost> tagToPosts;
 

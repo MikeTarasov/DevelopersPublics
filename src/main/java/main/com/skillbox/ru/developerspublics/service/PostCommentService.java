@@ -3,7 +3,6 @@ package main.com.skillbox.ru.developerspublics.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiComment;
 import main.com.skillbox.ru.developerspublics.api.response.ApiCommentTrueResponse;
 import main.com.skillbox.ru.developerspublics.api.response.ErrorsResponse;

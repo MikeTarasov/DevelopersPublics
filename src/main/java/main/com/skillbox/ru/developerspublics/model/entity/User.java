@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -22,6 +21,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.enums.Roles;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -38,11 +39,11 @@ public class User implements UserDetails {
   private int id;
 
   //является ли модератором (isModerator = 1)
-  @Column(name = "is_moderator", columnDefinition = "INT", nullable = false)
+  @Column(columnDefinition = "INT", nullable = false)
   private int isModerator;
 
   //дата регистрации
-  @Column(name = "reg_time", columnDefinition = "TIMESTAMP", nullable = false)
+  @Column(columnDefinition = "TIMESTAMP", nullable = false)
   private Date regTime;
 
   //имя пользователя
@@ -65,15 +66,18 @@ public class User implements UserDetails {
   private String photo;
 
   //посты пользователя
-  @OneToMany(mappedBy = "userPost")
+  @OneToMany(mappedBy = "userPost", orphanRemoval = true)
+  @LazyCollection(LazyCollectionOption.EXTRA)
   private List<Post> userPosts;
 
   //оценки, данные пользователем
-  @OneToMany(mappedBy = "userVote")
+  @OneToMany(mappedBy = "userVote", orphanRemoval = true)
+  @LazyCollection(LazyCollectionOption.EXTRA)
   private List<PostVote> userPostVotes;
 
   //комментарии пользователя
-  @OneToMany(mappedBy = "commentUser")
+  @OneToMany(mappedBy = "commentUser", orphanRemoval = true)
+  @LazyCollection(LazyCollectionOption.EXTRA)
   private List<PostComment> userPostComments;
 
   //список ролей пользователя

@@ -20,7 +20,7 @@ spring.dataSource.username: u2k1etoapeywyynhifuo
 spring.dataSource.password: UvvGOOLAREdH5TXl8K8S
 
 server.port: ${PORT:8080}
-spring.jpa.hibernate.ddl-auto: update
+spring.jpa.hibernate.ddl-auto: none
 
 #Max size for uploads media
 spring.servlet.multipart.max-file-size: 10MB

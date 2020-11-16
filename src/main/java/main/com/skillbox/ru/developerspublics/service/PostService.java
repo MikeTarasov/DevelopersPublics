@@ -200,7 +200,7 @@ public class PostService {
   }
 
 
-  private int getCommentsCount(Post post) { //TODO
+  private int getCommentsCount(Post post) {
     return post.getPostComments() == null ? 0 : post.getPostComments().size();
   }
 
@@ -283,11 +283,7 @@ public class PostService {
 
 
   private int countActivePosts() {
-    return postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
-        1,
-        ModerationStatuses.ACCEPTED,
-        new Date(System.currentTimeMillis()),
-        null).size();
+    return postsRepository.countActivePosts(new Date(System.currentTimeMillis()));
   }
 
 
@@ -571,7 +567,6 @@ public class PostService {
   }
 
 
-  @SneakyThrows
   public ResponseEntity<?> getApiPostByDate(int offset, int limit, String date) {
     //получаем список постов за дату
     List<Post> posts = findActivePostByDate(date);
