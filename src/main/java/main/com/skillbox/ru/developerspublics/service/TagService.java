@@ -8,9 +8,9 @@ import java.util.HashSet;
 import java.util.List;
 import main.com.skillbox.ru.developerspublics.api.response.TagResponse;
 import main.com.skillbox.ru.developerspublics.api.response.TagsListResponse;
-import main.com.skillbox.ru.developerspublics.model.projections.TagResponseProjection;
 import main.com.skillbox.ru.developerspublics.model.entity.Tag;
 import main.com.skillbox.ru.developerspublics.model.entity.TagToPost;
+import main.com.skillbox.ru.developerspublics.model.projections.TagResponseProjection;
 import main.com.skillbox.ru.developerspublics.model.repository.TagToPostsRepository;
 import main.com.skillbox.ru.developerspublics.model.repository.TagsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,9 +67,9 @@ public class TagService {
     HashMap<String, Float> weightMap = new HashMap<>();
 
     //получим мапу из списка в аргументе
-    for (TagResponseProjection tagResponseProjection :
-                          tagsRepository.getTagResponseSet(new Date(System.currentTimeMillis()))) {
-      TagResponse tagResponse = new TagResponse(tagResponseProjection);
+    for (TagResponseProjection projection :
+        tagsRepository.getTagResponseSet(new Date(System.currentTimeMillis()))) {
+      TagResponse tagResponse = new TagResponse(projection);
       if (tagNameList.contains(tagResponse.getName())) {
         weightMap.put(tagResponse.getName(), tagResponse.getWeight());
       }
@@ -78,21 +78,17 @@ public class TagService {
     //получаем мах вес
     float maxWeight = weightMap.values().stream().max(Float::compareTo).orElse(0F);
 
-    //переводим в удельный вес
-    for (String name : weightMap.keySet()) {
-      float weight = 0F;
-      //на ноль не делим
-      if (maxWeight != 0) {
-        weight = weightMap.get(name) / maxWeight;
+    //на ноль не делим и в список не добавляем
+    if (maxWeight != 0) {
+      //переводим в удельный вес
+      for (String name : weightMap.keySet()) {
+        float weight = weightMap.get(name) / maxWeight;
         //ограничиваем мин вес
-        if (weight < tagMinWeight) {
-          weight = tagMinWeight;
+        if (weight >= tagMinWeight) {
+          list.add(new TagResponse(name, weight));
         }
       }
-      //добавляем
-      list.add(new TagResponse(name, weight));
     }
-
     return list;
   }
 
@@ -133,11 +129,12 @@ public class TagService {
     } else {
       //перебираем все активные тэги и ищем совпадения
       for (String tagName : getActiveTags()) {
-        //все совпадения заносим в список по шаблону
-        if (tagName.equals(query)) tagNames.add(tagName);
+        if (tagName.equals(query)) {
+          //все совпадения заносим в список по шаблону
+          tagNames.add(tagName);
+        }
       }
     }
-
     //собираем ответ
     return ResponseEntity.status(HttpStatus.OK)
         .body(new TagsListResponse(getTagResponseList(tagNames)));

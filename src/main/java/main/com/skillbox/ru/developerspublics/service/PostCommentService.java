@@ -3,7 +3,6 @@ package main.com.skillbox.ru.developerspublics.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiComment;
 import main.com.skillbox.ru.developerspublics.api.response.ApiCommentTrueResponse;
 import main.com.skillbox.ru.developerspublics.api.response.ErrorsResponse;
@@ -50,7 +49,7 @@ public class PostCommentService {
     return postCommentsRepository.findById(id);
   }
 
-  @SneakyThrows
+
   public List<PostCommentResponse> getPostCommentResponseList(List<PostComment> postComments) {
     List<PostCommentResponse> list = new ArrayList<>();
     for (PostComment postComment : postComments) {
@@ -72,6 +71,11 @@ public class PostCommentService {
 
   private User findCommentUser(PostComment postComment) {
     return userService.findUserById(postComment.getUserId());
+  }
+
+
+  public void deletePostComment(PostComment postComment) {
+    postCommentsRepository.delete(postComment);
   }
 
 

@@ -5,7 +5,6 @@ import java.util.Date;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -15,8 +14,6 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
 
 
 @Data
@@ -36,10 +33,10 @@ public class PostVote {
   @Column(name = "post_id", nullable = false)
   private int postId;
 
-  @Column(columnDefinition = "DATETIME", nullable = false)
+  @Column(columnDefinition = "TIMESTAMP", nullable = false)
   private Date time;
 
-  @Column(columnDefinition = "TINYINT", nullable = false)
+  @Column(columnDefinition = "INT", nullable = false)
   private int value;  // +1 -> like, -1 -> dislike
 
   @ManyToOne(cascade = CascadeType.ALL)

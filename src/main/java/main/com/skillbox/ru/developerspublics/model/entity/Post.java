@@ -4,10 +4,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -19,11 +20,9 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
+import main.com.skillbox.ru.developerspublics.model.enums.ModerationStatuses;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
 
 @Data
 @AllArgsConstructor
@@ -39,13 +38,13 @@ public class Post {
 
   //признак активности
   //0 -> hidden, 1 -> active
-  @Column(columnDefinition = "TINYINT", nullable = false)
+  @Column(columnDefinition = "INT", nullable = false)
   private int isActive;
 
   //статус проверки модератором
-  @Column(columnDefinition = "ENUM('NEW','ACCEPTED','DECLINED')", nullable = false)
-  @ColumnDefault("'NEW'")
-  private String moderationStatus;
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private ModerationStatuses moderationStatus;
 
   //id модератора, установившего статус или null
   @Column(name = "moderator_id")
@@ -56,7 +55,7 @@ public class Post {
   private int userId;
 
   //дата создания поста
-  @Column(columnDefinition = "DATETIME", nullable = false)
+  @Column(columnDefinition = "TIMESTAMP", nullable = false)
   private Date time;
 
   //заголовок поста
@@ -64,30 +63,25 @@ public class Post {
   private String title;
 
   //содержание поста
-  @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
+  @Column(columnDefinition = "TEXT", nullable = false)
   private String text;
 
   //кол-во просмотров
   @Column(nullable = false)
   private int viewCount;
 
-  //привязанный модератор поста
-//  @ManyToOne(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
-//  @JoinColumn(name = "moderator_id", insertable = false, updatable = false)
-//  private User moderatorPost;
-
   //привязанный автор поста
   @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-  @JoinColumn(name = "user_id", updatable = false, insertable = false)
+  @JoinColumn(name = "user_id", insertable = false, updatable = false)
   private User userPost;
 
   //привязанный список лайков/дислайков
-  @OneToMany(mappedBy = "postVote", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "postVote", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   @Fetch(value = FetchMode.SUBSELECT)
   private List<PostVote> postVotes;
 
   //привязанный список комментариев к посту
-  @OneToMany(mappedBy = "commentPost", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "commentPost", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   @Fetch(value = FetchMode.SUBSELECT)
   private List<PostComment> postComments;
 
@@ -105,18 +99,6 @@ public class Post {
   public void setTime(long timestamp) {
     time = Date.from(Instant.ofEpochMilli(timestamp));
   }
-
-  public String toString() {
-    return "Post id="+id+" isactive="+isActive+" modStat="+moderationStatus+" modId="+moderatorId+
-        " userId="+userId+" time="+time+" VC="+viewCount+
-//        " moderatorPost="+(moderatorPost == null ? null : "NOT_NULL")+
-        " userPost="+(userPost == null ? null : "NOT_NULL")+
-        " postVotes="+(postVotes == null ? null : "NOT_NULL")+
-        " postComments="+(postComments == null ? null : "NOT_NULL")+
-        " tagToPosts="+(tagToPosts == null ? null : "NOT_NULL");
-
-  }
-
 
   public List<PostVote> getPostVotes() {
     if (postVotes == null) postVotes = new ArrayList<>();

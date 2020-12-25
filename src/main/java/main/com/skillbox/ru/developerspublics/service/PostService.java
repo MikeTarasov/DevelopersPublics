@@ -82,14 +82,14 @@ public class PostService {
   }
 
 
-  private Optional<Post> getPostById(int id) {
+  private Optional<Post> findPostById(int id) {
     return postsRepository.findById(id);
   }
 
 
   private List<Post> findActivePosts() {
     return postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
-        1, ModerationStatuses.ACCEPTED.toString(), new Date(System.currentTimeMillis()), null);
+        1, ModerationStatuses.ACCEPTED, new Date(System.currentTimeMillis()), null);
   }
 
 
@@ -97,13 +97,12 @@ public class PostService {
       if (mode.equals("")) {
           mode = "recent";
       }
-
     List<Post> posts = new ArrayList<>();
     switch (mode) {
       case "recent":
         posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
             1,
-            ModerationStatuses.ACCEPTED.toString(),
+            ModerationStatuses.ACCEPTED,
             new Date(System.currentTimeMillis()),
             PageRequest.of(offset / limit, limit, Sort.by("time").descending()));
         break;
@@ -127,7 +126,7 @@ public class PostService {
       case "early":
         posts = postsRepository.findByIsActiveAndModerationStatusAndTimeBefore(
             1,
-            ModerationStatuses.ACCEPTED.toString(),
+            ModerationStatuses.ACCEPTED,
             new Date(System.currentTimeMillis()),
             PageRequest.of(offset / limit, limit, Sort.by("time")));
         break;
@@ -148,7 +147,7 @@ public class PostService {
   }
 
 
-  private List<Post> getActivePostsByQuery(String query, int offset, int limit) {
+  private List<Post> findActivePostsByQuery(String query, int offset, int limit) {
     return postsRepository
         .findActivePostsByQuery(
             1,
@@ -159,8 +158,9 @@ public class PostService {
         );
   }
 
+
   @SneakyThrows
-  private List<Post> getActivePostByDate(String date) {
+  private List<Post> findActivePostByDate(String date) {
     //парсим текущую дату из строки
     Calendar thisDay = Calendar.getInstance();
     thisDay.setTime(new SimpleDateFormat("yyyy-MM-dd").parse(date));
@@ -176,7 +176,7 @@ public class PostService {
 
     return postsRepository.findByIsActiveAndModerationStatusAndTimeAfterAndTimeBefore(
         1,
-        ModerationStatuses.ACCEPTED.toString(),
+        ModerationStatuses.ACCEPTED,
         dayBefore,
         dayAfter);
   }
@@ -218,26 +218,25 @@ public class PostService {
   public void deletePost(Post post) {
     Post postDB = postsRepository.findByTitle(post.getTitle());
       if (postDB != null) {
-        // delete tag2post
-        if (post.getTagToPosts() != null) {
+        //delete post votes
+        if (postDB.getPostVotes() != null && postDB.getPostVotes().size() != 0) {
+          postDB.getPostVotes().forEach(postVoteService::deletePostVote);
+        }
+        //delete post comments
+        if (postDB.getPostComments() != null && postDB.getPostComments().size() != 0) {
+          postDB.getPostComments().forEach(postCommentService::deletePostComment);
+        }
+        //delete tag to post
+        if (post.getTagToPosts() != null && post.getTagToPosts().size() != 0) {
           for (TagToPost tagToPost : post.getTagToPosts()) {
             Tag tag = tagService.findTagById(tagToPost.getTagId());
             tagToPostService.deleteTagToPost(tagToPost);
-            // delete tags without posts
             if (tagToPostService.getTagToPostsByTagId(tag.getId()).size() == 0) {
               tagService.deleteTag(tag);
             }
           }
         }
-        // delete post comments
-        if (post.getPostComments() != null) {
-          post.getPostComments().forEach(postCommentService::deletePostComment);
-        }
-        // delete post votes
-        if (post.getPostVotes() != null) {
-          post.getPostVotes().forEach(postVoteService::delete);
-        }
-        // delete post
+        //delete post
         postsRepository.delete(postDB);
       }
   }
@@ -257,14 +256,14 @@ public class PostService {
       post.setUserId(userId);
       //проверяем настройку премодерации:
       if (globalSettingService
-          .findGlobalSettingByCode(GlobalSettingsCodes.POST_PREMODERATION.toString())
+          .findGlobalSettingByCode(GlobalSettingsCodes.POST_PREMODERATION)
           .getValue()
-          .equals(GlobalSettingsValues.YES.toString())) {
+          .equals(GlobalSettingsValues.YES)) {
         // - YES -> NEW
-        post.setModerationStatus(ModerationStatuses.NEW.getStatus());
+        post.setModerationStatus(ModerationStatuses.NEW);
       } else {
         // - NO  -> ACCEPTED
-        post.setModerationStatus(ModerationStatuses.ACCEPTED.toString());
+        post.setModerationStatus(ModerationStatuses.ACCEPTED);
       }
 
       post.setViewCount(0);
@@ -278,6 +277,7 @@ public class PostService {
     } catch (Exception e) {
       return false;
     }
+
     return true;
   }
 
@@ -304,7 +304,7 @@ public class PostService {
     //2 - проверяем статус -> д.б. ACCEPTED
     //3 - проверяем дату публикации -> д.б. не в будующем
     return post.getIsActive() == 1 &&
-        post.getModerationStatus().equals(ModerationStatuses.ACCEPTED.toString())
+        post.getModerationStatus().equals(ModerationStatuses.ACCEPTED)
         && post.getTimestamp() <= (System.currentTimeMillis() / 1000);
   }
 
@@ -314,7 +314,7 @@ public class PostService {
       int userId,
       List<String> tagsNames) {
     //находим в базе
-    Optional<Post> optionalPost = getPostById(id);
+    Optional<Post> optionalPost = findPostById(id);
     if (optionalPost.isEmpty()) {
       return false;
     }
@@ -328,7 +328,7 @@ public class PostService {
     //редактирует user -> ModerationStatuses.NEW
     //редактирует moderator -> ModerationStatus не меняем!
     if (userService.findUserById(userId).getIsModerator() == 0) {
-      post.setModerationStatus(ModerationStatuses.NEW.getStatus());
+      post.setModerationStatus(ModerationStatuses.NEW);
     }
 
     //отправляем в репозиторий
@@ -340,7 +340,9 @@ public class PostService {
       //удаляем тэги, отсутствующие в новом списке
       if (!tagsNames.contains(tag.getName())) {
         tagToPostService.deleteTagToPost(tagToPost);
-        tagService.deleteTag(tag);
+        if (tagToPostService.getTagToPostsByTagId(tag.getId()).size() == 0) {
+          tagService.deleteTag(tag);
+        }
       }
     }
 
@@ -352,8 +354,8 @@ public class PostService {
   }
 
 
-  public boolean setModerationStatus(int postId, String status, int moderatorId) {
-    Optional<Post> optionalPost = getPostById(postId);
+  public boolean setModerationStatus(int postId, ModerationStatuses status, int moderatorId) {
+    Optional<Post> optionalPost = findPostById(postId);
     if (optionalPost.isEmpty()) {
       return false;
     }
@@ -510,7 +512,7 @@ public class PostService {
     if (query.length() == 0) {
       findPosts = getActivePosts(offset, limit, "");
     } else { //иначе ищем query в текстовых полях
-      findPosts = getActivePostsByQuery(query, offset, limit);
+      findPosts = findActivePostsByQuery(query, offset, limit);
     }
 
     //собираем ответ
@@ -523,11 +525,11 @@ public class PostService {
   public ResponseEntity<?> getApiPostId(int id) {
     //ищем нужный пост по id
     //если пост не найден - возвращаем 404
-    Optional<Post> optional = getPostById(id);
-    if (optional.isEmpty()) {
+    Optional<Post> optionalPost = findPostById(id);
+    if (optionalPost.isEmpty()) {
       return ResponseEntity.status(404).body(null);
     }
-    Post post = optional.get();
+    Post post = optionalPost.get();
 
     //При успешном запросе увеличиваем количество просмотров поста на 1, кроме случаев:
     // - Если модератор авторизован, то не считаем его просмотры вообще
@@ -567,7 +569,7 @@ public class PostService {
 
   public ResponseEntity<?> getApiPostByDate(int offset, int limit, String date) {
     //получаем список постов за дату
-    List<Post> posts = getActivePostByDate(date);
+    List<Post> posts = findActivePostByDate(date);
     //запоминаем размер
     int postsSize = posts.size();
     //сортируем и обрезаем
@@ -584,7 +586,7 @@ public class PostService {
     //получаем список тэг-пост для тега по имени тэга
     for (TagToPost tagToPost : tagService.getTagToPost(tagName)) {
       //находим пост по id
-      Optional<Post> optionalPost = getPostById(tagToPost.getPostId());
+      Optional<Post> optionalPost = findPostById(tagToPost.getPostId());
       if (optionalPost.isPresent()) {
         Post post = optionalPost.get();
         //проверяем на активность
@@ -612,20 +614,19 @@ public class PostService {
       }
     //выдергиваем из контекста пользователя
     User user = userService.findUserByLogin(authentication.getName());
-    System.out.println(user);
       if (user == null || user.getIsModerator() != 1) {
           return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
       }
     //переходим на верхний регистр
-    status = status.toUpperCase();
+    ModerationStatuses moderationStatus = ModerationStatuses.valueOf(status.toUpperCase());
     //получим список постов
     List<Post> posts = new ArrayList<>();
-    for (Post post : postsRepository.findByModerationStatus(status)) {
+    for (Post post : postsRepository.findByModerationStatus(moderationStatus)) {
       //отбираем активные посты с нужным статусом:
       //NEW - выводим все
       //ACCEPTED-DECLINED -> выводим только для текущего пользователя
       if (post.getIsActive() == 1) {
-          if (status.equals(ModerationStatuses.NEW.toString())) {
+          if (moderationStatus.equals(ModerationStatuses.NEW)) {
               posts.add(post);
           } else if (post.getModeratorId() != null && post.getModeratorId() == user.getId()) {
               posts.add(post);
@@ -657,21 +658,21 @@ public class PostService {
 
         case "pending":
           if (post.getIsActive() == 1 &&
-              post.getModerationStatus().equals(ModerationStatuses.NEW.toString())) {
+              post.getModerationStatus().equals(ModerationStatuses.NEW)) {
             posts.add(post);
           }
           break;
 
         case "declined":
           if (post.getIsActive() == 1 &&
-              post.getModerationStatus().equals(ModerationStatuses.DECLINED.toString())) {
+              post.getModerationStatus().equals(ModerationStatuses.DECLINED)) {
             posts.add(post);
           }
           break;
 
         case "published":
           if (post.getIsActive() == 1 &&
-              post.getModerationStatus().equals(ModerationStatuses.ACCEPTED.toString())) {
+              post.getModerationStatus().equals(ModerationStatuses.ACCEPTED)) {
             posts.add(post);
           }
           break;
@@ -693,22 +694,22 @@ public class PostService {
           return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
       }
     //переводим decision -> status
-    String status = "";
+    ModerationStatuses status = null;
     String decision = requestBody.getDecision();
       if (decision == null) {
           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
       }
       if (decision.equals(Decision.ACCEPT.getDecision())) {
-          status = ModerationStatuses.ACCEPTED.toString();
+          status = ModerationStatuses.ACCEPTED;
       } else if (decision.equals(Decision.DECLINE.getDecision())) {
-          status = ModerationStatuses.DECLINED.toString();
+          status = ModerationStatuses.DECLINED;
       }
 
     //проверяем на ошибки: не найден модератор, не правильный статус, не найден пост
     boolean hasErrors = false;
     User moderator = userService.findUserByLogin(authentication.getName());
 
-      if (moderator == null || moderator.getIsModerator() != 1 || status.equals("")) {
+      if (moderator == null || moderator.getIsModerator() != 1 || status == null) {
           hasErrors = true;
       } else if (!setModerationStatus(requestBody.getPostId(), status, moderator.getId())) {
           hasErrors = true;
@@ -813,8 +814,8 @@ public class PostService {
     //if STATISTICS_IS_PUBLIC = NO & Auth=false -> HTTP.401
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
       if (globalSettingService.findGlobalSettingByCode(
-          GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString()).getValue()
-          .equals(GlobalSettingsValues.NO.toString())) {
+          GlobalSettingsCodes.STATISTICS_IS_PUBLIC).getValue()
+          .equals(GlobalSettingsValues.NO)) {
           if (authentication == null
               || userService.findUserByLogin(authentication.getName()) == null) {
               return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);

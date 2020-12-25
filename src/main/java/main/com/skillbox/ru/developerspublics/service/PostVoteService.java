@@ -44,6 +44,11 @@ public class PostVoteService {
   }
 
 
+  public void deletePostVote(PostVote postVote) {
+    postVotesRepository.delete(postVote);
+  }
+
+
   private boolean setLikeDislike(int postId, int userId, int value) {
     Post post;
     if (postsRepository.findById(postId).isPresent()) {
@@ -92,7 +97,6 @@ public class PostVoteService {
     if (authentication == null) {
       return ResponseEntity.status(401).body(null);
     }
-
     //из контекста достаем пользователя
     User user = userService.findUserByLogin(authentication.getName());
     // === @Secured(USER) ===

@@ -1,6 +1,5 @@
 package com.skillbox.ru.developerspublics.test;
 
-
 import java.util.ArrayList;
 import java.util.Collections;
 import main.com.skillbox.ru.developerspublics.DevelopersPublicationsApplication;
@@ -20,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,8 +39,8 @@ public class UnitTestsPostVoteService {
 
     @Autowired
     public UnitTestsPostVoteService(PostService postService,
-                                    PostVoteService postVoteService,
-                                    UserService userService) {
+        PostVoteService postVoteService,
+        UserService userService) {
         this.postService = postService;
         this.postVoteService = postVoteService;
         this.userService = userService;
@@ -50,7 +48,6 @@ public class UnitTestsPostVoteService {
 
     @Transactional
     private void saveUser() {
-        clearAll();
         userService.saveUser(user);
     }
 
@@ -58,12 +55,12 @@ public class UnitTestsPostVoteService {
     private void savePost(int userId) {
         deletePost();
         postService.savePost(
-                System.currentTimeMillis(),
-                1,
-                title,
-                "123456789012345678901234567890123456789012345678901234567890",
-                userId,
-                new ArrayList<>(Collections.singleton("TESTTAG")));
+            System.currentTimeMillis(),
+            1,
+            title,
+            "123456789012345678901234567890123456789012345678901234567890",
+            userId,
+            new ArrayList<>(Collections.singleton("TESTTAG")));
         post = postService.findPostByTitle(title);
     }
 
@@ -74,12 +71,16 @@ public class UnitTestsPostVoteService {
 
     private void deletePost() {
         post = postService.findPostByTitle(title);
-        if (post != null) postService.deletePost(post);
+        if (post != null) {
+            postService.deletePost(post);
+        }
     }
 
     private void deleteUser() {
         user = userService.findUserByLogin(user.getEmail());
-        if (user != null) userService.deleteUser(user);
+        if (user != null) {
+            userService.deleteUser(user);
+        }
     }
 
     private void clearAll() {
@@ -102,9 +103,9 @@ public class UnitTestsPostVoteService {
     @Transactional
     public void testPostApiPostLikeAnonymous() {
         SecurityContextHolder.getContext().setAuthentication(new AnonymousAuthenticationToken(
-                "anonymous",
-                "anonymous",
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
+            "anonymous",
+            "anonymous",
+            Collections.singleton(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
         ));
 
         RequestApiPostLike request = new RequestApiPostLike();

@@ -111,8 +111,9 @@ public class UserService implements UserDetailsService {
   @Override
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
     User user = findUserByLogin(email);
-    if (user == null) return null;
-
+    if (user == null) {
+      return null;
+    }
     Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
     for (Role role : user.getRoles()) {
       grantedAuthorities.add(new SimpleGrantedAuthority(role.getAuthority()));
@@ -179,16 +180,23 @@ public class UserService implements UserDetailsService {
   public boolean saveUser(User user) {
     //ищем пользователя в БД
     //если уже есть - сохранять нечего
-    if (userRepository.findUserByEmail(user.getEmail()) != null) return false;
-
+    if (userRepository.findUserByEmail(user.getEmail()) != null) {
+      return false;
+    }
     //если нет - задаем роль, кодируем пароль и сохраняем в репозиторий
+
     //  first user = moderator
-    if (userRepository.count() == 0) user.setIsModerator(1);
+    if (userRepository.count() == 0) {
+      user.setIsModerator(1);
+    }
+    //  /first user = moderator
+
     user.setRoles();
     user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
     userRepository.save(user);
     return true;
   }
+
 
   @Transactional
   public void deleteUser(User user) {
@@ -280,8 +288,9 @@ public class UserService implements UserDetailsService {
 
     //скидываем на сервер
     File folder = new File(homePath + path);
-    if (!folder.exists()) folder.mkdirs();
-
+    if (!folder.exists()) {
+      folder.mkdirs();
+    }
     File file = new File(folder.getAbsolutePath() + File.separator + name);
     ImageIO.write(newImage, imageType, file);
 
@@ -316,8 +325,9 @@ public class UserService implements UserDetailsService {
   @SneakyThrows
   private String saveImage(MultipartFile image) {
     StringBuilder name = new StringBuilder(Objects.requireNonNull(image.getOriginalFilename()));
-    if (name.toString().equals("")) name.insert(0, "1.jpg");
-
+    if (name.toString().equals("")) {
+      name.insert(0, "1.jpg");
+    }
     String[] hash = substringHash(Integer.toString(image.hashCode()));
     String pathDB = String
         .join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], "");
@@ -325,12 +335,16 @@ public class UserService implements UserDetailsService {
 
     //создаем директрорию, если её нет
     File folder = new File(pathServer);
-    if (!folder.exists()) folder.mkdirs();
-
+    if (!folder.exists()) {
+      folder.mkdirs();
+    }
     //защитимся от перезаписи файлов
     while (true) {
-      if (!new File(pathServer + name).exists()) break;
-      else name.insert(0, "0");
+      if (!new File(pathServer + name).exists()) {
+        break;
+      } else {
+        name.insert(0, "0");
+      }
     }
 
     BufferedImage bufferedImage = ImageIO.read(image.getInputStream());
@@ -366,6 +380,7 @@ public class UserService implements UserDetailsService {
   }
 
 
+  @Transactional
   private boolean sendEmail(User user) {
     boolean result = true;
     try {
@@ -420,7 +435,9 @@ public class UserService implements UserDetailsService {
     String pathServer = uploadsHome + pathDB + name;
 
     Resource file = new FileSystemResource(pathServer);
-    if (file.exists()) return ResponseEntity.ok().body(file);
+    if (file.exists()) {
+      return ResponseEntity.ok().body(file);
+    }
 
     // <backup>
     if (uploadsService.restoreImage(uploadsHome, pathDB, name)) {
@@ -444,8 +461,9 @@ public class UserService implements UserDetailsService {
     //если нашли - проверяем пароль и заносим user'а в контекст
     if (isPasswordCorrect(authUser, requestApiAuthLogin.getPassword())) {
       authUser(authUser.getEmail(), requestApiAuthLogin.getPassword());
-    } else return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
-
+    } else {
+      return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
+    }
 
     //и заполняем ответ
     return new ResponseEntity<>(getResultUserResponse(authUser), HttpStatus.OK);
@@ -455,9 +473,11 @@ public class UserService implements UserDetailsService {
   public ResponseEntity<?> getApiAuthCheck() {
     //проверяем сохранён ли идентификатор текущей сессии в списке авторизованных
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    //если не аутентифицирован
-    if (authentication == null) return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
 
+    //если не аутентифицирован
+    if (authentication == null) {
+      return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
+    }
     //если не авторизован
     if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
       return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
@@ -465,8 +485,11 @@ public class UserService implements UserDetailsService {
 
     //вытаскиваем пользователя
     User user = findUserByLogin(authentication.getName());
+
     //если не нашли
-    if (user == null) return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
+    if (user == null) {
+      return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
+    }
 
     //собираем ответ
     return new ResponseEntity<>(getResultUserResponse(user), HttpStatus.OK);
@@ -477,8 +500,9 @@ public class UserService implements UserDetailsService {
     //ищем юзера по введенному е-мэйлу
     User user = findUserByLogin(requestBody.getEmail());
     //если не нашли - выдаем ошибку
-    if (user == null) return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
-
+    if (user == null) {
+      return new ResponseEntity<>(new ResultResponse(false), HttpStatus.OK);
+    }
     //пробуем отправить письмо - результат учитываем в ответе
     return new ResponseEntity<>(new ResultResponse(sendEmail(user)), HttpStatus.OK);
   }
@@ -486,19 +510,25 @@ public class UserService implements UserDetailsService {
 
   public ResponseEntity<?> postApiAuthPassword(RequestApiAuthPassword requestBody) {
     //test code
-    User user = findUserByCode(requestBody.getCode());
     boolean isCodeCorrect = false;
-    if (user != null) isCodeCorrect = true;
+    User user = findUserByCode(requestBody.getCode());
+    if (user != null) {
+      isCodeCorrect = true;
+    }
 
     //test password
-    String password = requestBody.getPassword();
     boolean isPasswordCorrect = true;
-    if (password.length() < 6) isPasswordCorrect = false;
+    String password = requestBody.getPassword();
+    if (password.length() < 6) {
+      isPasswordCorrect = false;
+    }
 
     //test captcha
     boolean isCaptchaCorrect = false;
     if (captchaCodeService.findCaptchaCodeByCodeAndSecret(
-        requestBody.getCaptcha(), requestBody.getCaptchaSecret()) != null) isCaptchaCorrect = true;
+        requestBody.getCaptcha(), requestBody.getCaptchaSecret()) != null) {
+      isCaptchaCorrect = true;
+    }
 
     if (isCodeCorrect && isPasswordCorrect && isCaptchaCorrect) {
       changeUserPassword(user, password);
@@ -524,7 +554,9 @@ public class UserService implements UserDetailsService {
     //проверяем password
     String password = requestBody.getPassword();
     boolean isPasswordCorrect = true;
-    if (password.length() < 6) isPasswordCorrect = false;
+    if (password.length() < 6) {
+      isPasswordCorrect = false;
+    }
 
     //проверяем captcha
     boolean isCaptchaCorrect = false;
@@ -534,11 +566,12 @@ public class UserService implements UserDetailsService {
       isCaptchaCorrect = true;
     }
 
-    //если ошибок нет
+    //собираем ответ
     if (!isEmailExist && !isNameWrong && isPasswordCorrect && isCaptchaCorrect) {
       //создаем new User и отправляем true
       User user = new User(email, name, password);
       boolean isUserSaved = saveUser(user);
+      //собираем ответ
       return new ResponseEntity<>(new ResultResponse(isUserSaved), HttpStatus.OK);
     }
 
@@ -596,13 +629,18 @@ public class UserService implements UserDetailsService {
     //else consumes = "application/json"
     if (requestBody != null) {
       JSONObject request = (JSONObject) new JSONParser().parse(requestBody);
-      if (request.get("email") != null) email = request.get("email").toString();
-
-      if (request.get("name") != null) name = request.get("name").toString();
-
-      if (request.get("password") != null) password = request.get("password").toString();
-
-      if (request.get("removePhoto") != null) removePhoto = request.get("removePhoto").toString();
+      if (request.get("email") != null) {
+        email = request.get("email").toString();
+      }
+      if (request.get("name") != null) {
+        name = request.get("name").toString();
+      }
+      if (request.get("password") != null) {
+        password = request.get("password").toString();
+      }
+      if (request.get("removePhoto") != null) {
+        removePhoto = request.get("removePhoto").toString();
+      }
     }
 
     //получаем user
@@ -618,27 +656,39 @@ public class UserService implements UserDetailsService {
 
     //проверяем изменение имени
     if (!user.getName().equals(name)) {
-      if (!changeUserName(user, name)) errorsBuilder.name("Имя указано неверно");
+      if (!changeUserName(user, name)) {
+        errorsBuilder.name("Имя указано неверно");
+      }
     }
 
     //проверяем изменение e-mail
     if (!user.getEmail().equals(email)) {
-      if (!changeUserEmail(user, email)) errorsBuilder.email("Этот e-mail уже зарегистрирован");
+      if (!changeUserEmail(user, email)) {
+        errorsBuilder.email("Этот e-mail уже зарегистрирован");
+      }
     }
 
     //проверяем изменение пароля
     if (password != null) {
-      if (password.length() >= 6) changeUserPassword(user, password);
-      else errorsBuilder.password("Пароль короче 6-ти символов");
+      if (password.length() >= 6) {
+        changeUserPassword(user, password);
+      } else {
+        errorsBuilder.password("Пароль короче 6-ти символов");
+      }
     }
 
     if (removePhoto != null) {
       //удаление фото
-      if (removePhoto.equals("1")) removePhoto(user);
+      if (removePhoto.equals("1")) {
+        removePhoto(user);
+      }
       //изменение фото
       else if (removePhoto.equals("0")) {
-        if (avatar.getSize() <= 5 * 1024 * 1024) saveAvatar(user, avatar.getInputStream());
-        else errorsBuilder.photo("Фото слишком большое, нужно не более 5 Мб");
+        if (avatar.getSize() <= 5 * 1024 * 1024) {
+          saveAvatar(user, avatar.getInputStream());
+        } else {
+          errorsBuilder.photo("Фото слишком большое, нужно не более 5 Мб");
+        }
       }
     }
 

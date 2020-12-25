@@ -22,7 +22,7 @@ public class Uploads {
   @Column(columnDefinition = "VARCHAR(255)", nullable = false)
   private String path;
 
-  @Column(columnDefinition = "MEDIUMBLOB", nullable = false)
+  @Column(columnDefinition = "BYTEA", nullable = false)
   private byte[] bytes;
 
   public Uploads(String path, byte[] bytes) {

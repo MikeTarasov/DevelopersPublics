@@ -22,8 +22,8 @@ public interface TagsRepository extends JpaRepository<Tag, Integer> {
           + "AND posts.time<= :time", nativeQuery = true)
   HashSet<String> findActiveTags(@Param("time") Date time);
 
-  @Query(value = "SELECT name, (SELECT COUNT(*) FROM tag2post t2p WHERE t.id=t2p.tag_id) AS weight "
-      + "FROM tags t JOIN tag2post ttp ON t.id=ttp.tag_id JOIN posts p ON ttp.post_id=p.id "
+  @Query(value = "SELECT name, (SELECT COUNT(*) FROM tag2post t2p WHERE t2p.tag_id=t.id) AS weight "
+      + "FROM tags t LEFT JOIN tag2post ttp ON t.id=ttp.tag_id LEFT JOIN posts p ON ttp.post_id=p.id "
       + "WHERE p.is_active=1 AND p.moderation_status='ACCEPTED' AND p.time<= :time",
       nativeQuery = true)
   HashSet<TagResponseProjection> getTagResponseSet(@Param("time") Date time);

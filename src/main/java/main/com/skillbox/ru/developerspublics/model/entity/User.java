@@ -8,15 +8,11 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.persistence.Basic;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -43,11 +39,11 @@ public class User implements UserDetails {
   private int id;
 
   //является ли модератором (isModerator = 1)
-  @Column(columnDefinition = "TINYINT", nullable = false)
+  @Column(columnDefinition = "INT", nullable = false)
   private int isModerator;
 
   //дата регистрации
-  @Column(columnDefinition = "DATETIME", nullable = false)
+  @Column(columnDefinition = "TIMESTAMP", nullable = false)
   private Date regTime;
 
   //имя пользователя
@@ -68,11 +64,6 @@ public class User implements UserDetails {
   //аватар
   @Column(columnDefinition = "TEXT")
   private String photo;
-
-  //посты, требующие модерации
-//  @OneToMany(mappedBy = "moderatorPost", orphanRemoval = true)
-//  @LazyCollection(LazyCollectionOption.EXTRA)
-//  private List<Post> moderatorPosts;
 
   //посты пользователя
   @OneToMany(mappedBy = "userPost", orphanRemoval = true)
@@ -170,15 +161,5 @@ public class User implements UserDetails {
     result = result * email.length();
     result = result * password.length();
     return result;
-  }
-
-  public String toString() {
-    return "User id=" + id + " isMod=" + isModerator +" time=" + regTime + "name=" + name + " email="
-    +email + " pass=" + password + " code="+code+" photo="+photo+" modPost="+
-//        (moderatorPosts == null ? null : "NOT_NULL") +
-        " userPosts="+(userPosts == null ? null : "NOT_NULL")+
-        " userPostVotes="+(userPostVotes == null ? null : "NOT_NULL")+
-        " userPostComments="+(userPostComments == null ? null : "NOT_NULL")+
-        " roles="+roles;
   }
 }

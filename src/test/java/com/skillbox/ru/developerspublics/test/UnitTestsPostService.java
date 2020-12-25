@@ -1,19 +1,10 @@
 package com.skillbox.ru.developerspublics.test;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.DevelopersPublicationsApplication;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiModeration;
 import main.com.skillbox.ru.developerspublics.api.request.RequestPostPutApiPost;
-import main.com.skillbox.ru.developerspublics.api.response.ApiCalendarResponse;
-import main.com.skillbox.ru.developerspublics.api.response.ApiPostResponse;
-import main.com.skillbox.ru.developerspublics.api.response.ErrorsResponse;
-import main.com.skillbox.ru.developerspublics.api.response.PostByIdResponse;
-import main.com.skillbox.ru.developerspublics.api.response.ResultFalseErrorsResponse;
-import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
+import main.com.skillbox.ru.developerspublics.api.response.*;
 import main.com.skillbox.ru.developerspublics.model.entity.GlobalSetting;
 import main.com.skillbox.ru.developerspublics.model.entity.Post;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
@@ -38,6 +29,11 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Date;
 import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(SpringExtension.class)
@@ -50,14 +46,14 @@ public class UnitTestsPostService {
     private final PostService postService;
     private final TagService tagService;
     private final UserService userService;
-    private final String sipValue;
+    private final GlobalSettingsValues sipValue;
     private final GlobalSetting sip;
-    private final String modStatValue;
+    private final GlobalSettingsValues modStatValue;
     private final GlobalSetting moderationStatus;
     private final String password = "testPassword";
     private User user;
     private Post post;
-    private final String tagName = "testTag";
+    private final String tagName = "TESTTAG";
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private String date;
     private final String title = "testTitle testTitle testTitle";
@@ -78,20 +74,20 @@ public class UnitTestsPostService {
         this.tagService = tagService;
         this.userService = userService;
         sip = globalSettingsRepository
-            .findGlobalSettingByCode(GlobalSettingsCodes.STATISTICS_IS_PUBLIC.toString());
+            .findGlobalSettingByCode(GlobalSettingsCodes.STATISTICS_IS_PUBLIC);
         moderationStatus = globalSettingsRepository
-            .findGlobalSettingByCode(GlobalSettingsCodes.POST_PREMODERATION.toString());
+            .findGlobalSettingByCode(GlobalSettingsCodes.POST_PREMODERATION);
         sipValue = sip.getValue();
         modStatValue = moderationStatus.getValue();
     }
 
     private void setNoValue(GlobalSetting globalSetting) {
-        globalSetting.setValue(GlobalSettingsValues.NO.toString());
+        globalSetting.setValue(GlobalSettingsValues.NO);
         globalSettingsRepository.save(globalSetting);
     }
 
     private void setYesValue(GlobalSetting globalSetting) {
-        globalSetting.setValue(GlobalSettingsValues.YES.toString());
+        globalSetting.setValue(GlobalSettingsValues.YES);
         globalSettingsRepository.save(globalSetting);
     }
 
@@ -128,7 +124,7 @@ public class UnitTestsPostService {
         deletePost();
         post = new Post();
         post.setIsActive(1);
-        post.setModerationStatus(ModerationStatuses.ACCEPTED.toString());
+        post.setModerationStatus(ModerationStatuses.ACCEPTED);
         post.setUserId(userId);
         post.setTime(System.currentTimeMillis());
         post.setTitle(title);
@@ -145,7 +141,6 @@ public class UnitTestsPostService {
     }
 
     private void saveTag() { tagService.saveTag(tagName, post.getId()); }
-
 
     @Test
     @Transactional
@@ -210,7 +205,7 @@ public class UnitTestsPostService {
         ResultFalseErrorsResponse rfer = (ResultFalseErrorsResponse) response.getBody();
         Assert.assertEquals(new ResultFalseErrorsResponse(
                 ErrorsResponse.builder().title("Заголовок не установлен").build()),
-                rfer);
+            rfer);
 
         deleteUser();
     }
@@ -234,7 +229,7 @@ public class UnitTestsPostService {
         ResultFalseErrorsResponse rfer = (ResultFalseErrorsResponse) response.getBody();
         Assert.assertEquals(new ResultFalseErrorsResponse(
                 ErrorsResponse.builder().text("Текст публикации слишком короткий").build()),
-                rfer);
+            rfer);
 
         deleteUser();
     }
@@ -258,7 +253,7 @@ public class UnitTestsPostService {
         ResultFalseErrorsResponse rfer = (ResultFalseErrorsResponse) response.getBody();
         Assert.assertEquals(new ResultFalseErrorsResponse(
                 ErrorsResponse.builder().text("Текст публикации слишком длинный").build()),
-                rfer);
+            rfer);
 
         deleteUser();
     }
@@ -281,7 +276,7 @@ public class UnitTestsPostService {
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());;
         Assert.assertEquals(new ResultFalseErrorsResponse(
                 ErrorsResponse.builder().text("Не удалось сохранить пост").build()),
-                response.getBody());
+            response.getBody());
 
         deleteUser();
     }
@@ -571,11 +566,11 @@ public class UnitTestsPostService {
     public void testGetApiPostModeration200New() {
         authUser(1);
         initPost(user.getId());
-        String status = ModerationStatuses.NEW.getStatus();
+        ModerationStatuses status = ModerationStatuses.NEW;
         post.setModerationStatus(status);
         postsRepository.save(post);
 
-        ResponseEntity<?> response = postService.getApiPostModeration(0, 10, status);
+        ResponseEntity<?> response = postService.getApiPostModeration(0, 10, status.toString());
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiPostResponse apr = (ApiPostResponse) response.getBody();
         Assert.assertNotNull(apr);
@@ -589,11 +584,11 @@ public class UnitTestsPostService {
         authUser(1);
         initPost(user.getId());
         post.setModeratorId(user.getId());
-        String status = ModerationStatuses.DECLINED.getStatus();
+        ModerationStatuses status = ModerationStatuses.DECLINED;
         post.setModerationStatus(status);
         postsRepository.save(post);
 
-        ResponseEntity<?> response = postService.getApiPostModeration(0, 10, status);
+        ResponseEntity<?> response = postService.getApiPostModeration(0, 10, status.toString());
         Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
         ApiPostResponse apr = (ApiPostResponse) response.getBody();
         Assert.assertNotNull(apr);

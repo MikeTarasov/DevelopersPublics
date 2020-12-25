@@ -46,10 +46,10 @@ public class UnitTestsGlobalSettingService {
     public void testPutApiSettings200() {
         RequestApiSettings goodRequest = new RequestApiSettings();
         for (GlobalSetting gs : service.getAllGlobalSettings()) {
-            switch (gs.getCode()) {
-                case "MULTIUSER_MODE" : goodRequest.setMultiUserMode(Boolean.parseBoolean(gs.getValue())); break;
-                case "POST_PREMODERATION" : goodRequest.setPostPremoderation(Boolean.parseBoolean(gs.getValue())); break;
-                case "STATISTICS_IS_PUBLIC" : goodRequest.setStatisticsIsPublic(Boolean.parseBoolean(gs.getValue())); break;
+            switch (gs.getCode().toString()) {
+                case "MULTIUSER_MODE" : goodRequest.setMultiUserMode(Boolean.parseBoolean(gs.getValue().toString())); break;
+                case "POST_PREMODERATION" : goodRequest.setPostPremoderation(Boolean.parseBoolean(gs.getValue().toString())); break;
+                case "STATISTICS_IS_PUBLIC" : goodRequest.setStatisticsIsPublic(Boolean.parseBoolean(gs.getValue().toString())); break;
             }
         }
         ResponseEntity<?> goodResponse = service.putApiSettings(goodRequest);
