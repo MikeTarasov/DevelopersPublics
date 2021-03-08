@@ -6,7 +6,7 @@ import main.com.skillbox.ru.developerspublics.model.projections.TagResponseProje
 
 @Data
 @AllArgsConstructor
-public class TagResponse implements TagResponseProjection {
+public class TagResponse {
 
   private String name;
   private Float weight;

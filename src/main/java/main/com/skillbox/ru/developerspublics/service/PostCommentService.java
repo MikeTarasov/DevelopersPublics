@@ -1,14 +1,7 @@
 package main.com.skillbox.ru.developerspublics.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiComment;
-import main.com.skillbox.ru.developerspublics.api.response.ApiCommentTrueResponse;
-import main.com.skillbox.ru.developerspublics.api.response.ErrorsResponse;
-import main.com.skillbox.ru.developerspublics.api.response.PostCommentResponse;
-import main.com.skillbox.ru.developerspublics.api.response.ResultFalseErrorsResponse;
-import main.com.skillbox.ru.developerspublics.api.response.UserIdNamePhotoResponse;
+import main.com.skillbox.ru.developerspublics.api.response.*;
 import main.com.skillbox.ru.developerspublics.model.entity.PostComment;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.repository.PostCommentsRepository;
@@ -20,6 +13,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -80,7 +77,7 @@ public class PostCommentService {
 
 
   @Transactional
-  private int saveComment(Integer parentId, int postId, int userId, String text) {
+  int saveComment(Integer parentId, int postId, int userId, String text) {
     PostComment postComment = new PostComment();
 
     if (parentId != null) {
@@ -94,10 +91,6 @@ public class PostCommentService {
     postCommentsRepository.saveAndFlush(postComment);
 
     return postComment.getId();
-  }
-
-  public void deletePostComment(PostComment postComment) {
-    postCommentsRepository.delete(postComment);
   }
 
 

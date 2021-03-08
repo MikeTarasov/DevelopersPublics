@@ -1,27 +1,12 @@
 package main.com.skillbox.ru.developerspublics.service;
 
 
-import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
-import java.io.File;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import javax.imageio.ImageIO;
-import javax.mail.internet.MimeMessage;
 import lombok.SneakyThrows;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthLogin;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthPassword;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRegister;
 import main.com.skillbox.ru.developerspublics.api.request.RequestApiAuthRestore;
-import main.com.skillbox.ru.developerspublics.api.response.ErrorsResponse;
-import main.com.skillbox.ru.developerspublics.api.response.ResultFalseErrorsResponse;
-import main.com.skillbox.ru.developerspublics.api.response.ResultResponse;
-import main.com.skillbox.ru.developerspublics.api.response.ResultUserResponse;
-import main.com.skillbox.ru.developerspublics.api.response.UserResponse;
+import main.com.skillbox.ru.developerspublics.api.response.*;
 import main.com.skillbox.ru.developerspublics.model.Role;
 import main.com.skillbox.ru.developerspublics.model.entity.User;
 import main.com.skillbox.ru.developerspublics.model.repository.PostCommentsRepository;
@@ -53,6 +38,18 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.imageio.ImageIO;
+import javax.mail.internet.MimeMessage;
+import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 
 @Service
@@ -247,7 +244,7 @@ public class UserService implements UserDetailsService {
 
 
   @Transactional
-  private void removePhoto(User user) {
+  void removePhoto(User user) {
     String path = user.getPhoto();
     user.setPhoto("");
     userRepository.save(user);
@@ -259,8 +256,8 @@ public class UserService implements UserDetailsService {
 
   @Transactional
   @SneakyThrows
-  private void resizeAndSaveImage(String homePath, String path, String name,
-      InputStream inputStream, int imageHeight, int imageWidth) {
+  void resizeAndSaveImage(String homePath, String path, String name,
+                          InputStream inputStream, int imageHeight, int imageWidth) {
     //получаем исходное изображение
     String imageType = name.substring(name.lastIndexOf(".") + 1);
     if (imageType.equals("")) {
@@ -323,14 +320,14 @@ public class UserService implements UserDetailsService {
 
   @Transactional
   @SneakyThrows
-  private String saveImage(MultipartFile image) {
+  String saveImage(MultipartFile image) {
     StringBuilder name = new StringBuilder(Objects.requireNonNull(image.getOriginalFilename()));
     if (name.toString().equals("")) {
       name.insert(0, "1.jpg");
     }
     String[] hash = substringHash(Integer.toString(image.hashCode()));
     String pathDB = String
-        .join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], "");
+            .join(File.separator, "", uploadsPath, hash[0], hash[1], hash[2], "");
     String pathServer = uploadsHome + pathDB;
 
     //создаем директрорию, если её нет
@@ -381,11 +378,11 @@ public class UserService implements UserDetailsService {
 
 
   @Transactional
-  private boolean sendEmail(User user) {
+  boolean sendEmail(User user) {
     boolean result = true;
     try {
       String hash = bCryptPasswordEncoder.encode(Long.toString(System.currentTimeMillis()))
-          .substring(10).toLowerCase().replaceAll("\\W", "");
+              .substring(10).toLowerCase().replaceAll("\\W", "");
 
       user.setCode(hash);
       userRepository.save(user);

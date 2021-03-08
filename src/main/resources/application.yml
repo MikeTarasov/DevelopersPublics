@@ -1,70 +1,70 @@
-#Replace with your time-zone
-db.timezone: ${ADDON_TIMEZONE}
+spring:
+  datasource:
+    initialization-mode: always
+    platform: postgres
+    url: jdbc:postgresql://${ADDON_HOST}:${ADDON_PORT}/${ADDON_DB}?reconnect=true&verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=${db.timezone}
+    username: ${ADDON_USER}
+    password: ${ADDON_PASSWORD}
+  jackson:
+    serialization:
+      FAIL_ON_EMPTY_BEANS: false
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+    hibernate:
+      ddl-auto: none
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
-spring.datasource.initialization-mode: always
-spring.datasource.platform: postgres
-spring.dataSource.url: jdbc:postgresql://${ADDON_HOST}:${ADDON_PORT}/${ADDON_DB}?reconnect=true&verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=${db.timezone}
-spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
+server:
+  port: ${PORT}
 
-##Replace with your DB username here:
-spring.dataSource.username: ${ADDON_USER}
-##Replace with your DB password here:
-spring.dataSource.password: ${ADDON_PASSWORD}
+db:
+  timezone: ${ADDON_TIMEZONE}
 
-server.port: ${PORT:8080}
-spring.jpa.hibernate.ddl-auto: none
+moderator:
+  email: ${MODERATOR_EMAIL}
+  password: ${MODERATOR_PASSWORD}
 
-#Max size for uploads media
-spring.servlet.multipart.max-file-size: 10MB
-spring.servlet.multipart.max-request-size: 10MB
+uploads:
+  home: /tmp/codon/tmp/images
+  path: upload
+  width: 640
 
-spring.jackson.serialization.FAIL_ON_EMPTY_BEANS: false
+avatar:
+  path: avatar
+  width: 36
+  height: 36
 
-#Replace with your web host here:
-blog.host: mktarasov-java-pg-skillbox.herokuapp.com
+announce:
+  size: 1000
 
-#Replace with your email here:
-moderator.email: ${MODERATOR_EMAIL}
-#Replace with your application password here:
-moderator.email.password: ${MODERATOR_PASSWORD}
+tag:
+  min:
+    weight: 0.22
 
-#path to images on server
-uploads.home: /tmp/codon/tmp/images
-#path to avatars on browser
-avatar.path: avatar
-#path to uploads img on posts
-uploads.path: upload
+captcha:
+  chars: 6
+  height: 35
+  width: 100
+  life:
+    time: 3600000
 
-#post announce size
-announce.size: 1000
+images:
+  auto:
+    clean:
+      time: 864000000
 
-#tags min weight
-tag.min.weight: 0.22
-
-#avatar width
-avatar.width: 36
-#avatar height
-avatar.height: 36
-
-#uploads max width
-uploads.width: 640
-
-#captcha total chars
-captcha.chars: 6
-#captcha height
-captcha.height: 35
-#captcha width
-captcha.width: 100
-
-#Replace with your captcha life-time in milliseconds here (default=3600000 (1 hour)):
-captcha.life.time: 3600000
-#Replace with your images auto-clean time in milliseconds here (default=864000000 (10 days)):
-images.auto.clean.time: 864000000
-
-#footer blog-info
-blog.title: Developers Publications
-blog.subtitle: Рассказы разработчиков
-blog.phone: +7 904 550-48-47
-blog.email: mktarasov@gmail.com
-blog.copyright: Михаил Тарасов
-blog.copyrightFrom: 2020
+blog:
+  host: mktarasov-java-pg-skillbox.herokuapp.com
+  title: Developers Publications
+  subtitle: Рассказы разработчиков
+  phone: +7 904 550-48-47
+  email: mktarasov@gmail.com
+  copyright: Михаил Тарасов
+  copyrightFrom: 2020
