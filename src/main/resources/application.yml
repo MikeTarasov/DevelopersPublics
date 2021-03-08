@@ -1,23 +1,15 @@
-#Replace with your DB type
-db.type: postgresql
-#Replace with your DB port
-db.port: 5432
-#Replace with your DB host
-db.host: byknqtanzwgqsfz41ppu-postgresql.services.clever-cloud.com
-#Replace with your DB name
-db.name: byknqtanzwgqsfz41ppu
 #Replace with your time-zone
-db.timezone: Europe/Moscow
+db.timezone: ${ADDON_TIMEZONE}
 
 spring.datasource.initialization-mode: always
 spring.datasource.platform: postgres
-spring.dataSource.url: jdbc:${db.type}://${db.host}:${db.port}/${db.name}?reconnect=true&verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=${db.timezone}
+spring.dataSource.url: jdbc:postgresql://${ADDON_HOST}:${ADDON_PORT}/${ADDON_DB}?reconnect=true&verifyServerCertificate=false&useSSL=false&requireSSL=false&serverTimezone=${db.timezone}
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
 
 ##Replace with your DB username here:
-spring.dataSource.username: u2k1etoapeywyynhifuo
+spring.dataSource.username: ${ADDON_USER}
 ##Replace with your DB password here:
-spring.dataSource.password: UvvGOOLAREdH5TXl8K8S
+spring.dataSource.password: ${ADDON_PASSWORD}
 
 server.port: ${PORT:8080}
 spring.jpa.hibernate.ddl-auto: none
@@ -32,9 +24,9 @@ spring.jackson.serialization.FAIL_ON_EMPTY_BEANS: false
 blog.host: mktarasov-java-pg-skillbox.herokuapp.com
 
 #Replace with your email here:
-moderator.email: developerspublics@gmail.com
+moderator.email: ${MODERATOR_EMAIL}
 #Replace with your application password here:
-moderator.email.password: wzhaqlnptimbivpl
+moderator.email.password: ${MODERATOR_PASSWORD}
 
 #path to images on server
 uploads.home: /tmp/codon/tmp/images
